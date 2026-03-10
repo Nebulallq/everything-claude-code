@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eval</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Run evaluation against acceptance criteria<br>agent: build</h2>
+<h1>Eval Command</h1>
+<p>Evaluate implementation against acceptance criteria: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<p>Run structured evaluation to verify the implementation meets requirements.</p>
+<h2>Evaluation Framework</h2>
+<h3>Grader Types</h3>
+<ol>
+<li><p><strong>Binary Grader</strong> - Pass/Fail</p>
+<ul>
+<li>Does it work? Yes/No</li>
+<li>Good for: feature completion, bug fixes</li>
+</ul>
+</li>
+<li><p><strong>Scalar Grader</strong> - Score 0-100</p>
+<ul>
+<li>How well does it work?</li>
+<li>Good for: performance, quality metrics</li>
+</ul>
+</li>
+<li><p><strong>Rubric Grader</strong> - Category scores</p>
+<ul>
+<li>Multiple dimensions evaluated</li>
+<li>Good for: comprehensive review</li>
+</ul>
+</li>
+</ol>
+<h2>Evaluation Process</h2>
+<h3>Step 1: Define Criteria</h3>
+<pre><code>Acceptance Criteria:
+1. [Criterion 1] - [weight]
+2. [Criterion 2] - [weight]
+3. [Criterion 3] - [weight]
+</code></pre>
+<h3>Step 2: Run Tests</h3>
+<p>For each criterion:</p>
+<ul>
+<li>Execute relevant test</li>
+<li>Collect evidence</li>
+<li>Score result</li>
+</ul>
+<h3>Step 3: Calculate Score</h3>
+<pre><code>Final Score = Σ (criterion_score × weight) / total_weight
+</code></pre>
+<h3>Step 4: Report</h3>
+<h2>Evaluation Report</h2>
+<h3>Overall: [PASS/FAIL] (Score: X/100)</h3>
+<h3>Criterion Breakdown</h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Score</th>
+<th>Weight</th>
+<th>Weighted</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>[Criterion 1]</td>
+<td>X/10</td>
+<td>30%</td>
+<td>X</td>
+</tr>
+<tr>
+<td>[Criterion 2]</td>
+<td>X/10</td>
+<td>40%</td>
+<td>X</td>
+</tr>
+<tr>
+<td>[Criterion 3]</td>
+<td>X/10</td>
+<td>30%</td>
+<td>X</td>
+</tr>
+</tbody></table>
+<h3>Evidence</h3>
+<p><strong>Criterion 1: [Name]</strong></p>
+<ul>
+<li>Test: [what was tested]</li>
+<li>Result: [outcome]</li>
+<li>Evidence: [screenshot, log, output]</li>
+</ul>
+<h3>Recommendations</h3>
+<p>[If not passing, what needs to change]</p>
+<h2>Pass@K Metrics</h2>
+<p>For non-deterministic evaluations:</p>
+<ul>
+<li>Run K times</li>
+<li>Calculate pass rate</li>
+<li>Report: &quot;Pass@K = X/K&quot;</li>
+</ul>
+<hr>
+<p><strong>TIP</strong>: Use eval for acceptance testing before marking features complete.</p>
+
+</body>
+</html>

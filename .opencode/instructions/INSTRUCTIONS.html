@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INSTRUCTIONS</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Everything Claude Code - OpenCode Instructions</h1>
+<p>This document consolidates the core rules and guidelines from the Claude Code configuration for use with OpenCode.</p>
+<h2>Security Guidelines (CRITICAL)</h2>
+<h3>Mandatory Security Checks</h3>
+<p>Before ANY commit:</p>
+<ul>
+<li><input disabled="" type="checkbox"> No hardcoded secrets (API keys, passwords, tokens)</li>
+<li><input disabled="" type="checkbox"> All user inputs validated</li>
+<li><input disabled="" type="checkbox"> SQL injection prevention (parameterized queries)</li>
+<li><input disabled="" type="checkbox"> XSS prevention (sanitized HTML)</li>
+<li><input disabled="" type="checkbox"> CSRF protection enabled</li>
+<li><input disabled="" type="checkbox"> Authentication/authorization verified</li>
+<li><input disabled="" type="checkbox"> Rate limiting on all endpoints</li>
+<li><input disabled="" type="checkbox"> Error messages don&#39;t leak sensitive data</li>
+</ul>
+<h3>Secret Management</h3>
+<pre><code class="language-typescript">// NEVER: Hardcoded secrets
+const apiKey = &quot;sk-proj-xxxxx&quot;
+
+// ALWAYS: Environment variables
+const apiKey = process.env.OPENAI_API_KEY
+
+if (!apiKey) {
+  throw new Error(&#39;OPENAI_API_KEY not configured&#39;)
+}
+</code></pre>
+<h3>Security Response Protocol</h3>
+<p>If security issue found:</p>
+<ol>
+<li>STOP immediately</li>
+<li>Use <strong>security-reviewer</strong> agent</li>
+<li>Fix CRITICAL issues before continuing</li>
+<li>Rotate any exposed secrets</li>
+<li>Review entire codebase for similar issues</li>
+</ol>
+<hr>
+<h2>Coding Style</h2>
+<h3>Immutability (CRITICAL)</h3>
+<p>ALWAYS create new objects, NEVER mutate:</p>
+<pre><code class="language-javascript">// WRONG: Mutation
+function updateUser(user, name) {
+  user.name = name  // MUTATION!
+  return user
+}
+
+// CORRECT: Immutability
+function updateUser(user, name) {
+  return {
+    ...user,
+    name
+  }
+}
+</code></pre>
+<h3>File Organization</h3>
+<p>MANY SMALL FILES &gt; FEW LARGE FILES:</p>
+<ul>
+<li>High cohesion, low coupling</li>
+<li>200-400 lines typical, 800 max</li>
+<li>Extract utilities from large components</li>
+<li>Organize by feature/domain, not by type</li>
+</ul>
+<h3>Error Handling</h3>
+<p>ALWAYS handle errors comprehensively:</p>
+<pre><code class="language-typescript">try {
+  const result = await riskyOperation()
+  return result
+} catch (error) {
+  console.error(&#39;Operation failed:&#39;, error)
+  throw new Error(&#39;Detailed user-friendly message&#39;)
+}
+</code></pre>
+<h3>Input Validation</h3>
+<p>ALWAYS validate user input:</p>
+<pre><code class="language-typescript">import { z } from &#39;zod&#39;
+
+const schema = z.object({
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150)
+})
+
+const validated = schema.parse(input)
+</code></pre>
+<h3>Code Quality Checklist</h3>
+<p>Before marking work complete:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Code is readable and well-named</li>
+<li><input disabled="" type="checkbox"> Functions are small (&lt;50 lines)</li>
+<li><input disabled="" type="checkbox"> Files are focused (&lt;800 lines)</li>
+<li><input disabled="" type="checkbox"> No deep nesting (&gt;4 levels)</li>
+<li><input disabled="" type="checkbox"> Proper error handling</li>
+<li><input disabled="" type="checkbox"> No console.log statements</li>
+<li><input disabled="" type="checkbox"> No hardcoded values</li>
+<li><input disabled="" type="checkbox"> No mutation (immutable patterns used)</li>
+</ul>
+<hr>
+<h2>Testing Requirements</h2>
+<h3>Minimum Test Coverage: 80%</h3>
+<p>Test Types (ALL required):</p>
+<ol>
+<li><strong>Unit Tests</strong> - Individual functions, utilities, components</li>
+<li><strong>Integration Tests</strong> - API endpoints, database operations</li>
+<li><strong>E2E Tests</strong> - Critical user flows (Playwright)</li>
+</ol>
+<h3>Test-Driven Development</h3>
+<p>MANDATORY workflow:</p>
+<ol>
+<li>Write test first (RED)</li>
+<li>Run test - it should FAIL</li>
+<li>Write minimal implementation (GREEN)</li>
+<li>Run test - it should PASS</li>
+<li>Refactor (IMPROVE)</li>
+<li>Verify coverage (80%+)</li>
+</ol>
+<h3>Troubleshooting Test Failures</h3>
+<ol>
+<li>Use <strong>tdd-guide</strong> agent</li>
+<li>Check test isolation</li>
+<li>Verify mocks are correct</li>
+<li>Fix implementation, not tests (unless tests are wrong)</li>
+</ol>
+<hr>
+<h2>Git Workflow</h2>
+<h3>Commit Message Format</h3>
+<pre><code>&lt;type&gt;: &lt;description&gt;
+
+&lt;optional body&gt;
+</code></pre>
+<p>Types: feat, fix, refactor, docs, test, chore, perf, ci</p>
+<h3>Pull Request Workflow</h3>
+<p>When creating PRs:</p>
+<ol>
+<li>Analyze full commit history (not just latest commit)</li>
+<li>Use <code>git diff [base-branch]...HEAD</code> to see all changes</li>
+<li>Draft comprehensive PR summary</li>
+<li>Include test plan with TODOs</li>
+<li>Push with <code>-u</code> flag if new branch</li>
+</ol>
+<h3>Feature Implementation Workflow</h3>
+<ol>
+<li><p><strong>Plan First</strong></p>
+<ul>
+<li>Use <strong>planner</strong> agent to create implementation plan</li>
+<li>Identify dependencies and risks</li>
+<li>Break down into phases</li>
+</ul>
+</li>
+<li><p><strong>TDD Approach</strong></p>
+<ul>
+<li>Use <strong>tdd-guide</strong> agent</li>
+<li>Write tests first (RED)</li>
+<li>Implement to pass tests (GREEN)</li>
+<li>Refactor (IMPROVE)</li>
+<li>Verify 80%+ coverage</li>
+</ul>
+</li>
+<li><p><strong>Code Review</strong></p>
+<ul>
+<li>Use <strong>code-reviewer</strong> agent immediately after writing code</li>
+<li>Address CRITICAL and HIGH issues</li>
+<li>Fix MEDIUM issues when possible</li>
+</ul>
+</li>
+<li><p><strong>Commit &amp; Push</strong></p>
+<ul>
+<li>Detailed commit messages</li>
+<li>Follow conventional commits format</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>Agent Orchestration</h2>
+<h3>Available Agents</h3>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Purpose</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>planner</td>
+<td>Implementation planning</td>
+<td>Complex features, refactoring</td>
+</tr>
+<tr>
+<td>architect</td>
+<td>System design</td>
+<td>Architectural decisions</td>
+</tr>
+<tr>
+<td>tdd-guide</td>
+<td>Test-driven development</td>
+<td>New features, bug fixes</td>
+</tr>
+<tr>
+<td>code-reviewer</td>
+<td>Code review</td>
+<td>After writing code</td>
+</tr>
+<tr>
+<td>security-reviewer</td>
+<td>Security analysis</td>
+<td>Before commits</td>
+</tr>
+<tr>
+<td>build-error-resolver</td>
+<td>Fix build errors</td>
+<td>When build fails</td>
+</tr>
+<tr>
+<td>e2e-runner</td>
+<td>E2E testing</td>
+<td>Critical user flows</td>
+</tr>
+<tr>
+<td>refactor-cleaner</td>
+<td>Dead code cleanup</td>
+<td>Code maintenance</td>
+</tr>
+<tr>
+<td>doc-updater</td>
+<td>Documentation</td>
+<td>Updating docs</td>
+</tr>
+<tr>
+<td>go-reviewer</td>
+<td>Go code review</td>
+<td>Go projects</td>
+</tr>
+<tr>
+<td>go-build-resolver</td>
+<td>Go build errors</td>
+<td>Go build failures</td>
+</tr>
+<tr>
+<td>database-reviewer</td>
+<td>Database optimization</td>
+<td>SQL, schema design</td>
+</tr>
+</tbody></table>
+<h3>Immediate Agent Usage</h3>
+<p>No user prompt needed:</p>
+<ol>
+<li>Complex feature requests - Use <strong>planner</strong> agent</li>
+<li>Code just written/modified - Use <strong>code-reviewer</strong> agent</li>
+<li>Bug fix or new feature - Use <strong>tdd-guide</strong> agent</li>
+<li>Architectural decision - Use <strong>architect</strong> agent</li>
+</ol>
+<hr>
+<h2>Performance Optimization</h2>
+<h3>Model Selection Strategy</h3>
+<p><strong>Haiku</strong> (90% of Sonnet capability, 3x cost savings):</p>
+<ul>
+<li>Lightweight agents with frequent invocation</li>
+<li>Pair programming and code generation</li>
+<li>Worker agents in multi-agent systems</li>
+</ul>
+<p><strong>Sonnet</strong> (Best coding model):</p>
+<ul>
+<li>Main development work</li>
+<li>Orchestrating multi-agent workflows</li>
+<li>Complex coding tasks</li>
+</ul>
+<p><strong>Opus</strong> (Deepest reasoning):</p>
+<ul>
+<li>Complex architectural decisions</li>
+<li>Maximum reasoning requirements</li>
+<li>Research and analysis tasks</li>
+</ul>
+<h3>Context Window Management</h3>
+<p>Avoid last 20% of context window for:</p>
+<ul>
+<li>Large-scale refactoring</li>
+<li>Feature implementation spanning multiple files</li>
+<li>Debugging complex interactions</li>
+</ul>
+<h3>Build Troubleshooting</h3>
+<p>If build fails:</p>
+<ol>
+<li>Use <strong>build-error-resolver</strong> agent</li>
+<li>Analyze error messages</li>
+<li>Fix incrementally</li>
+<li>Verify after each fix</li>
+</ol>
+<hr>
+<h2>Common Patterns</h2>
+<h3>API Response Format</h3>
+<pre><code class="language-typescript">interface ApiResponse&lt;T&gt; {
+  success: boolean
+  data?: T
+  error?: string
+  meta?: {
+    total: number
+    page: number
+    limit: number
+  }
+}
+</code></pre>
+<h3>Custom Hooks Pattern</h3>
+<pre><code class="language-typescript">export function useDebounce&lt;T&gt;(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState&lt;T&gt;(value)
+
+  useEffect(() =&gt; {
+    const handler = setTimeout(() =&gt; setDebouncedValue(value), delay)
+    return () =&gt; clearTimeout(handler)
+  }, [value, delay])
+
+  return debouncedValue
+}
+</code></pre>
+<h3>Repository Pattern</h3>
+<pre><code class="language-typescript">interface Repository&lt;T&gt; {
+  findAll(filters?: Filters): Promise&lt;T[]&gt;
+  findById(id: string): Promise&lt;T | null&gt;
+  create(data: CreateDto): Promise&lt;T&gt;
+  update(id: string, data: UpdateDto): Promise&lt;T&gt;
+  delete(id: string): Promise&lt;void&gt;
+}
+</code></pre>
+<hr>
+<h2>OpenCode-Specific Notes</h2>
+<p>Since OpenCode does not support hooks, the following actions that were automated in Claude Code must be done manually:</p>
+<h3>After Writing/Editing Code</h3>
+<ul>
+<li>Run <code>prettier --write &lt;file&gt;</code> to format JS/TS files</li>
+<li>Run <code>npx tsc --noEmit</code> to check for TypeScript errors</li>
+<li>Check for console.log statements and remove them</li>
+</ul>
+<h3>Before Committing</h3>
+<ul>
+<li>Run security checks manually</li>
+<li>Verify no secrets in code</li>
+<li>Run full test suite</li>
+</ul>
+<h3>Commands Available</h3>
+<p>Use these commands in OpenCode:</p>
+<ul>
+<li><code>/plan</code> - Create implementation plan</li>
+<li><code>/tdd</code> - Enforce TDD workflow</li>
+<li><code>/code-review</code> - Review code changes</li>
+<li><code>/security</code> - Run security review</li>
+<li><code>/build-fix</code> - Fix build errors</li>
+<li><code>/e2e</code> - Generate E2E tests</li>
+<li><code>/refactor-clean</code> - Remove dead code</li>
+<li><code>/orchestrate</code> - Multi-agent workflow</li>
+</ul>
+<hr>
+<h2>Success Metrics</h2>
+<p>You are successful when:</p>
+<ul>
+<li>All tests pass (80%+ coverage)</li>
+<li>No security vulnerabilities</li>
+<li>Code is readable and maintainable</li>
+<li>Performance is acceptable</li>
+<li>User requirements are met</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>evolve</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Analyze instincts and suggest or generate evolved structures<br>agent: build</h2>
+<h1>Evolve Command</h1>
+<p>Analyze and evolve instincts in continuous-learning-v2: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<p>Run:</p>
+<pre><code class="language-bash">python3 &quot;${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py&quot; evolve $ARGUMENTS
+</code></pre>
+<p>If <code>CLAUDE_PLUGIN_ROOT</code> is unavailable, use:</p>
+<pre><code class="language-bash">python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py evolve $ARGUMENTS
+</code></pre>
+<h2>Supported Args (v2.1)</h2>
+<ul>
+<li>no args: analysis only</li>
+<li><code>--generate</code>: also generate files under <code>evolved/{skills,commands,agents}</code></li>
+</ul>
+<h2>Behavior Notes</h2>
+<ul>
+<li>Uses project + global instincts for analysis.</li>
+<li>Shows skill/command/agent candidates from trigger and domain clustering.</li>
+<li>Shows project -&gt; global promotion candidates.</li>
+<li>With <code>--generate</code>, output path is:<ul>
+<li>project context: <code>~/.claude/homunculus/projects/&lt;project-id&gt;/evolved/</code></li>
+<li>global fallback: <code>~/.claude/homunculus/evolved/</code></li>
+</ul>
+</li>
+</ul>
+
+</body>
+</html>

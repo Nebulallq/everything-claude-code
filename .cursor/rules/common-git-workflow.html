@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>common-git-workflow</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: &quot;Git workflow: conventional commits, PR process&quot;<br>alwaysApply: true</h2>
+<h1>Git Workflow</h1>
+<h2>Commit Message Format</h2>
+<pre><code>&lt;type&gt;: &lt;description&gt;
+
+&lt;optional body&gt;
+</code></pre>
+<p>Types: feat, fix, refactor, docs, test, chore, perf, ci</p>
+<p>Note: Attribution disabled globally via ~/.claude/settings.json.</p>
+<h2>Pull Request Workflow</h2>
+<p>When creating PRs:</p>
+<ol>
+<li>Analyze full commit history (not just latest commit)</li>
+<li>Use <code>git diff [base-branch]...HEAD</code> to see all changes</li>
+<li>Draft comprehensive PR summary</li>
+<li>Include test plan with TODOs</li>
+<li>Push with <code>-u</code> flag if new branch</li>
+</ol>
+<blockquote>
+<p>For the full development process (planning, TDD, code review) before git operations,<br>see the development workflow rule.</p>
+</blockquote>
+
+</body>
+</html>

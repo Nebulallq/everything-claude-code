@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: e2e-testing<br>description: Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies.<br>origin: ECC</h2>
+<h1>E2E Testing Patterns</h1>
+<p>Comprehensive Playwright patterns for building stable, fast, and maintainable E2E test suites.</p>
+<h2>Test File Organization</h2>
+<pre><code>tests/
+├── e2e/
+│   ├── auth/
+│   │   ├── login.spec.ts
+│   │   ├── logout.spec.ts
+│   │   └── register.spec.ts
+│   ├── features/
+│   │   ├── browse.spec.ts
+│   │   ├── search.spec.ts
+│   │   └── create.spec.ts
+│   └── api/
+│       └── endpoints.spec.ts
+├── fixtures/
+│   ├── auth.ts
+│   └── data.ts
+└── playwright.config.ts
+</code></pre>
+<h2>Page Object Model (POM)</h2>
+<pre><code class="language-typescript">import { Page, Locator } from &#39;@playwright/test&#39;
+
+export class ItemsPage {
+  readonly page: Page
+  readonly searchInput: Locator
+  readonly itemCards: Locator
+  readonly createButton: Locator
+
+  constructor(page: Page) {
+    this.page = page
+    this.searchInput = page.locator(&#39;[data-testid=&quot;search-input&quot;]&#39;)
+    this.itemCards = page.locator(&#39;[data-testid=&quot;item-card&quot;]&#39;)
+    this.createButton = page.locator(&#39;[data-testid=&quot;create-btn&quot;]&#39;)
+  }
+
+  async goto() {
+    await this.page.goto(&#39;/items&#39;)
+    await this.page.waitForLoadState(&#39;networkidle&#39;)
+  }
+
+  async search(query: string) {
+    await this.searchInput.fill(query)
+    await this.page.waitForResponse(resp =&gt; resp.url().includes(&#39;/api/search&#39;))
+    await this.page.waitForLoadState(&#39;networkidle&#39;)
+  }
+
+  async getItemCount() {
+    return await this.itemCards.count()
+  }
+}
+</code></pre>
+<h2>Test Structure</h2>
+<pre><code class="language-typescript">import { test, expect } from &#39;@playwright/test&#39;
+import { ItemsPage } from &#39;../../pages/ItemsPage&#39;
+
+test.describe(&#39;Item Search&#39;, () =&gt; {
+  let itemsPage: ItemsPage
+
+  test.beforeEach(async ({ page }) =&gt; {
+    itemsPage = new ItemsPage(page)
+    await itemsPage.goto()
+  })
+
+  test(&#39;should search by keyword&#39;, async ({ page }) =&gt; {
+    await itemsPage.search(&#39;test&#39;)
+
+    const count = await itemsPage.getItemCount()
+    expect(count).toBeGreaterThan(0)
+
+    await expect(itemsPage.itemCards.first()).toContainText(/test/i)
+    await page.screenshot({ path: &#39;artifacts/search-results.png&#39; })
+  })
+
+  test(&#39;should handle no results&#39;, async ({ page }) =&gt; {
+    await itemsPage.search(&#39;xyznonexistent123&#39;)
+
+    await expect(page.locator(&#39;[data-testid=&quot;no-results&quot;]&#39;)).toBeVisible()
+    expect(await itemsPage.getItemCount()).toBe(0)
+  })
+})
+</code></pre>
+<h2>Playwright Configuration</h2>
+<pre><code class="language-typescript">import { defineConfig, devices } from &#39;@playwright/test&#39;
+
+export default defineConfig({
+  testDir: &#39;./tests/e2e&#39;,
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [
+    [&#39;html&#39;, { outputFolder: &#39;playwright-report&#39; }],
+    [&#39;junit&#39;, { outputFile: &#39;playwright-results.xml&#39; }],
+    [&#39;json&#39;, { outputFile: &#39;playwright-results.json&#39; }]
+  ],
+  use: {
+    baseURL: process.env.BASE_URL || &#39;http://localhost:3000&#39;,
+    trace: &#39;on-first-retry&#39;,
+    screenshot: &#39;only-on-failure&#39;,
+    video: &#39;retain-on-failure&#39;,
+    actionTimeout: 10000,
+    navigationTimeout: 30000,
+  },
+  projects: [
+    { name: &#39;chromium&#39;, use: { ...devices[&#39;Desktop Chrome&#39;] } },
+    { name: &#39;firefox&#39;, use: { ...devices[&#39;Desktop Firefox&#39;] } },
+    { name: &#39;webkit&#39;, use: { ...devices[&#39;Desktop Safari&#39;] } },
+    { name: &#39;mobile-chrome&#39;, use: { ...devices[&#39;Pixel 5&#39;] } },
+  ],
+  webServer: {
+    command: &#39;npm run dev&#39;,
+    url: &#39;http://localhost:3000&#39;,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
+})
+</code></pre>
+<h2>Flaky Test Patterns</h2>
+<h3>Quarantine</h3>
+<pre><code class="language-typescript">test(&#39;flaky: complex search&#39;, async ({ page }) =&gt; {
+  test.fixme(true, &#39;Flaky - Issue #123&#39;)
+  // test code...
+})
+
+test(&#39;conditional skip&#39;, async ({ page }) =&gt; {
+  test.skip(process.env.CI, &#39;Flaky in CI - Issue #123&#39;)
+  // test code...
+})
+</code></pre>
+<h3>Identify Flakiness</h3>
+<pre><code class="language-bash">npx playwright test tests/search.spec.ts --repeat-each=10
+npx playwright test tests/search.spec.ts --retries=3
+</code></pre>
+<h3>Common Causes &amp; Fixes</h3>
+<p><strong>Race conditions:</strong></p>
+<pre><code class="language-typescript">// Bad: assumes element is ready
+await page.click(&#39;[data-testid=&quot;button&quot;]&#39;)
+
+// Good: auto-wait locator
+await page.locator(&#39;[data-testid=&quot;button&quot;]&#39;).click()
+</code></pre>
+<p><strong>Network timing:</strong></p>
+<pre><code class="language-typescript">// Bad: arbitrary timeout
+await page.waitForTimeout(5000)
+
+// Good: wait for specific condition
+await page.waitForResponse(resp =&gt; resp.url().includes(&#39;/api/data&#39;))
+</code></pre>
+<p><strong>Animation timing:</strong></p>
+<pre><code class="language-typescript">// Bad: click during animation
+await page.click(&#39;[data-testid=&quot;menu-item&quot;]&#39;)
+
+// Good: wait for stability
+await page.locator(&#39;[data-testid=&quot;menu-item&quot;]&#39;).waitFor({ state: &#39;visible&#39; })
+await page.waitForLoadState(&#39;networkidle&#39;)
+await page.locator(&#39;[data-testid=&quot;menu-item&quot;]&#39;).click()
+</code></pre>
+<h2>Artifact Management</h2>
+<h3>Screenshots</h3>
+<pre><code class="language-typescript">await page.screenshot({ path: &#39;artifacts/after-login.png&#39; })
+await page.screenshot({ path: &#39;artifacts/full-page.png&#39;, fullPage: true })
+await page.locator(&#39;[data-testid=&quot;chart&quot;]&#39;).screenshot({ path: &#39;artifacts/chart.png&#39; })
+</code></pre>
+<h3>Traces</h3>
+<pre><code class="language-typescript">await browser.startTracing(page, {
+  path: &#39;artifacts/trace.json&#39;,
+  screenshots: true,
+  snapshots: true,
+})
+// ... test actions ...
+await browser.stopTracing()
+</code></pre>
+<h3>Video</h3>
+<pre><code class="language-typescript">// In playwright.config.ts
+use: {
+  video: &#39;retain-on-failure&#39;,
+  videosPath: &#39;artifacts/videos/&#39;
+}
+</code></pre>
+<h2>CI/CD Integration</h2>
+<pre><code class="language-yaml"># .github/workflows/e2e.yml
+name: E2E Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npx playwright test
+        env:
+          BASE_URL: ${{ vars.STAGING_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+</code></pre>
+<h2>Test Report Template</h2>
+<pre><code class="language-markdown"># E2E Test Report
+
+**Date:** YYYY-MM-DD HH:MM
+**Duration:** Xm Ys
+**Status:** PASSING / FAILING
+
+## Summary
+- Total: X | Passed: Y (Z%) | Failed: A | Flaky: B | Skipped: C
+
+## Failed Tests
+
+### test-name
+**File:** `tests/e2e/feature.spec.ts:45`
+**Error:** Expected element to be visible
+**Screenshot:** artifacts/failed.png
+**Recommended Fix:** [description]
+
+## Artifacts
+- HTML Report: playwright-report/index.html
+- Screenshots: artifacts/*.png
+- Videos: artifacts/videos/*.webm
+- Traces: artifacts/*.zip
+</code></pre>
+<h2>Wallet / Web3 Testing</h2>
+<pre><code class="language-typescript">test(&#39;wallet connection&#39;, async ({ page, context }) =&gt; {
+  // Mock wallet provider
+  await context.addInitScript(() =&gt; {
+    window.ethereum = {
+      isMetaMask: true,
+      request: async ({ method }) =&gt; {
+        if (method === &#39;eth_requestAccounts&#39;)
+          return [&#39;0x1234567890123456789012345678901234567890&#39;]
+        if (method === &#39;eth_chainId&#39;) return &#39;0x1&#39;
+      }
+    }
+  })
+
+  await page.goto(&#39;/&#39;)
+  await page.locator(&#39;[data-testid=&quot;connect-wallet&quot;]&#39;).click()
+  await expect(page.locator(&#39;[data-testid=&quot;wallet-address&quot;]&#39;)).toContainText(&#39;0x1234&#39;)
+})
+</code></pre>
+<h2>Financial / Critical Flow Testing</h2>
+<pre><code class="language-typescript">test(&#39;trade execution&#39;, async ({ page }) =&gt; {
+  // Skip on production — real money
+  test.skip(process.env.NODE_ENV === &#39;production&#39;, &#39;Skip on production&#39;)
+
+  await page.goto(&#39;/markets/test-market&#39;)
+  await page.locator(&#39;[data-testid=&quot;position-yes&quot;]&#39;).click()
+  await page.locator(&#39;[data-testid=&quot;trade-amount&quot;]&#39;).fill(&#39;1.0&#39;)
+
+  // Verify preview
+  const preview = page.locator(&#39;[data-testid=&quot;trade-preview&quot;]&#39;)
+  await expect(preview).toContainText(&#39;1.0&#39;)
+
+  // Confirm and wait for blockchain
+  await page.locator(&#39;[data-testid=&quot;confirm-trade&quot;]&#39;).click()
+  await page.waitForResponse(
+    resp =&gt; resp.url().includes(&#39;/api/trade&#39;) &amp;&amp; resp.status() === 200,
+    { timeout: 30000 }
+  )
+
+  await expect(page.locator(&#39;[data-testid=&quot;trade-success&quot;]&#39;)).toBeVisible()
+})
+</code></pre>
+
+</body>
+</html>

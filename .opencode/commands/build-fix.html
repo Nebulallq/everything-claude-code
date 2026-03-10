@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>build-fix</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Fix build and TypeScript errors with minimal changes<br>agent: build-error-resolver<br>subtask: true</h2>
+<h1>Build Fix Command</h1>
+<p>Fix build and TypeScript errors with minimal changes: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Run type check</strong>: <code>npx tsc --noEmit</code></li>
+<li><strong>Collect all errors</strong></li>
+<li><strong>Fix errors one by one</strong> with minimal changes</li>
+<li><strong>Verify each fix</strong> doesn&#39;t introduce new errors</li>
+<li><strong>Run final check</strong> to confirm all errors resolved</li>
+</ol>
+<h2>Approach</h2>
+<h3>DO:</h3>
+<ul>
+<li>✅ Fix type errors with correct types</li>
+<li>✅ Add missing imports</li>
+<li>✅ Fix syntax errors</li>
+<li>✅ Make minimal changes</li>
+<li>✅ Preserve existing behavior</li>
+<li>✅ Run <code>tsc --noEmit</code> after each change</li>
+</ul>
+<h3>DON&#39;T:</h3>
+<ul>
+<li>❌ Refactor code</li>
+<li>❌ Add new features</li>
+<li>❌ Change architecture</li>
+<li>❌ Use <code>any</code> type (unless absolutely necessary)</li>
+<li>❌ Add <code>@ts-ignore</code> comments</li>
+<li>❌ Change business logic</li>
+</ul>
+<h2>Common Error Fixes</h2>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Type &#39;X&#39; is not assignable to type &#39;Y&#39;</td>
+<td>Add correct type annotation</td>
+</tr>
+<tr>
+<td>Property &#39;X&#39; does not exist</td>
+<td>Add property to interface or fix property name</td>
+</tr>
+<tr>
+<td>Cannot find module &#39;X&#39;</td>
+<td>Install package or fix import path</td>
+</tr>
+<tr>
+<td>Argument of type &#39;X&#39; is not assignable</td>
+<td>Cast or fix function signature</td>
+</tr>
+<tr>
+<td>Object is possibly &#39;undefined&#39;</td>
+<td>Add null check or optional chaining</td>
+</tr>
+</tbody></table>
+<h2>Verification Steps</h2>
+<p>After fixes:</p>
+<ol>
+<li><code>npx tsc --noEmit</code> - should show 0 errors</li>
+<li><code>npm run build</code> - should succeed</li>
+<li><code>npm test</code> - tests should still pass</li>
+</ol>
+<hr>
+<p><strong>IMPORTANT</strong>: Focus on fixing errors only. No refactoring, no improvements, no architectural changes. Get the build green with minimal diff.</p>
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>go-review</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Go code review for idiomatic patterns<br>agent: go-reviewer<br>subtask: true</h2>
+<h1>Go Review Command</h1>
+<p>Review Go code for idiomatic patterns and best practices: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Analyze Go code</strong> for idioms and patterns</li>
+<li><strong>Check concurrency</strong> - goroutines, channels, mutexes</li>
+<li><strong>Review error handling</strong> - proper error wrapping</li>
+<li><strong>Verify performance</strong> - allocations, bottlenecks</li>
+</ol>
+<h2>Review Checklist</h2>
+<h3>Idiomatic Go</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Package naming (lowercase, no underscores)</li>
+<li><input disabled="" type="checkbox"> Variable naming (camelCase, short)</li>
+<li><input disabled="" type="checkbox"> Interface naming (ends with -er)</li>
+<li><input disabled="" type="checkbox"> Error naming (starts with Err)</li>
+</ul>
+<h3>Error Handling</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Errors are checked, not ignored</li>
+<li><input disabled="" type="checkbox"> Errors wrapped with context (<code>fmt.Errorf(&quot;...: %w&quot;, err)</code>)</li>
+<li><input disabled="" type="checkbox"> Sentinel errors used appropriately</li>
+<li><input disabled="" type="checkbox"> Custom error types when needed</li>
+</ul>
+<h3>Concurrency</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Goroutines properly managed</li>
+<li><input disabled="" type="checkbox"> Channels buffered appropriately</li>
+<li><input disabled="" type="checkbox"> No data races (use <code>-race</code> flag)</li>
+<li><input disabled="" type="checkbox"> Context passed for cancellation</li>
+<li><input disabled="" type="checkbox"> WaitGroups used correctly</li>
+</ul>
+<h3>Performance</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Avoid unnecessary allocations</li>
+<li><input disabled="" type="checkbox"> Use <code>sync.Pool</code> for frequent allocations</li>
+<li><input disabled="" type="checkbox"> Prefer value receivers for small structs</li>
+<li><input disabled="" type="checkbox"> Buffer I/O operations</li>
+</ul>
+<h3>Code Organization</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Small, focused packages</li>
+<li><input disabled="" type="checkbox"> Clear dependency direction</li>
+<li><input disabled="" type="checkbox"> Internal packages for private code</li>
+<li><input disabled="" type="checkbox"> Godoc comments on exports</li>
+</ul>
+<h2>Report Format</h2>
+<h3>Idiomatic Issues</h3>
+<ul>
+<li>[file:line] Issue description<br>Suggestion: How to fix</li>
+</ul>
+<h3>Error Handling Issues</h3>
+<ul>
+<li>[file:line] Issue description<br>Suggestion: How to fix</li>
+</ul>
+<h3>Concurrency Issues</h3>
+<ul>
+<li>[file:line] Issue description<br>Suggestion: How to fix</li>
+</ul>
+<h3>Performance Issues</h3>
+<ul>
+<li>[file:line] Issue description<br>Suggestion: How to fix</li>
+</ul>
+<hr>
+<p><strong>TIP</strong>: Run <code>go vet</code> and <code>staticcheck</code> for additional automated checks.</p>
+
+</body>
+</html>

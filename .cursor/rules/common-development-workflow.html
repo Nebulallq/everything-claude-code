@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>common-development-workflow</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: &quot;Development workflow: plan, TDD, review, commit pipeline&quot;<br>alwaysApply: true</h2>
+<h1>Development Workflow</h1>
+<blockquote>
+<p>This rule extends the git workflow rule with the full feature development process that happens before git operations.</p>
+</blockquote>
+<p>The Feature Implementation Workflow describes the development pipeline: planning, TDD, code review, and then committing to git.</p>
+<h2>Feature Implementation Workflow</h2>
+<ol>
+<li><p><strong>Plan First</strong></p>
+<ul>
+<li>Use <strong>planner</strong> agent to create implementation plan</li>
+<li>Identify dependencies and risks</li>
+<li>Break down into phases</li>
+</ul>
+</li>
+<li><p><strong>TDD Approach</strong></p>
+<ul>
+<li>Use <strong>tdd-guide</strong> agent</li>
+<li>Write tests first (RED)</li>
+<li>Implement to pass tests (GREEN)</li>
+<li>Refactor (IMPROVE)</li>
+<li>Verify 80%+ coverage</li>
+</ul>
+</li>
+<li><p><strong>Code Review</strong></p>
+<ul>
+<li>Use <strong>code-reviewer</strong> agent immediately after writing code</li>
+<li>Address CRITICAL and HIGH issues</li>
+<li>Fix MEDIUM issues when possible</li>
+</ul>
+</li>
+<li><p><strong>Commit &amp; Push</strong></p>
+<ul>
+<li>Detailed commit messages</li>
+<li>Follow conventional commits format</li>
+<li>See the git workflow rule for commit message format and PR process</li>
+</ul>
+</li>
+</ol>
+
+</body>
+</html>

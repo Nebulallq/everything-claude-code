@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>plan</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Create implementation plan with risk assessment<br>agent: planner<br>subtask: true</h2>
+<h1>Plan Command</h1>
+<p>Create a detailed implementation plan for: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Restate Requirements</strong> - Clarify what needs to be built</li>
+<li><strong>Identify Risks</strong> - Surface potential issues, blockers, and dependencies</li>
+<li><strong>Create Step Plan</strong> - Break down implementation into phases</li>
+<li><strong>Wait for Confirmation</strong> - MUST receive user approval before proceeding</li>
+</ol>
+<h2>Output Format</h2>
+<h3>Requirements Restatement</h3>
+<p>[Clear, concise restatement of what will be built]</p>
+<h3>Implementation Phases</h3>
+<p>[Phase 1: Description]</p>
+<ul>
+<li>Step 1.1</li>
+<li>Step 1.2<br>...</li>
+</ul>
+<p>[Phase 2: Description]</p>
+<ul>
+<li>Step 2.1</li>
+<li>Step 2.2<br>...</li>
+</ul>
+<h3>Dependencies</h3>
+<p>[List external dependencies, APIs, services needed]</p>
+<h3>Risks</h3>
+<ul>
+<li>HIGH: [Critical risks that could block implementation]</li>
+<li>MEDIUM: [Moderate risks to address]</li>
+<li>LOW: [Minor concerns]</li>
+</ul>
+<h3>Estimated Complexity</h3>
+<p>[HIGH/MEDIUM/LOW with time estimates]</p>
+<p><strong>WAITING FOR CONFIRMATION</strong>: Proceed with this plan? (yes/no/modify)</p>
+<hr>
+<p><strong>CRITICAL</strong>: Do NOT write any code until the user explicitly confirms with &quot;yes&quot;, &quot;proceed&quot;, or similar affirmative response.</p>
+
+</body>
+</html>

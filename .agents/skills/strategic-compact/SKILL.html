@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: strategic-compact<br>description: Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction.<br>origin: ECC</h2>
+<h1>Strategic Compact Skill</h1>
+<p>Suggests manual <code>/compact</code> at strategic points in your workflow rather than relying on arbitrary auto-compaction.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Running long sessions that approach context limits (200K+ tokens)</li>
+<li>Working on multi-phase tasks (research → plan → implement → test)</li>
+<li>Switching between unrelated tasks within the same session</li>
+<li>After completing a major milestone and starting new work</li>
+<li>When responses slow down or become less coherent (context pressure)</li>
+</ul>
+<h2>Why Strategic Compaction?</h2>
+<p>Auto-compaction triggers at arbitrary points:</p>
+<ul>
+<li>Often mid-task, losing important context</li>
+<li>No awareness of logical task boundaries</li>
+<li>Can interrupt complex multi-step operations</li>
+</ul>
+<p>Strategic compaction at logical boundaries:</p>
+<ul>
+<li><strong>After exploration, before execution</strong> — Compact research context, keep implementation plan</li>
+<li><strong>After completing a milestone</strong> — Fresh start for next phase</li>
+<li><strong>Before major context shifts</strong> — Clear exploration context before different task</li>
+</ul>
+<h2>How It Works</h2>
+<p>The <code>suggest-compact.js</code> script runs on PreToolUse (Edit/Write) and:</p>
+<ol>
+<li><strong>Tracks tool calls</strong> — Counts tool invocations in session</li>
+<li><strong>Threshold detection</strong> — Suggests at configurable threshold (default: 50 calls)</li>
+<li><strong>Periodic reminders</strong> — Reminds every 25 calls after threshold</li>
+</ol>
+<h2>Hook Setup</h2>
+<p>Add to your <code>~/.claude/settings.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [
+      {
+        &quot;matcher&quot;: &quot;Edit&quot;,
+        &quot;hooks&quot;: [{ &quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;node ~/.claude/skills/strategic-compact/suggest-compact.js&quot; }]
+      },
+      {
+        &quot;matcher&quot;: &quot;Write&quot;,
+        &quot;hooks&quot;: [{ &quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;node ~/.claude/skills/strategic-compact/suggest-compact.js&quot; }]
+      }
+    ]
+  }
+}
+</code></pre>
+<h2>Configuration</h2>
+<p>Environment variables:</p>
+<ul>
+<li><code>COMPACT_THRESHOLD</code> — Tool calls before first suggestion (default: 50)</li>
+</ul>
+<h2>Compaction Decision Guide</h2>
+<p>Use this table to decide when to compact:</p>
+<table>
+<thead>
+<tr>
+<th>Phase Transition</th>
+<th>Compact?</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Research → Planning</td>
+<td>Yes</td>
+<td>Research context is bulky; plan is the distilled output</td>
+</tr>
+<tr>
+<td>Planning → Implementation</td>
+<td>Yes</td>
+<td>Plan is in TodoWrite or a file; free up context for code</td>
+</tr>
+<tr>
+<td>Implementation → Testing</td>
+<td>Maybe</td>
+<td>Keep if tests reference recent code; compact if switching focus</td>
+</tr>
+<tr>
+<td>Debugging → Next feature</td>
+<td>Yes</td>
+<td>Debug traces pollute context for unrelated work</td>
+</tr>
+<tr>
+<td>Mid-implementation</td>
+<td>No</td>
+<td>Losing variable names, file paths, and partial state is costly</td>
+</tr>
+<tr>
+<td>After a failed approach</td>
+<td>Yes</td>
+<td>Clear the dead-end reasoning before trying a new approach</td>
+</tr>
+</tbody></table>
+<h2>What Survives Compaction</h2>
+<p>Understanding what persists helps you compact with confidence:</p>
+<table>
+<thead>
+<tr>
+<th>Persists</th>
+<th>Lost</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CLAUDE.md instructions</td>
+<td>Intermediate reasoning and analysis</td>
+</tr>
+<tr>
+<td>TodoWrite task list</td>
+<td>File contents you previously read</td>
+</tr>
+<tr>
+<td>Memory files (<code>~/.claude/memory/</code>)</td>
+<td>Multi-step conversation context</td>
+</tr>
+<tr>
+<td>Git state (commits, branches)</td>
+<td>Tool call history and counts</td>
+</tr>
+<tr>
+<td>Files on disk</td>
+<td>Nuanced user preferences stated verbally</td>
+</tr>
+</tbody></table>
+<h2>Best Practices</h2>
+<ol>
+<li><strong>Compact after planning</strong> — Once plan is finalized in TodoWrite, compact to start fresh</li>
+<li><strong>Compact after debugging</strong> — Clear error-resolution context before continuing</li>
+<li><strong>Don&#39;t compact mid-implementation</strong> — Preserve context for related changes</li>
+<li><strong>Read the suggestion</strong> — The hook tells you <em>when</em>, you decide <em>if</em></li>
+<li><strong>Write before compacting</strong> — Save important context to files or memory before compacting</li>
+<li><strong>Use <code>/compact</code> with a summary</strong> — Add a custom message: <code>/compact Focus on implementing auth middleware next</code></li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a href="https://x.com/affaanmustafa/status/2014040193557471352">The Longform Guide</a> — Token optimization section</li>
+<li>Memory persistence hooks — For state that survives compaction</li>
+<li><code>continuous-learning</code> skill — Extracts patterns before session ends</li>
+</ul>
+
+</body>
+</html>

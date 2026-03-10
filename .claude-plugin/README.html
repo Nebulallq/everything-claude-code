@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h3>Plugin Manifest Gotchas</h3>
+<p>If you plan to edit <code>.claude-plugin/plugin.json</code>, be aware that the Claude plugin validator enforces several <strong>undocumented but strict constraints</strong> that can cause installs to fail with vague errors (for example, <code>agents: Invalid input</code>). In particular, component fields must be arrays, <code>agents</code> must use explicit file paths rather than directories, and a <code>version</code> field is required for reliable validation and installation.</p>
+<p>These constraints are not obvious from public examples and have caused repeated installation failures in the past. They are documented in detail in <code>.claude-plugin/PLUGIN_SCHEMA_NOTES.md</code>, which should be reviewed before making any changes to the plugin manifest.</p>
+
+</body>
+</html>

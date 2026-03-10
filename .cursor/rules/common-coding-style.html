@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>common-coding-style</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: &quot;ECC coding style: immutability, file organization, error handling, validation&quot;<br>alwaysApply: true</h2>
+<h1>Coding Style</h1>
+<h2>Immutability (CRITICAL)</h2>
+<p>ALWAYS create new objects, NEVER mutate existing ones:</p>
+<pre><code>// Pseudocode
+WRONG:  modify(original, field, value) → changes original in-place
+CORRECT: update(original, field, value) → returns new copy with change
+</code></pre>
+<p>Rationale: Immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency.</p>
+<h2>File Organization</h2>
+<p>MANY SMALL FILES &gt; FEW LARGE FILES:</p>
+<ul>
+<li>High cohesion, low coupling</li>
+<li>200-400 lines typical, 800 max</li>
+<li>Extract utilities from large modules</li>
+<li>Organize by feature/domain, not by type</li>
+</ul>
+<h2>Error Handling</h2>
+<p>ALWAYS handle errors comprehensively:</p>
+<ul>
+<li>Handle errors explicitly at every level</li>
+<li>Provide user-friendly error messages in UI-facing code</li>
+<li>Log detailed error context on the server side</li>
+<li>Never silently swallow errors</li>
+</ul>
+<h2>Input Validation</h2>
+<p>ALWAYS validate at system boundaries:</p>
+<ul>
+<li>Validate all user input before processing</li>
+<li>Use schema-based validation where available</li>
+<li>Fail fast with clear error messages</li>
+<li>Never trust external data (API responses, user input, file content)</li>
+</ul>
+<h2>Code Quality Checklist</h2>
+<p>Before marking work complete:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Code is readable and well-named</li>
+<li><input disabled="" type="checkbox"> Functions are small (&lt;50 lines)</li>
+<li><input disabled="" type="checkbox"> Files are focused (&lt;800 lines)</li>
+<li><input disabled="" type="checkbox"> No deep nesting (&gt;4 levels)</li>
+<li><input disabled="" type="checkbox"> Proper error handling</li>
+<li><input disabled="" type="checkbox"> No hardcoded values (use constants or config)</li>
+<li><input disabled="" type="checkbox"> No mutation (immutable patterns used)</li>
+</ul>
+
+</body>
+</html>

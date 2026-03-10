@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>update-docs</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Update documentation for recent changes<br>agent: doc-updater<br>subtask: true</h2>
+<h1>Update Docs Command</h1>
+<p>Update documentation to reflect recent changes: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Identify changed code</strong> - <code>git diff --name-only</code></li>
+<li><strong>Find related docs</strong> - README, API docs, guides</li>
+<li><strong>Update documentation</strong> - Keep in sync with code</li>
+<li><strong>Verify accuracy</strong> - Docs match implementation</li>
+</ol>
+<h2>Documentation Types</h2>
+<h3>README.md</h3>
+<ul>
+<li>Installation instructions</li>
+<li>Quick start guide</li>
+<li>Feature overview</li>
+<li>Configuration options</li>
+</ul>
+<h3>API Documentation</h3>
+<ul>
+<li>Endpoint descriptions</li>
+<li>Request/response formats</li>
+<li>Authentication details</li>
+<li>Error codes</li>
+</ul>
+<h3>Code Comments</h3>
+<ul>
+<li>JSDoc for public APIs</li>
+<li>Complex logic explanations</li>
+<li>TODO/FIXME cleanup</li>
+</ul>
+<h3>Guides</h3>
+<ul>
+<li>How-to tutorials</li>
+<li>Architecture decisions (ADRs)</li>
+<li>Troubleshooting guides</li>
+</ul>
+<h2>Update Checklist</h2>
+<ul>
+<li><input disabled="" type="checkbox"> README reflects current features</li>
+<li><input disabled="" type="checkbox"> API docs match endpoints</li>
+<li><input disabled="" type="checkbox"> JSDoc updated for changed functions</li>
+<li><input disabled="" type="checkbox"> Examples are working</li>
+<li><input disabled="" type="checkbox"> Links are valid</li>
+<li><input disabled="" type="checkbox"> Version numbers updated</li>
+</ul>
+<h2>Documentation Quality</h2>
+<h3>Good Documentation</h3>
+<ul>
+<li>Accurate and up-to-date</li>
+<li>Clear and concise</li>
+<li>Has working examples</li>
+<li>Covers edge cases</li>
+</ul>
+<h3>Avoid</h3>
+<ul>
+<li>Outdated information</li>
+<li>Missing parameters</li>
+<li>Broken examples</li>
+<li>Ambiguous language</li>
+</ul>
+<hr>
+<p><strong>IMPORTANT</strong>: Documentation should be updated alongside code changes, not as an afterthought.</p>
+
+</body>
+</html>

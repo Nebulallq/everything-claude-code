@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>security</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Run comprehensive security review<br>agent: security-reviewer<br>subtask: true</h2>
+<h1>Security Review Command</h1>
+<p>Conduct a comprehensive security review: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<p>Analyze the specified code for security vulnerabilities following OWASP guidelines and security best practices.</p>
+<h2>Security Checklist</h2>
+<h3>OWASP Top 10</h3>
+<ol>
+<li><p><strong>Injection</strong> (SQL, NoSQL, OS command, LDAP)</p>
+<ul>
+<li>Check for parameterized queries</li>
+<li>Verify input sanitization</li>
+<li>Review dynamic query construction</li>
+</ul>
+</li>
+<li><p><strong>Broken Authentication</strong></p>
+<ul>
+<li>Password storage (bcrypt, argon2)</li>
+<li>Session management</li>
+<li>Multi-factor authentication</li>
+<li>Password reset flows</li>
+</ul>
+</li>
+<li><p><strong>Sensitive Data Exposure</strong></p>
+<ul>
+<li>Encryption at rest and in transit</li>
+<li>Proper key management</li>
+<li>PII handling</li>
+</ul>
+</li>
+<li><p><strong>XML External Entities (XXE)</strong></p>
+<ul>
+<li>Disable DTD processing</li>
+<li>Input validation for XML</li>
+</ul>
+</li>
+<li><p><strong>Broken Access Control</strong></p>
+<ul>
+<li>Authorization checks on every endpoint</li>
+<li>Role-based access control</li>
+<li>Resource ownership validation</li>
+</ul>
+</li>
+<li><p><strong>Security Misconfiguration</strong></p>
+<ul>
+<li>Default credentials removed</li>
+<li>Error handling doesn&#39;t leak info</li>
+<li>Security headers configured</li>
+</ul>
+</li>
+<li><p><strong>Cross-Site Scripting (XSS)</strong></p>
+<ul>
+<li>Output encoding</li>
+<li>Content Security Policy</li>
+<li>Input sanitization</li>
+</ul>
+</li>
+<li><p><strong>Insecure Deserialization</strong></p>
+<ul>
+<li>Validate serialized data</li>
+<li>Implement integrity checks</li>
+</ul>
+</li>
+<li><p><strong>Using Components with Known Vulnerabilities</strong></p>
+<ul>
+<li>Run <code>npm audit</code></li>
+<li>Check for outdated dependencies</li>
+</ul>
+</li>
+<li><p><strong>Insufficient Logging &amp; Monitoring</strong></p>
+<ul>
+<li>Security events logged</li>
+<li>No sensitive data in logs</li>
+<li>Alerting configured</li>
+</ul>
+</li>
+</ol>
+<h3>Additional Checks</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Secrets in code (API keys, passwords)</li>
+<li><input disabled="" type="checkbox"> Environment variable handling</li>
+<li><input disabled="" type="checkbox"> CORS configuration</li>
+<li><input disabled="" type="checkbox"> Rate limiting</li>
+<li><input disabled="" type="checkbox"> CSRF protection</li>
+<li><input disabled="" type="checkbox"> Secure cookie flags</li>
+</ul>
+<h2>Report Format</h2>
+<h3>Critical Issues</h3>
+<p>[Issues that must be fixed immediately]</p>
+<h3>High Priority</h3>
+<p>[Issues that should be fixed before release]</p>
+<h3>Recommendations</h3>
+<p>[Security improvements to consider]</p>
+<hr>
+<p><strong>IMPORTANT</strong>: Security issues are blockers. Do not proceed until critical issues are resolved.</p>
+
+</body>
+</html>

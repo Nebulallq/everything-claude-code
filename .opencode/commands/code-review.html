@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>code-review</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Review code for quality, security, and maintainability<br>agent: code-reviewer<br>subtask: true</h2>
+<h1>Code Review Command</h1>
+<p>Review code changes for quality, security, and maintainability: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Get changed files</strong>: Run <code>git diff --name-only HEAD</code></li>
+<li><strong>Analyze each file</strong> for issues</li>
+<li><strong>Generate structured report</strong></li>
+<li><strong>Provide actionable recommendations</strong></li>
+</ol>
+<h2>Check Categories</h2>
+<h3>Security Issues (CRITICAL)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Hardcoded credentials, API keys, tokens</li>
+<li><input disabled="" type="checkbox"> SQL injection vulnerabilities</li>
+<li><input disabled="" type="checkbox"> XSS vulnerabilities</li>
+<li><input disabled="" type="checkbox"> Missing input validation</li>
+<li><input disabled="" type="checkbox"> Insecure dependencies</li>
+<li><input disabled="" type="checkbox"> Path traversal risks</li>
+<li><input disabled="" type="checkbox"> Authentication/authorization flaws</li>
+</ul>
+<h3>Code Quality (HIGH)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Functions &gt; 50 lines</li>
+<li><input disabled="" type="checkbox"> Files &gt; 800 lines</li>
+<li><input disabled="" type="checkbox"> Nesting depth &gt; 4 levels</li>
+<li><input disabled="" type="checkbox"> Missing error handling</li>
+<li><input disabled="" type="checkbox"> console.log statements</li>
+<li><input disabled="" type="checkbox"> TODO/FIXME comments</li>
+<li><input disabled="" type="checkbox"> Missing JSDoc for public APIs</li>
+</ul>
+<h3>Best Practices (MEDIUM)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Mutation patterns (use immutable instead)</li>
+<li><input disabled="" type="checkbox"> Unnecessary complexity</li>
+<li><input disabled="" type="checkbox"> Missing tests for new code</li>
+<li><input disabled="" type="checkbox"> Accessibility issues (a11y)</li>
+<li><input disabled="" type="checkbox"> Performance concerns</li>
+</ul>
+<h3>Style (LOW)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Inconsistent naming</li>
+<li><input disabled="" type="checkbox"> Missing type annotations</li>
+<li><input disabled="" type="checkbox"> Formatting issues</li>
+</ul>
+<h2>Report Format</h2>
+<p>For each issue found:</p>
+<pre><code>**[SEVERITY]** file.ts:123
+Issue: [Description]
+Fix: [How to fix]
+</code></pre>
+<h2>Decision</h2>
+<ul>
+<li><strong>CRITICAL or HIGH issues</strong>: Block commit, require fixes</li>
+<li><strong>MEDIUM issues</strong>: Recommend fixes before merge</li>
+<li><strong>LOW issues</strong>: Optional improvements</li>
+</ul>
+<hr>
+<p><strong>IMPORTANT</strong>: Never approve code with security vulnerabilities!</p>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swift-patterns</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: &quot;Swift patterns extending common rules&quot;<br>globs: [&quot;<strong>/*.swift&quot;, &quot;</strong>/Package.swift&quot;]<br>alwaysApply: false</h2>
+<h1>Swift Patterns</h1>
+<blockquote>
+<p>This file extends the common patterns rule with Swift specific content.</p>
+</blockquote>
+<h2>Protocol-Oriented Design</h2>
+<p>Define small, focused protocols. Use protocol extensions for shared defaults:</p>
+<pre><code class="language-swift">protocol Repository: Sendable {
+    associatedtype Item: Identifiable &amp; Sendable
+    func find(by id: Item.ID) async throws -&gt; Item?
+    func save(_ item: Item) async throws
+}
+</code></pre>
+<h2>Value Types</h2>
+<ul>
+<li>Use structs for data transfer objects and models</li>
+<li>Use enums with associated values to model distinct states:</li>
+</ul>
+<pre><code class="language-swift">enum LoadState&lt;T: Sendable&gt;: Sendable {
+    case idle
+    case loading
+    case loaded(T)
+    case failed(Error)
+}
+</code></pre>
+<h2>Actor Pattern</h2>
+<p>Use actors for shared mutable state instead of locks or dispatch queues:</p>
+<pre><code class="language-swift">actor Cache&lt;Key: Hashable &amp; Sendable, Value: Sendable&gt; {
+    private var storage: [Key: Value] = [:]
+
+    func get(_ key: Key) -&gt; Value? { storage[key] }
+    func set(_ key: Key, value: Value) { storage[key] = value }
+}
+</code></pre>
+<h2>Dependency Injection</h2>
+<p>Inject protocols with default parameters -- production uses defaults, tests inject mocks:</p>
+<pre><code class="language-swift">struct UserService {
+    private let repository: any UserRepository
+
+    init(repository: any UserRepository = DefaultUserRepository()) {
+        self.repository = repository
+    }
+}
+</code></pre>
+<h2>References</h2>
+<p>See skill: <code>swift-actor-persistence</code> for actor-based persistence patterns.<br>See skill: <code>swift-protocol-di-testing</code> for protocol-based DI and testing.</p>
+
+</body>
+</html>

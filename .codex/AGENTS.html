@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENTS</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>ECC for Codex CLI</h1>
+<p>This supplements the root <code>AGENTS.md</code> with Codex-specific guidance.</p>
+<h2>Model Recommendations</h2>
+<table>
+<thead>
+<tr>
+<th>Task Type</th>
+<th>Recommended Model</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Routine coding, tests, formatting</td>
+<td>GPT 5.4</td>
+</tr>
+<tr>
+<td>Complex features, architecture</td>
+<td>GPT 5.4</td>
+</tr>
+<tr>
+<td>Debugging, refactoring</td>
+<td>GPT 5.4</td>
+</tr>
+<tr>
+<td>Security review</td>
+<td>GPT 5.4</td>
+</tr>
+</tbody></table>
+<h2>Skills Discovery</h2>
+<p>Skills are auto-loaded from <code>.agents/skills/</code>. Each skill contains:</p>
+<ul>
+<li><code>SKILL.md</code> — Detailed instructions and workflow</li>
+<li><code>agents/openai.yaml</code> — Codex interface metadata</li>
+</ul>
+<p>Available skills:</p>
+<ul>
+<li>tdd-workflow — Test-driven development with 80%+ coverage</li>
+<li>security-review — Comprehensive security checklist</li>
+<li>coding-standards — Universal coding standards</li>
+<li>frontend-patterns — React/Next.js patterns</li>
+<li>frontend-slides — Viewport-safe HTML presentations and PPTX-to-web conversion</li>
+<li>article-writing — Long-form writing from notes and voice references</li>
+<li>content-engine — Platform-native social content and repurposing</li>
+<li>market-research — Source-attributed market and competitor research</li>
+<li>investor-materials — Decks, memos, models, and one-pagers</li>
+<li>investor-outreach — Personalized investor outreach and follow-ups</li>
+<li>backend-patterns — API design, database, caching</li>
+<li>e2e-testing — Playwright E2E tests</li>
+<li>eval-harness — Eval-driven development</li>
+<li>strategic-compact — Context management</li>
+<li>api-design — REST API design patterns</li>
+<li>verification-loop — Build, test, lint, typecheck, security</li>
+</ul>
+<h2>MCP Servers</h2>
+<p>Configure in <code>~/.codex/config.toml</code> under <code>[mcp_servers]</code>. See <code>.codex/config.toml</code> for reference configuration with GitHub, Context7, Memory, and Sequential Thinking servers.</p>
+<h2>Key Differences from Claude Code</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Claude Code</th>
+<th>Codex CLI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hooks</td>
+<td>8+ event types</td>
+<td>Not yet supported</td>
+</tr>
+<tr>
+<td>Context file</td>
+<td>CLAUDE.md + AGENTS.md</td>
+<td>AGENTS.md only</td>
+</tr>
+<tr>
+<td>Skills</td>
+<td>Skills loaded via plugin</td>
+<td><code>.agents/skills/</code> directory</td>
+</tr>
+<tr>
+<td>Commands</td>
+<td><code>/slash</code> commands</td>
+<td>Instruction-based</td>
+</tr>
+<tr>
+<td>Agents</td>
+<td>Subagent Task tool</td>
+<td>Single agent model</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>Hook-based enforcement</td>
+<td>Instruction + sandbox</td>
+</tr>
+<tr>
+<td>MCP</td>
+<td>Full support</td>
+<td>Command-based only</td>
+</tr>
+</tbody></table>
+<h2>Security Without Hooks</h2>
+<p>Since Codex lacks hooks, security enforcement is instruction-based:</p>
+<ol>
+<li>Always validate inputs at system boundaries</li>
+<li>Never hardcode secrets — use environment variables</li>
+<li>Run <code>npm audit</code> / <code>pip audit</code> before committing</li>
+<li>Review <code>git diff</code> before every push</li>
+<li>Use <code>sandbox_mode = &quot;workspace-write&quot;</code> in config</li>
+</ol>
+
+</body>
+</html>

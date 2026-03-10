@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>go-test</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Go TDD workflow with table-driven tests<br>agent: tdd-guide<br>subtask: true</h2>
+<h1>Go Test Command</h1>
+<p>Implement using Go TDD methodology: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<p>Apply test-driven development with Go idioms:</p>
+<ol>
+<li><strong>Define types</strong> - Interfaces and structs</li>
+<li><strong>Write table-driven tests</strong> - Comprehensive coverage</li>
+<li><strong>Implement minimal code</strong> - Pass the tests</li>
+<li><strong>Benchmark</strong> - Verify performance</li>
+</ol>
+<h2>TDD Cycle for Go</h2>
+<h3>Step 1: Define Interface</h3>
+<pre><code class="language-go">type Calculator interface {
+    Calculate(input Input) (Output, error)
+}
+
+type Input struct {
+    // fields
+}
+
+type Output struct {
+    // fields
+}
+</code></pre>
+<h3>Step 2: Table-Driven Tests</h3>
+<pre><code class="language-go">func TestCalculate(t *testing.T) {
+    tests := []struct {
+        name    string
+        input   Input
+        want    Output
+        wantErr bool
+    }{
+        {
+            name:  &quot;valid input&quot;,
+            input: Input{...},
+            want:  Output{...},
+        },
+        {
+            name:    &quot;invalid input&quot;,
+            input:   Input{...},
+            wantErr: true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got, err := Calculate(tt.input)
+            if (err != nil) != tt.wantErr {
+                t.Errorf(&quot;Calculate() error = %v, wantErr %v&quot;, err, tt.wantErr)
+                return
+            }
+            if !reflect.DeepEqual(got, tt.want) {
+                t.Errorf(&quot;Calculate() = %v, want %v&quot;, got, tt.want)
+            }
+        })
+    }
+}
+</code></pre>
+<h3>Step 3: Run Tests (RED)</h3>
+<pre><code class="language-bash">go test -v ./...
+</code></pre>
+<h3>Step 4: Implement (GREEN)</h3>
+<pre><code class="language-go">func Calculate(input Input) (Output, error) {
+    // Minimal implementation
+}
+</code></pre>
+<h3>Step 5: Benchmark</h3>
+<pre><code class="language-go">func BenchmarkCalculate(b *testing.B) {
+    input := Input{...}
+    for i := 0; i &lt; b.N; i++ {
+        Calculate(input)
+    }
+}
+</code></pre>
+<h2>Go Testing Commands</h2>
+<pre><code class="language-bash"># Run all tests
+go test ./...
+
+# Run with verbose output
+go test -v ./...
+
+# Run with coverage
+go test -cover ./...
+
+# Run with race detector
+go test -race ./...
+
+# Run benchmarks
+go test -bench=. ./...
+
+# Generate coverage report
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+</code></pre>
+<h2>Test File Organization</h2>
+<pre><code>package/
+├── calculator.go       # Implementation
+├── calculator_test.go  # Tests
+├── testdata/           # Test fixtures
+│   └── input.json
+└── mock_test.go        # Mock implementations
+</code></pre>
+<hr>
+<p><strong>TIP</strong>: Use <code>testify/assert</code> for cleaner assertions, or stick with stdlib for simplicity.</p>
+
+</body>
+</html>

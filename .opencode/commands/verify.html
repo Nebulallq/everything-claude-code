@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>verify</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Run verification loop to validate implementation<br>agent: build</h2>
+<h1>Verify Command</h1>
+<p>Run verification loop to validate the implementation: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<p>Execute comprehensive verification:</p>
+<ol>
+<li><strong>Type Check</strong>: <code>npx tsc --noEmit</code></li>
+<li><strong>Lint</strong>: <code>npm run lint</code></li>
+<li><strong>Unit Tests</strong>: <code>npm test</code></li>
+<li><strong>Integration Tests</strong>: <code>npm run test:integration</code> (if available)</li>
+<li><strong>Build</strong>: <code>npm run build</code></li>
+<li><strong>Coverage Check</strong>: Verify 80%+ coverage</li>
+</ol>
+<h2>Verification Checklist</h2>
+<h3>Code Quality</h3>
+<ul>
+<li><input disabled="" type="checkbox"> No TypeScript errors</li>
+<li><input disabled="" type="checkbox"> No lint warnings</li>
+<li><input disabled="" type="checkbox"> No console.log statements</li>
+<li><input disabled="" type="checkbox"> Functions &lt; 50 lines</li>
+<li><input disabled="" type="checkbox"> Files &lt; 800 lines</li>
+</ul>
+<h3>Tests</h3>
+<ul>
+<li><input disabled="" type="checkbox"> All tests passing</li>
+<li><input disabled="" type="checkbox"> Coverage &gt;= 80%</li>
+<li><input disabled="" type="checkbox"> Edge cases covered</li>
+<li><input disabled="" type="checkbox"> Error conditions tested</li>
+</ul>
+<h3>Security</h3>
+<ul>
+<li><input disabled="" type="checkbox"> No hardcoded secrets</li>
+<li><input disabled="" type="checkbox"> Input validation present</li>
+<li><input disabled="" type="checkbox"> No SQL injection risks</li>
+<li><input disabled="" type="checkbox"> No XSS vulnerabilities</li>
+</ul>
+<h3>Build</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Build succeeds</li>
+<li><input disabled="" type="checkbox"> No warnings</li>
+<li><input disabled="" type="checkbox"> Bundle size acceptable</li>
+</ul>
+<h2>Verification Report</h2>
+<h3>Summary</h3>
+<ul>
+<li>Status: ✅ PASS / ❌ FAIL</li>
+<li>Score: X/Y checks passed</li>
+</ul>
+<h3>Details</h3>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TypeScript</td>
+<td>✅/❌</td>
+<td>[details]</td>
+</tr>
+<tr>
+<td>Lint</td>
+<td>✅/❌</td>
+<td>[details]</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>✅/❌</td>
+<td>[details]</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>✅/❌</td>
+<td>XX% (target: 80%)</td>
+</tr>
+<tr>
+<td>Build</td>
+<td>✅/❌</td>
+<td>[details]</td>
+</tr>
+</tbody></table>
+<h3>Action Items</h3>
+<p>[If FAIL, list what needs to be fixed]</p>
+<hr>
+<p><strong>NOTE</strong>: Verification loop should be run before every commit and PR.</p>
+
+</body>
+</html>

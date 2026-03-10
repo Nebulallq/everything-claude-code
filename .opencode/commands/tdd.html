@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tdd</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Enforce TDD workflow with 80%+ coverage<br>agent: tdd-guide<br>subtask: true</h2>
+<h1>TDD Command</h1>
+<p>Implement the following using strict test-driven development: $ARGUMENTS</p>
+<h2>TDD Cycle (MANDATORY)</h2>
+<pre><code>RED → GREEN → REFACTOR → REPEAT
+</code></pre>
+<ol>
+<li><strong>RED</strong>: Write a failing test FIRST</li>
+<li><strong>GREEN</strong>: Write minimal code to pass the test</li>
+<li><strong>REFACTOR</strong>: Improve code while keeping tests green</li>
+<li><strong>REPEAT</strong>: Continue until feature complete</li>
+</ol>
+<h2>Your Task</h2>
+<h3>Step 1: Define Interfaces (SCAFFOLD)</h3>
+<ul>
+<li>Define TypeScript interfaces for inputs/outputs</li>
+<li>Create function signature with <code>throw new Error(&#39;Not implemented&#39;)</code></li>
+</ul>
+<h3>Step 2: Write Failing Tests (RED)</h3>
+<ul>
+<li>Write tests that exercise the interface</li>
+<li>Include happy path, edge cases, and error conditions</li>
+<li>Run tests - verify they FAIL</li>
+</ul>
+<h3>Step 3: Implement Minimal Code (GREEN)</h3>
+<ul>
+<li>Write just enough code to make tests pass</li>
+<li>No premature optimization</li>
+<li>Run tests - verify they PASS</li>
+</ul>
+<h3>Step 4: Refactor (IMPROVE)</h3>
+<ul>
+<li>Extract constants, improve naming</li>
+<li>Remove duplication</li>
+<li>Run tests - verify they still PASS</li>
+</ul>
+<h3>Step 5: Check Coverage</h3>
+<ul>
+<li>Target: 80% minimum</li>
+<li>100% for critical business logic</li>
+<li>Add more tests if needed</li>
+</ul>
+<h2>Coverage Requirements</h2>
+<table>
+<thead>
+<tr>
+<th>Code Type</th>
+<th>Minimum</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Standard code</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>Financial calculations</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Authentication logic</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Security-critical code</td>
+<td>100%</td>
+</tr>
+</tbody></table>
+<h2>Test Types to Include</h2>
+<ul>
+<li><strong>Unit Tests</strong>: Individual functions</li>
+<li><strong>Edge Cases</strong>: Empty, null, max values, boundaries</li>
+<li><strong>Error Conditions</strong>: Invalid inputs, network failures</li>
+<li><strong>Integration Tests</strong>: API endpoints, database operations</li>
+</ul>
+<hr>
+<p><strong>MANDATORY</strong>: Tests must be written BEFORE implementation. Never skip the RED phase.</p>
+
+</body>
+</html>

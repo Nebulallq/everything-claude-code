@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>quality-gate</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Quality Gate Command</h1>
+<p>Run the ECC quality pipeline on demand for a file or project scope.</p>
+<h2>Usage</h2>
+<p><code>/quality-gate [path|.] [--fix] [--strict]</code></p>
+<ul>
+<li>default target: current directory (<code>.</code>)</li>
+<li><code>--fix</code>: allow auto-format/fix where configured</li>
+<li><code>--strict</code>: fail on warnings where supported</li>
+</ul>
+<h2>Pipeline</h2>
+<ol>
+<li>Detect language/tooling for target.</li>
+<li>Run formatter checks.</li>
+<li>Run lint/type checks when available.</li>
+<li>Produce a concise remediation list.</li>
+</ol>
+<h2>Notes</h2>
+<p>This command mirrors hook behavior but is operator-invoked.</p>
+<h2>Arguments</h2>
+<p>$ARGUMENTS:</p>
+<ul>
+<li><code>[path|.]</code> optional target path</li>
+<li><code>--fix</code> optional</li>
+<li><code>--strict</code> optional</li>
+</ul>
+
+</body>
+</html>

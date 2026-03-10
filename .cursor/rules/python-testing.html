@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>python-testing</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: &quot;Python testing extending common rules&quot;<br>globs: [&quot;<strong>/*.py&quot;, &quot;</strong>/*.pyi&quot;]<br>alwaysApply: false</h2>
+<h1>Python Testing</h1>
+<blockquote>
+<p>This file extends the common testing rule with Python specific content.</p>
+</blockquote>
+<h2>Framework</h2>
+<p>Use <strong>pytest</strong> as the testing framework.</p>
+<h2>Coverage</h2>
+<pre><code class="language-bash">pytest --cov=src --cov-report=term-missing
+</code></pre>
+<h2>Test Organization</h2>
+<p>Use <code>pytest.mark</code> for test categorization:</p>
+<pre><code class="language-python">import pytest
+
+@pytest.mark.unit
+def test_calculate_total():
+    ...
+
+@pytest.mark.integration
+def test_database_connection():
+    ...
+</code></pre>
+<h2>Reference</h2>
+<p>See skill: <code>python-testing</code> for detailed pytest patterns and fixtures.</p>
+
+</body>
+</html>

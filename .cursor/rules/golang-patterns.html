@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>golang-patterns</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: &quot;Go patterns extending common rules&quot;<br>globs: [&quot;<strong>/*.go&quot;, &quot;</strong>/go.mod&quot;, &quot;**/go.sum&quot;]<br>alwaysApply: false</h2>
+<h1>Go Patterns</h1>
+<blockquote>
+<p>This file extends the common patterns rule with Go specific content.</p>
+</blockquote>
+<h2>Functional Options</h2>
+<pre><code class="language-go">type Option func(*Server)
+
+func WithPort(port int) Option {
+    return func(s *Server) { s.port = port }
+}
+
+func NewServer(opts ...Option) *Server {
+    s := &amp;Server{port: 8080}
+    for _, opt := range opts {
+        opt(s)
+    }
+    return s
+}
+</code></pre>
+<h2>Small Interfaces</h2>
+<p>Define interfaces where they are used, not where they are implemented.</p>
+<h2>Dependency Injection</h2>
+<p>Use constructor functions to inject dependencies:</p>
+<pre><code class="language-go">func NewUserService(repo UserRepository, logger Logger) *UserService {
+    return &amp;UserService{repo: repo, logger: logger}
+}
+</code></pre>
+<h2>Reference</h2>
+<p>See skill: <code>golang-patterns</code> for comprehensive Go patterns including concurrency, error handling, and package organization.</p>
+
+</body>
+</html>

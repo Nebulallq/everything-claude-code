@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PLUGIN_SCHEMA_NOTES</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Plugin Manifest Schema Notes</h1>
+<p>This document captures <strong>undocumented but enforced constraints</strong> of the Claude Code plugin manifest validator.</p>
+<p>These rules are based on real installation failures, validator behavior, and comparison with known working plugins.<br>They exist to prevent silent breakage and repeated regressions.</p>
+<p>If you edit <code>.claude-plugin/plugin.json</code>, read this first.</p>
+<hr>
+<h2>Summary (Read This First)</h2>
+<p>The Claude plugin manifest validator is <strong>strict and opinionated</strong>.<br>It enforces rules that are not fully documented in public schema references.</p>
+<p>The most common failure mode is:</p>
+<blockquote>
+<p>The manifest looks reasonable, but the validator rejects it with vague errors like<br><code>agents: Invalid input</code></p>
+</blockquote>
+<p>This document explains why.</p>
+<hr>
+<h2>Required Fields</h2>
+<h3><code>version</code> (MANDATORY)</h3>
+<p>The <code>version</code> field is required by the validator even if omitted from some examples.</p>
+<p>If missing, installation may fail during marketplace install or CLI validation.</p>
+<p>Example:</p>
+<pre><code class="language-json">{
+  &quot;version&quot;: &quot;1.1.0&quot;
+}
+</code></pre>
+<hr>
+<h2>Field Shape Rules</h2>
+<p>The following fields <strong>must always be arrays</strong>:</p>
+<ul>
+<li><code>agents</code></li>
+<li><code>commands</code></li>
+<li><code>skills</code></li>
+<li><code>hooks</code> (if present)</li>
+</ul>
+<p>Even if there is only one entry, <strong>strings are not accepted</strong>.</p>
+<h3>Invalid</h3>
+<pre><code class="language-json">{
+  &quot;agents&quot;: &quot;./agents&quot;
+}
+</code></pre>
+<h3>Valid</h3>
+<pre><code class="language-json">{
+  &quot;agents&quot;: [&quot;./agents/planner.md&quot;]
+}
+</code></pre>
+<p>This applies consistently across all component path fields.</p>
+<hr>
+<h2>Path Resolution Rules (Critical)</h2>
+<h3>Agents MUST use explicit file paths</h3>
+<p>The validator <strong>does not accept directory paths for <code>agents</code></strong>.</p>
+<p>Even the following will fail:</p>
+<pre><code class="language-json">{
+  &quot;agents&quot;: [&quot;./agents/&quot;]
+}
+</code></pre>
+<p>Instead, you must enumerate agent files explicitly:</p>
+<pre><code class="language-json">{
+  &quot;agents&quot;: [
+    &quot;./agents/planner.md&quot;,
+    &quot;./agents/architect.md&quot;,
+    &quot;./agents/code-reviewer.md&quot;
+  ]
+}
+</code></pre>
+<p>This is the most common source of validation errors.</p>
+<h3>Commands and Skills</h3>
+<ul>
+<li><code>commands</code> and <code>skills</code> accept directory paths <strong>only when wrapped in arrays</strong></li>
+<li>Explicit file paths are safest and most future-proof</li>
+</ul>
+<hr>
+<h2>Validator Behavior Notes</h2>
+<ul>
+<li><code>claude plugin validate</code> is stricter than some marketplace previews</li>
+<li>Validation may pass locally but fail during install if paths are ambiguous</li>
+<li>Errors are often generic (<code>Invalid input</code>) and do not indicate root cause</li>
+<li>Cross-platform installs (especially Windows) are less forgiving of path assumptions</li>
+</ul>
+<p>Assume the validator is hostile and literal.</p>
+<hr>
+<h2>The <code>hooks</code> Field: DO NOT ADD</h2>
+<blockquote>
+<p>⚠️ <strong>CRITICAL:</strong> Do NOT add a <code>&quot;hooks&quot;</code> field to <code>plugin.json</code>. This is enforced by a regression test.</p>
+</blockquote>
+<h3>Why This Matters</h3>
+<p>Claude Code v2.1+ <strong>automatically loads</strong> <code>hooks/hooks.json</code> from any installed plugin by convention. If you also declare it in <code>plugin.json</code>, you get:</p>
+<pre><code>Duplicate hooks file detected: ./hooks/hooks.json resolves to already-loaded file.
+The standard hooks/hooks.json is loaded automatically, so manifest.hooks should
+only reference additional hook files.
+</code></pre>
+<h3>The Flip-Flop History</h3>
+<p>This has caused repeated fix/revert cycles in this repo:</p>
+<table>
+<thead>
+<tr>
+<th>Commit</th>
+<th>Action</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>22ad036</code></td>
+<td>ADD hooks</td>
+<td>Users reported &quot;hooks not loading&quot;</td>
+</tr>
+<tr>
+<td><code>a7bc5f2</code></td>
+<td>REMOVE hooks</td>
+<td>Users reported &quot;duplicate hooks error&quot; (#52)</td>
+</tr>
+<tr>
+<td><code>779085e</code></td>
+<td>ADD hooks</td>
+<td>Users reported &quot;agents not loading&quot; (#88)</td>
+</tr>
+<tr>
+<td><code>e3a1306</code></td>
+<td>REMOVE hooks</td>
+<td>Users reported &quot;duplicate hooks error&quot; (#103)</td>
+</tr>
+</tbody></table>
+<p><strong>Root cause:</strong> Claude Code CLI changed behavior between versions:</p>
+<ul>
+<li>Pre-v2.1: Required explicit <code>hooks</code> declaration</li>
+<li>v2.1+: Auto-loads by convention, errors on duplicate</li>
+</ul>
+<h3>Current Rule (Enforced by Test)</h3>
+<p>The test <code>plugin.json does NOT have explicit hooks declaration</code> in <code>tests/hooks/hooks.test.js</code> prevents this from being reintroduced.</p>
+<p><strong>If you&#39;re adding additional hook files</strong> (not <code>hooks/hooks.json</code>), those CAN be declared. But the standard <code>hooks/hooks.json</code> must NOT be declared.</p>
+<hr>
+<h2>Known Anti-Patterns</h2>
+<p>These look correct but are rejected:</p>
+<ul>
+<li>String values instead of arrays</li>
+<li>Arrays of directories for <code>agents</code></li>
+<li>Missing <code>version</code></li>
+<li>Relying on inferred paths</li>
+<li>Assuming marketplace behavior matches local validation</li>
+<li><strong>Adding <code>&quot;hooks&quot;: &quot;./hooks/hooks.json&quot;</code></strong> - auto-loaded by convention, causes duplicate error</li>
+</ul>
+<p>Avoid cleverness. Be explicit.</p>
+<hr>
+<h2>Minimal Known-Good Example</h2>
+<pre><code class="language-json">{
+  &quot;version&quot;: &quot;1.1.0&quot;,
+  &quot;agents&quot;: [
+    &quot;./agents/planner.md&quot;,
+    &quot;./agents/code-reviewer.md&quot;
+  ],
+  &quot;commands&quot;: [&quot;./commands/&quot;],
+  &quot;skills&quot;: [&quot;./skills/&quot;]
+}
+</code></pre>
+<p>This structure has been validated against the Claude plugin validator.</p>
+<p><strong>Important:</strong> Notice there is NO <code>&quot;hooks&quot;</code> field. The <code>hooks/hooks.json</code> file is loaded automatically by convention. Adding it explicitly causes a duplicate error.</p>
+<hr>
+<h2>Recommendation for Contributors</h2>
+<p>Before submitting changes that touch <code>plugin.json</code>:</p>
+<ol>
+<li>Use explicit file paths for agents</li>
+<li>Ensure all component fields are arrays</li>
+<li>Include a <code>version</code></li>
+<li>Run:</li>
+</ol>
+<pre><code class="language-bash">claude plugin validate .claude-plugin/plugin.json
+</code></pre>
+<p>If in doubt, choose verbosity over convenience.</p>
+<hr>
+<h2>Why This File Exists</h2>
+<p>This repository is widely forked and used as a reference implementation.</p>
+<p>Documenting validator quirks here:</p>
+<ul>
+<li>Prevents repeated issues</li>
+<li>Reduces contributor frustration</li>
+<li>Preserves plugin stability as the ecosystem evolves</li>
+</ul>
+<p>If the validator changes, update this document first.</p>
+
+</body>
+</html>

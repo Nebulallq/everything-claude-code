@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>test-coverage</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Analyze and improve test coverage<br>agent: tdd-guide<br>subtask: true</h2>
+<h1>Test Coverage Command</h1>
+<p>Analyze test coverage and identify gaps: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Run coverage report</strong>: <code>npm test -- --coverage</code></li>
+<li><strong>Analyze results</strong> - Identify low coverage areas</li>
+<li><strong>Prioritize gaps</strong> - Critical code first</li>
+<li><strong>Generate missing tests</strong> - For uncovered code</li>
+</ol>
+<h2>Coverage Targets</h2>
+<table>
+<thead>
+<tr>
+<th>Code Type</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Standard code</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>Financial logic</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Auth/security</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Utilities</td>
+<td>90%</td>
+</tr>
+<tr>
+<td>UI components</td>
+<td>70%</td>
+</tr>
+</tbody></table>
+<h2>Coverage Report Analysis</h2>
+<h3>Summary</h3>
+<pre><code>File           | % Stmts | % Branch | % Funcs | % Lines
+---------------|---------|----------|---------|--------
+All files      |   XX    |    XX    |   XX    |   XX
+</code></pre>
+<h3>Low Coverage Files</h3>
+<p>[Files below target, prioritized by criticality]</p>
+<h3>Uncovered Lines</h3>
+<p>[Specific lines that need tests]</p>
+<h2>Test Generation</h2>
+<p>For each uncovered area:</p>
+<h3>[Function/Component Name]</h3>
+<p><strong>Location</strong>: <code>src/path/file.ts:123</code></p>
+<p><strong>Coverage Gap</strong>: [description]</p>
+<p><strong>Suggested Tests</strong>:</p>
+<pre><code class="language-typescript">describe(&#39;functionName&#39;, () =&gt; {
+  it(&#39;should [expected behavior]&#39;, () =&gt; {
+    // Test code
+  })
+
+  it(&#39;should handle [edge case]&#39;, () =&gt; {
+    // Edge case test
+  })
+})
+</code></pre>
+<h2>Coverage Improvement Plan</h2>
+<ol>
+<li><p><strong>Critical</strong> (add immediately)</p>
+<ul>
+<li><input disabled="" type="checkbox"> file1.ts - Auth logic</li>
+<li><input disabled="" type="checkbox"> file2.ts - Payment handling</li>
+</ul>
+</li>
+<li><p><strong>High</strong> (add this sprint)</p>
+<ul>
+<li><input disabled="" type="checkbox"> file3.ts - Core business logic</li>
+</ul>
+</li>
+<li><p><strong>Medium</strong> (add when touching file)</p>
+<ul>
+<li><input disabled="" type="checkbox"> file4.ts - Utilities</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>IMPORTANT</strong>: Coverage is a metric, not a goal. Focus on meaningful tests, not just hitting numbers.</p>
+
+</body>
+</html>

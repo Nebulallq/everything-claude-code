@@ -69,7 +69,8 @@ ${html}
 }
 
 // CLI 使用 - 只在直接运行时执行
-if (import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`) {
+const isMainModule = process.argv[1] && process.argv[1].endsWith('md2html-example.mjs');
+if (isMainModule) {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {

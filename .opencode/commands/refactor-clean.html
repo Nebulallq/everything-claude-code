@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>refactor-clean</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Remove dead code and consolidate duplicates<br>agent: refactor-cleaner<br>subtask: true</h2>
+<h1>Refactor Clean Command</h1>
+<p>Analyze and clean up the codebase: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Detect dead code</strong> using analysis tools</li>
+<li><strong>Identify duplicates</strong> and consolidation opportunities</li>
+<li><strong>Safely remove</strong> unused code with documentation</li>
+<li><strong>Verify</strong> no functionality broken</li>
+</ol>
+<h2>Detection Phase</h2>
+<h3>Run Analysis Tools</h3>
+<pre><code class="language-bash"># Find unused exports
+npx knip
+
+# Find unused dependencies
+npx depcheck
+
+# Find unused TypeScript exports
+npx ts-prune
+</code></pre>
+<h3>Manual Checks</h3>
+<ul>
+<li>Unused functions (no callers)</li>
+<li>Unused variables</li>
+<li>Unused imports</li>
+<li>Commented-out code</li>
+<li>Unreachable code</li>
+<li>Unused CSS classes</li>
+</ul>
+<h2>Removal Phase</h2>
+<h3>Before Removing</h3>
+<ol>
+<li><strong>Search for usage</strong> - grep, find references</li>
+<li><strong>Check exports</strong> - might be used externally</li>
+<li><strong>Verify tests</strong> - no test depends on it</li>
+<li><strong>Document removal</strong> - git commit message</li>
+</ol>
+<h3>Safe Removal Order</h3>
+<ol>
+<li>Remove unused imports first</li>
+<li>Remove unused private functions</li>
+<li>Remove unused exported functions</li>
+<li>Remove unused types/interfaces</li>
+<li>Remove unused files</li>
+</ol>
+<h2>Consolidation Phase</h2>
+<h3>Identify Duplicates</h3>
+<ul>
+<li>Similar functions with minor differences</li>
+<li>Copy-pasted code blocks</li>
+<li>Repeated patterns</li>
+</ul>
+<h3>Consolidation Strategies</h3>
+<ol>
+<li><strong>Extract utility function</strong> - for repeated logic</li>
+<li><strong>Create base class</strong> - for similar classes</li>
+<li><strong>Use higher-order functions</strong> - for repeated patterns</li>
+<li><strong>Create shared constants</strong> - for magic values</li>
+</ol>
+<h2>Verification</h2>
+<p>After cleanup:</p>
+<ol>
+<li><code>npm run build</code> - builds successfully</li>
+<li><code>npm test</code> - all tests pass</li>
+<li><code>npm run lint</code> - no new lint errors</li>
+<li>Manual smoke test - features work</li>
+</ol>
+<h2>Report Format</h2>
+<pre><code>Dead Code Analysis
+==================
+
+Removed:
+- file.ts: functionName (unused export)
+- utils.ts: helperFunction (no callers)
+
+Consolidated:
+- formatDate() and formatDateTime() → dateUtils.format()
+
+Remaining (manual review needed):
+- oldComponent.tsx: potentially unused, verify with team
+</code></pre>
+<hr>
+<p><strong>CAUTION</strong>: Always verify before removing. When in doubt, ask or add <code>// TODO: verify usage</code> comment.</p>
+
+</body>
+</html>

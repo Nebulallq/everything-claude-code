@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>instinct-import</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Import instincts from external sources<br>agent: build</h2>
+<h1>Instinct Import Command</h1>
+<p>Import instincts from a file or URL: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<p>Import instincts into the continuous-learning-v2 system.</p>
+<h2>Import Sources</h2>
+<h3>File Import</h3>
+<pre><code>/instinct-import path/to/instincts.json
+</code></pre>
+<h3>URL Import</h3>
+<pre><code>/instinct-import https://example.com/instincts.json
+</code></pre>
+<h3>Team Share Import</h3>
+<pre><code>/instinct-import @teammate/instincts
+</code></pre>
+<h2>Import Format</h2>
+<p>Expected JSON structure:</p>
+<pre><code class="language-json">{
+  &quot;instincts&quot;: [
+    {
+      &quot;trigger&quot;: &quot;[situation description]&quot;,
+      &quot;action&quot;: &quot;[recommended action]&quot;,
+      &quot;confidence&quot;: 0.7,
+      &quot;category&quot;: &quot;coding&quot;,
+      &quot;source&quot;: &quot;imported&quot;
+    }
+  ],
+  &quot;metadata&quot;: {
+    &quot;version&quot;: &quot;1.0&quot;,
+    &quot;exported&quot;: &quot;2025-01-15T10:00:00Z&quot;,
+    &quot;author&quot;: &quot;username&quot;
+  }
+}
+</code></pre>
+<h2>Import Process</h2>
+<ol>
+<li><strong>Validate format</strong> - Check JSON structure</li>
+<li><strong>Deduplicate</strong> - Skip existing instincts</li>
+<li><strong>Adjust confidence</strong> - Reduce confidence for imports (×0.8)</li>
+<li><strong>Merge</strong> - Add to local instinct store</li>
+<li><strong>Report</strong> - Show import summary</li>
+</ol>
+<h2>Import Report</h2>
+<pre><code>Import Summary
+==============
+Source: [path or URL]
+Total in file: X
+Imported: Y
+Skipped (duplicates): Z
+Errors: W
+
+Imported Instincts:
+- [trigger] (confidence: 0.XX)
+- [trigger] (confidence: 0.XX)
+...
+</code></pre>
+<h2>Conflict Resolution</h2>
+<p>When importing duplicates:</p>
+<ul>
+<li>Keep higher confidence version</li>
+<li>Merge application counts</li>
+<li>Update timestamp</li>
+</ul>
+<hr>
+<p><strong>TIP</strong>: Review imported instincts with <code>/instinct-status</code> after import.</p>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>go-build</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Fix Go build and vet errors<br>agent: go-build-resolver<br>subtask: true</h2>
+<h1>Go Build Command</h1>
+<p>Fix Go build, vet, and compilation errors: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Run go build</strong>: <code>go build ./...</code></li>
+<li><strong>Run go vet</strong>: <code>go vet ./...</code></li>
+<li><strong>Fix errors</strong> one by one</li>
+<li><strong>Verify fixes</strong> don&#39;t introduce new errors</li>
+</ol>
+<h2>Common Go Errors</h2>
+<h3>Import Errors</h3>
+<pre><code>imported and not used: &quot;package&quot;
+</code></pre>
+<p><strong>Fix</strong>: Remove unused import or use <code>_</code> prefix</p>
+<h3>Type Errors</h3>
+<pre><code>cannot use x (type T) as type U
+</code></pre>
+<p><strong>Fix</strong>: Add type conversion or fix type definition</p>
+<h3>Undefined Errors</h3>
+<pre><code>undefined: identifier
+</code></pre>
+<p><strong>Fix</strong>: Import package, define variable, or fix typo</p>
+<h3>Vet Errors</h3>
+<pre><code>printf: call has arguments but no formatting directives
+</code></pre>
+<p><strong>Fix</strong>: Add format directive or remove arguments</p>
+<h2>Fix Order</h2>
+<ol>
+<li><strong>Import errors</strong> - Fix or remove imports</li>
+<li><strong>Type definitions</strong> - Ensure types exist</li>
+<li><strong>Function signatures</strong> - Match parameters</li>
+<li><strong>Vet warnings</strong> - Address static analysis</li>
+</ol>
+<h2>Build Commands</h2>
+<pre><code class="language-bash"># Build all packages
+go build ./...
+
+# Build with race detector
+go build -race ./...
+
+# Build for specific OS/arch
+GOOS=linux GOARCH=amd64 go build ./...
+
+# Run go vet
+go vet ./...
+
+# Run staticcheck
+staticcheck ./...
+
+# Format code
+gofmt -w .
+
+# Tidy dependencies
+go mod tidy
+</code></pre>
+<h2>Verification</h2>
+<p>After fixes:</p>
+<pre><code class="language-bash">go build ./...    # Should succeed
+go vet ./...      # Should have no warnings
+go test ./...     # Tests should pass
+</code></pre>
+<hr>
+<p><strong>IMPORTANT</strong>: Fix errors only. No refactoring, no improvements. Get the build green with minimal changes.</p>
+
+</body>
+</html>

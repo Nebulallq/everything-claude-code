@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: frontend-slides<br>description: Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presentation, convert a PPT/PPTX to web, or create slides for a talk/pitch. Helps non-designers discover their aesthetic through visual exploration rather than abstract choices.<br>origin: ECC</h2>
+<h1>Frontend Slides</h1>
+<p>Create zero-dependency, animation-rich HTML presentations that run entirely in the browser.</p>
+<p>Inspired by the visual exploration approach showcased in work by <a href="https://github.com/zarazhangrui">zarazhangrui</a>.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Creating a talk deck, pitch deck, workshop deck, or internal presentation</li>
+<li>Converting <code>.ppt</code> or <code>.pptx</code> slides into an HTML presentation</li>
+<li>Improving an existing HTML presentation&#39;s layout, motion, or typography</li>
+<li>Exploring presentation styles with a user who does not know their design preference yet</li>
+</ul>
+<h2>Non-Negotiables</h2>
+<ol>
+<li><strong>Zero dependencies</strong>: default to one self-contained HTML file with inline CSS and JS.</li>
+<li><strong>Viewport fit is mandatory</strong>: every slide must fit inside one viewport with no internal scrolling.</li>
+<li><strong>Show, don&#39;t tell</strong>: use visual previews instead of abstract style questionnaires.</li>
+<li><strong>Distinctive design</strong>: avoid generic purple-gradient, Inter-on-white, template-looking decks.</li>
+<li><strong>Production quality</strong>: keep code commented, accessible, responsive, and performant.</li>
+</ol>
+<p>Before generating, read <code>STYLE_PRESETS.md</code> for the viewport-safe CSS base, density limits, preset catalog, and CSS gotchas.</p>
+<h2>Workflow</h2>
+<h3>1. Detect Mode</h3>
+<p>Choose one path:</p>
+<ul>
+<li><strong>New presentation</strong>: user has a topic, notes, or full draft</li>
+<li><strong>PPT conversion</strong>: user has <code>.ppt</code> or <code>.pptx</code></li>
+<li><strong>Enhancement</strong>: user already has HTML slides and wants improvements</li>
+</ul>
+<h3>2. Discover Content</h3>
+<p>Ask only the minimum needed:</p>
+<ul>
+<li>purpose: pitch, teaching, conference talk, internal update</li>
+<li>length: short (5-10), medium (10-20), long (20+)</li>
+<li>content state: finished copy, rough notes, topic only</li>
+</ul>
+<p>If the user has content, ask them to paste it before styling.</p>
+<h3>3. Discover Style</h3>
+<p>Default to visual exploration.</p>
+<p>If the user already knows the desired preset, skip previews and use it directly.</p>
+<p>Otherwise:</p>
+<ol>
+<li>Ask what feeling the deck should create: impressed, energized, focused, inspired.</li>
+<li>Generate <strong>3 single-slide preview files</strong> in <code>.ecc-design/slide-previews/</code>.</li>
+<li>Each preview must be self-contained, show typography/color/motion clearly, and stay under roughly 100 lines of slide content.</li>
+<li>Ask the user which preview to keep or what elements to mix.</li>
+</ol>
+<p>Use the preset guide in <code>STYLE_PRESETS.md</code> when mapping mood to style.</p>
+<h3>4. Build the Presentation</h3>
+<p>Output either:</p>
+<ul>
+<li><code>presentation.html</code></li>
+<li><code>[presentation-name].html</code></li>
+</ul>
+<p>Use an <code>assets/</code> folder only when the deck contains extracted or user-supplied images.</p>
+<p>Required structure:</p>
+<ul>
+<li>semantic slide sections</li>
+<li>a viewport-safe CSS base from <code>STYLE_PRESETS.md</code></li>
+<li>CSS custom properties for theme values</li>
+<li>a presentation controller class for keyboard, wheel, and touch navigation</li>
+<li>Intersection Observer for reveal animations</li>
+<li>reduced-motion support</li>
+</ul>
+<h3>5. Enforce Viewport Fit</h3>
+<p>Treat this as a hard gate.</p>
+<p>Rules:</p>
+<ul>
+<li>every <code>.slide</code> must use <code>height: 100vh; height: 100dvh; overflow: hidden;</code></li>
+<li>all type and spacing must scale with <code>clamp()</code></li>
+<li>when content does not fit, split into multiple slides</li>
+<li>never solve overflow by shrinking text below readable sizes</li>
+<li>never allow scrollbars inside a slide</li>
+</ul>
+<p>Use the density limits and mandatory CSS block in <code>STYLE_PRESETS.md</code>.</p>
+<h3>6. Validate</h3>
+<p>Check the finished deck at these sizes:</p>
+<ul>
+<li>1920x1080</li>
+<li>1280x720</li>
+<li>768x1024</li>
+<li>375x667</li>
+<li>667x375</li>
+</ul>
+<p>If browser automation is available, use it to verify no slide overflows and that keyboard navigation works.</p>
+<h3>7. Deliver</h3>
+<p>At handoff:</p>
+<ul>
+<li>delete temporary preview files unless the user wants to keep them</li>
+<li>open the deck with the platform-appropriate opener when useful</li>
+<li>summarize file path, preset used, slide count, and easy theme customization points</li>
+</ul>
+<p>Use the correct opener for the current OS:</p>
+<ul>
+<li>macOS: <code>open file.html</code></li>
+<li>Linux: <code>xdg-open file.html</code></li>
+<li>Windows: <code>start &quot;&quot; file.html</code></li>
+</ul>
+<h2>PPT / PPTX Conversion</h2>
+<p>For PowerPoint conversion:</p>
+<ol>
+<li>Prefer <code>python3</code> with <code>python-pptx</code> to extract text, images, and notes.</li>
+<li>If <code>python-pptx</code> is unavailable, ask whether to install it or fall back to a manual/export-based workflow.</li>
+<li>Preserve slide order, speaker notes, and extracted assets.</li>
+<li>After extraction, run the same style-selection workflow as a new presentation.</li>
+</ol>
+<p>Keep conversion cross-platform. Do not rely on macOS-only tools when Python can do the job.</p>
+<h2>Implementation Requirements</h2>
+<h3>HTML / CSS</h3>
+<ul>
+<li>Use inline CSS and JS unless the user explicitly wants a multi-file project.</li>
+<li>Fonts may come from Google Fonts or Fontshare.</li>
+<li>Prefer atmospheric backgrounds, strong type hierarchy, and a clear visual direction.</li>
+<li>Use abstract shapes, gradients, grids, noise, and geometry rather than illustrations.</li>
+</ul>
+<h3>JavaScript</h3>
+<p>Include:</p>
+<ul>
+<li>keyboard navigation</li>
+<li>touch / swipe navigation</li>
+<li>mouse wheel navigation</li>
+<li>progress indicator or slide index</li>
+<li>reveal-on-enter animation triggers</li>
+</ul>
+<h3>Accessibility</h3>
+<ul>
+<li>use semantic structure (<code>main</code>, <code>section</code>, <code>nav</code>)</li>
+<li>keep contrast readable</li>
+<li>support keyboard-only navigation</li>
+<li>respect <code>prefers-reduced-motion</code></li>
+</ul>
+<h2>Content Density Limits</h2>
+<p>Use these maxima unless the user explicitly asks for denser slides and readability still holds:</p>
+<table>
+<thead>
+<tr>
+<th>Slide type</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Title</td>
+<td>1 heading + 1 subtitle + optional tagline</td>
+</tr>
+<tr>
+<td>Content</td>
+<td>1 heading + 4-6 bullets or 2 short paragraphs</td>
+</tr>
+<tr>
+<td>Feature grid</td>
+<td>6 cards max</td>
+</tr>
+<tr>
+<td>Code</td>
+<td>8-10 lines max</td>
+</tr>
+<tr>
+<td>Quote</td>
+<td>1 quote + attribution</td>
+</tr>
+<tr>
+<td>Image</td>
+<td>1 image constrained by viewport</td>
+</tr>
+</tbody></table>
+<h2>Anti-Patterns</h2>
+<ul>
+<li>generic startup gradients with no visual identity</li>
+<li>system-font decks unless intentionally editorial</li>
+<li>long bullet walls</li>
+<li>code blocks that need scrolling</li>
+<li>fixed-height content boxes that break on short screens</li>
+<li>invalid negated CSS functions like <code>-clamp(...)</code></li>
+</ul>
+<h2>Related ECC Skills</h2>
+<ul>
+<li><code>frontend-patterns</code> for component and interaction patterns around the deck</li>
+<li><code>liquid-glass-design</code> when a presentation intentionally borrows Apple glass aesthetics</li>
+<li><code>e2e-testing</code> if you need automated browser verification for the final deck</li>
+</ul>
+<h2>Deliverable Checklist</h2>
+<ul>
+<li>presentation runs from a local file in a browser</li>
+<li>every slide fits the viewport without scrolling</li>
+<li>style is distinctive and intentional</li>
+<li>animation is meaningful, not noisy</li>
+<li>reduced motion is respected</li>
+<li>file paths and customization points are explained at handoff</li>
+</ul>
+
+</body>
+</html>

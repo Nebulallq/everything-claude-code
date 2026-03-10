@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e2e</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Generate and run E2E tests with Playwright<br>agent: e2e-runner<br>subtask: true</h2>
+<h1>E2E Command</h1>
+<p>Generate and run end-to-end tests using Playwright: $ARGUMENTS</p>
+<h2>Your Task</h2>
+<ol>
+<li><strong>Analyze user flow</strong> to test</li>
+<li><strong>Create test journey</strong> with Playwright</li>
+<li><strong>Run tests</strong> and capture artifacts</li>
+<li><strong>Report results</strong> with screenshots/videos</li>
+</ol>
+<h2>Test Structure</h2>
+<pre><code class="language-typescript">import { test, expect } from &#39;@playwright/test&#39;
+
+test.describe(&#39;Feature: [Name]&#39;, () =&gt; {
+  test.beforeEach(async ({ page }) =&gt; {
+    // Setup: Navigate, authenticate, prepare state
+  })
+
+  test(&#39;should [expected behavior]&#39;, async ({ page }) =&gt; {
+    // Arrange: Set up test data
+
+    // Act: Perform user actions
+    await page.click(&#39;[data-testid=&quot;button&quot;]&#39;)
+    await page.fill(&#39;[data-testid=&quot;input&quot;]&#39;, &#39;value&#39;)
+
+    // Assert: Verify results
+    await expect(page.locator(&#39;[data-testid=&quot;result&quot;]&#39;)).toBeVisible()
+  })
+
+  test.afterEach(async ({ page }, testInfo) =&gt; {
+    // Capture screenshot on failure
+    if (testInfo.status !== &#39;passed&#39;) {
+      await page.screenshot({ path: `test-results/${testInfo.title}.png` })
+    }
+  })
+})
+</code></pre>
+<h2>Best Practices</h2>
+<h3>Selectors</h3>
+<ul>
+<li>Prefer <code>data-testid</code> attributes</li>
+<li>Avoid CSS classes (they change)</li>
+<li>Use semantic selectors (roles, labels)</li>
+</ul>
+<h3>Waits</h3>
+<ul>
+<li>Use Playwright&#39;s auto-waiting</li>
+<li>Avoid <code>page.waitForTimeout()</code></li>
+<li>Use <code>expect().toBeVisible()</code> for assertions</li>
+</ul>
+<h3>Test Isolation</h3>
+<ul>
+<li>Each test should be independent</li>
+<li>Clean up test data after</li>
+<li>Don&#39;t rely on test order</li>
+</ul>
+<h2>Artifacts to Capture</h2>
+<ul>
+<li>Screenshots on failure</li>
+<li>Videos for debugging</li>
+<li>Trace files for detailed analysis</li>
+<li>Network logs if relevant</li>
+</ul>
+<h2>Test Categories</h2>
+<ol>
+<li><p><strong>Critical User Flows</strong></p>
+<ul>
+<li>Authentication (login, logout, signup)</li>
+<li>Core feature happy paths</li>
+<li>Payment/checkout flows</li>
+</ul>
+</li>
+<li><p><strong>Edge Cases</strong></p>
+<ul>
+<li>Network failures</li>
+<li>Invalid inputs</li>
+<li>Session expiry</li>
+</ul>
+</li>
+<li><p><strong>Cross-Browser</strong></p>
+<ul>
+<li>Chrome, Firefox, Safari</li>
+<li>Mobile viewports</li>
+</ul>
+</li>
+</ol>
+<h2>Report Format</h2>
+<pre><code>E2E Test Results
+================
+✅ Passed: X
+❌ Failed: Y
+⏭️ Skipped: Z
+
+Failed Tests:
+- test-name: Error message
+  Screenshot: path/to/screenshot.png
+  Video: path/to/video.webm
+</code></pre>
+<hr>
+<p><strong>TIP</strong>: Run with <code>--headed</code> flag for debugging: <code>npx playwright test --headed</code></p>
+
+</body>
+</html>

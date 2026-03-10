@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>harness-audit</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Harness Audit Command</h1>
+<p>Audit the current repository&#39;s agent harness setup and return a prioritized scorecard.</p>
+<h2>Usage</h2>
+<p><code>/harness-audit [scope] [--format text|json]</code></p>
+<ul>
+<li><code>scope</code> (optional): <code>repo</code> (default), <code>hooks</code>, <code>skills</code>, <code>commands</code>, <code>agents</code></li>
+<li><code>--format</code>: output style (<code>text</code> default, <code>json</code> for automation)</li>
+</ul>
+<h2>What to Evaluate</h2>
+<p>Score each category from <code>0</code> to <code>10</code>:</p>
+<ol>
+<li>Tool Coverage</li>
+<li>Context Efficiency</li>
+<li>Quality Gates</li>
+<li>Memory Persistence</li>
+<li>Eval Coverage</li>
+<li>Security Guardrails</li>
+<li>Cost Efficiency</li>
+</ol>
+<h2>Output Contract</h2>
+<p>Return:</p>
+<ol>
+<li><code>overall_score</code> out of 70</li>
+<li>Category scores and concrete findings</li>
+<li>Top 3 actions with exact file paths</li>
+<li>Suggested ECC skills to apply next</li>
+</ol>
+<h2>Checklist</h2>
+<ul>
+<li>Inspect <code>hooks/hooks.json</code>, <code>scripts/hooks/</code>, and hook tests.</li>
+<li>Inspect <code>skills/</code>, command coverage, and agent coverage.</li>
+<li>Verify cross-harness parity for <code>.cursor/</code>, <code>.opencode/</code>, <code>.codex/</code>.</li>
+<li>Flag broken or stale references.</li>
+</ul>
+<h2>Example Result</h2>
+<pre><code class="language-text">Harness Audit (repo): 52/70
+- Quality Gates: 9/10
+- Eval Coverage: 6/10
+- Cost Efficiency: 4/10
+
+Top 3 Actions:
+1) Add cost tracking hook in scripts/hooks/cost-tracker.js
+2) Add pass@k docs and templates in skills/eval-harness/SKILL.md
+3) Add command parity for /harness-audit in .opencode/commands/
+</code></pre>
+<h2>Arguments</h2>
+<p>$ARGUMENTS:</p>
+<ul>
+<li><code>repo|hooks|skills|commands|agents</code> (optional scope)</li>
+<li><code>--format text|json</code> (optional output format)</li>
+</ul>
+
+</body>
+</html>

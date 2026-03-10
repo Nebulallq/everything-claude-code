@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>OpenCode ECC Plugin</h1>
+<blockquote>
+<p>⚠️ This README is specific to OpenCode usage.<br>If you installed ECC via npm (e.g. <code>npm install opencode-ecc</code>), refer to the root README instead.</p>
+</blockquote>
+<p>Everything Claude Code (ECC) plugin for OpenCode - agents, commands, hooks, and skills.</p>
+<h2>Installation</h2>
+<h2>Installation Overview</h2>
+<p>There are two ways to use Everything Claude Code (ECC):</p>
+<ol>
+<li><p><strong>npm package (recommended for most users)</strong><br>Install via npm/bun/yarn and use the <code>ecc-install</code> CLI to set up rules and agents.</p>
+</li>
+<li><p><strong>Direct clone / plugin mode</strong><br>Clone the repository and run OpenCode directly inside it.</p>
+</li>
+</ol>
+<p>Choose the method that matches your workflow below.</p>
+<h3>Option 1: npm Package</h3>
+<pre><code class="language-bash">npm install ecc-universal
+</code></pre>
+<p>Add to your <code>opencode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;ecc-universal&quot;]
+}
+</code></pre>
+<p>After installation, the <code>ecc-install</code> CLI becomes available:</p>
+<pre><code class="language-bash">npx ecc-install typescript
+</code></pre>
+<h3>Option 2: Direct Use</h3>
+<p>Clone and run OpenCode in the repository:</p>
+<pre><code class="language-bash">git clone https://github.com/affaan-m/everything-claude-code
+cd everything-claude-code
+opencode
+</code></pre>
+<h2>Features</h2>
+<h3>Agents (12)</h3>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>planner</td>
+<td>Implementation planning</td>
+</tr>
+<tr>
+<td>architect</td>
+<td>System design</td>
+</tr>
+<tr>
+<td>code-reviewer</td>
+<td>Code review</td>
+</tr>
+<tr>
+<td>security-reviewer</td>
+<td>Security analysis</td>
+</tr>
+<tr>
+<td>tdd-guide</td>
+<td>Test-driven development</td>
+</tr>
+<tr>
+<td>build-error-resolver</td>
+<td>Build error fixes</td>
+</tr>
+<tr>
+<td>e2e-runner</td>
+<td>E2E testing</td>
+</tr>
+<tr>
+<td>doc-updater</td>
+<td>Documentation</td>
+</tr>
+<tr>
+<td>refactor-cleaner</td>
+<td>Dead code cleanup</td>
+</tr>
+<tr>
+<td>go-reviewer</td>
+<td>Go code review</td>
+</tr>
+<tr>
+<td>go-build-resolver</td>
+<td>Go build errors</td>
+</tr>
+<tr>
+<td>database-reviewer</td>
+<td>Database optimization</td>
+</tr>
+</tbody></table>
+<h3>Commands (31)</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/plan</code></td>
+<td>Create implementation plan</td>
+</tr>
+<tr>
+<td><code>/tdd</code></td>
+<td>TDD workflow</td>
+</tr>
+<tr>
+<td><code>/code-review</code></td>
+<td>Review code changes</td>
+</tr>
+<tr>
+<td><code>/security</code></td>
+<td>Security review</td>
+</tr>
+<tr>
+<td><code>/build-fix</code></td>
+<td>Fix build errors</td>
+</tr>
+<tr>
+<td><code>/e2e</code></td>
+<td>E2E tests</td>
+</tr>
+<tr>
+<td><code>/refactor-clean</code></td>
+<td>Remove dead code</td>
+</tr>
+<tr>
+<td><code>/orchestrate</code></td>
+<td>Multi-agent workflow</td>
+</tr>
+<tr>
+<td><code>/learn</code></td>
+<td>Extract patterns</td>
+</tr>
+<tr>
+<td><code>/checkpoint</code></td>
+<td>Save progress</td>
+</tr>
+<tr>
+<td><code>/verify</code></td>
+<td>Verification loop</td>
+</tr>
+<tr>
+<td><code>/eval</code></td>
+<td>Evaluation</td>
+</tr>
+<tr>
+<td><code>/update-docs</code></td>
+<td>Update docs</td>
+</tr>
+<tr>
+<td><code>/update-codemaps</code></td>
+<td>Update codemaps</td>
+</tr>
+<tr>
+<td><code>/test-coverage</code></td>
+<td>Coverage analysis</td>
+</tr>
+<tr>
+<td><code>/setup-pm</code></td>
+<td>Package manager</td>
+</tr>
+<tr>
+<td><code>/go-review</code></td>
+<td>Go code review</td>
+</tr>
+<tr>
+<td><code>/go-test</code></td>
+<td>Go TDD</td>
+</tr>
+<tr>
+<td><code>/go-build</code></td>
+<td>Go build fix</td>
+</tr>
+<tr>
+<td><code>/skill-create</code></td>
+<td>Generate skills</td>
+</tr>
+<tr>
+<td><code>/instinct-status</code></td>
+<td>View instincts</td>
+</tr>
+<tr>
+<td><code>/instinct-import</code></td>
+<td>Import instincts</td>
+</tr>
+<tr>
+<td><code>/instinct-export</code></td>
+<td>Export instincts</td>
+</tr>
+<tr>
+<td><code>/evolve</code></td>
+<td>Cluster instincts</td>
+</tr>
+<tr>
+<td><code>/promote</code></td>
+<td>Promote project instincts</td>
+</tr>
+<tr>
+<td><code>/projects</code></td>
+<td>List known projects</td>
+</tr>
+<tr>
+<td><code>/harness-audit</code></td>
+<td>Audit harness reliability and eval readiness</td>
+</tr>
+<tr>
+<td><code>/loop-start</code></td>
+<td>Start controlled agentic loops</td>
+</tr>
+<tr>
+<td><code>/loop-status</code></td>
+<td>Check loop state and checkpoints</td>
+</tr>
+<tr>
+<td><code>/quality-gate</code></td>
+<td>Run quality gates on file/repo scope</td>
+</tr>
+<tr>
+<td><code>/model-route</code></td>
+<td>Route tasks by model and budget</td>
+</tr>
+</tbody></table>
+<h3>Plugin Hooks</h3>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Event</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Prettier</td>
+<td><code>file.edited</code></td>
+<td>Auto-format JS/TS</td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td><code>tool.execute.after</code></td>
+<td>Check for type errors</td>
+</tr>
+<tr>
+<td>console.log</td>
+<td><code>file.edited</code></td>
+<td>Warn about debug statements</td>
+</tr>
+<tr>
+<td>Notification</td>
+<td><code>session.idle</code></td>
+<td>Desktop notification</td>
+</tr>
+<tr>
+<td>Security</td>
+<td><code>tool.execute.before</code></td>
+<td>Check for secrets</td>
+</tr>
+</tbody></table>
+<h3>Custom Tools</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>run-tests</td>
+<td>Run test suite with options</td>
+</tr>
+<tr>
+<td>check-coverage</td>
+<td>Analyze test coverage</td>
+</tr>
+<tr>
+<td>security-audit</td>
+<td>Security vulnerability scan</td>
+</tr>
+</tbody></table>
+<h2>Hook Event Mapping</h2>
+<p>OpenCode&#39;s plugin system maps to Claude Code hooks:</p>
+<table>
+<thead>
+<tr>
+<th>Claude Code</th>
+<th>OpenCode</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PreToolUse</td>
+<td><code>tool.execute.before</code></td>
+</tr>
+<tr>
+<td>PostToolUse</td>
+<td><code>tool.execute.after</code></td>
+</tr>
+<tr>
+<td>Stop</td>
+<td><code>session.idle</code></td>
+</tr>
+<tr>
+<td>SessionStart</td>
+<td><code>session.created</code></td>
+</tr>
+<tr>
+<td>SessionEnd</td>
+<td><code>session.deleted</code></td>
+</tr>
+</tbody></table>
+<p>OpenCode has 20+ additional events not available in Claude Code.</p>
+<h3>Hook Runtime Controls</h3>
+<p>OpenCode plugin hooks honor the same runtime controls used by Claude Code/Cursor:</p>
+<pre><code class="language-bash">export ECC_HOOK_PROFILE=standard
+export ECC_DISABLED_HOOKS=&quot;pre:bash:tmux-reminder,post:edit:typecheck&quot;
+</code></pre>
+<ul>
+<li><code>ECC_HOOK_PROFILE</code>: <code>minimal</code>, <code>standard</code> (default), <code>strict</code></li>
+<li><code>ECC_DISABLED_HOOKS</code>: comma-separated hook IDs to disable</li>
+</ul>
+<h2>Skills</h2>
+<p>The default OpenCode config loads 11 curated ECC skills via the <code>instructions</code> array:</p>
+<ul>
+<li>coding-standards</li>
+<li>backend-patterns</li>
+<li>frontend-patterns</li>
+<li>frontend-slides</li>
+<li>security-review</li>
+<li>tdd-workflow</li>
+<li>strategic-compact</li>
+<li>eval-harness</li>
+<li>verification-loop</li>
+<li>api-design</li>
+<li>e2e-testing</li>
+</ul>
+<p>Additional specialized skills are shipped in <code>skills/</code> but not loaded by default to keep OpenCode sessions lean:</p>
+<ul>
+<li>article-writing</li>
+<li>content-engine</li>
+<li>market-research</li>
+<li>investor-materials</li>
+<li>investor-outreach</li>
+</ul>
+<h2>Configuration</h2>
+<p>Full configuration in <code>opencode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;$schema&quot;: &quot;https://opencode.ai/config.json&quot;,
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+  &quot;plugin&quot;: [&quot;./.opencode/plugins&quot;],
+  &quot;instructions&quot;: [
+    &quot;skills/tdd-workflow/SKILL.md&quot;,
+    &quot;skills/security-review/SKILL.md&quot;
+  ],
+  &quot;agent&quot;: { /* 12 agents */ },
+  &quot;command&quot;: { /* 24 commands */ }
+}
+</code></pre>
+<h2>License</h2>
+<p>MIT</p>
+
+</body>
+</html>

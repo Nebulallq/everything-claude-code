@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: tdd-workflow<br>description: Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including unit, integration, and E2E tests.<br>origin: ECC</h2>
+<h1>Test-Driven Development Workflow</h1>
+<p>This skill ensures all code development follows TDD principles with comprehensive test coverage.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Writing new features or functionality</li>
+<li>Fixing bugs or issues</li>
+<li>Refactoring existing code</li>
+<li>Adding API endpoints</li>
+<li>Creating new components</li>
+</ul>
+<h2>Core Principles</h2>
+<h3>1. Tests BEFORE Code</h3>
+<p>ALWAYS write tests first, then implement code to make tests pass.</p>
+<h3>2. Coverage Requirements</h3>
+<ul>
+<li>Minimum 80% coverage (unit + integration + E2E)</li>
+<li>All edge cases covered</li>
+<li>Error scenarios tested</li>
+<li>Boundary conditions verified</li>
+</ul>
+<h3>3. Test Types</h3>
+<h4>Unit Tests</h4>
+<ul>
+<li>Individual functions and utilities</li>
+<li>Component logic</li>
+<li>Pure functions</li>
+<li>Helpers and utilities</li>
+</ul>
+<h4>Integration Tests</h4>
+<ul>
+<li>API endpoints</li>
+<li>Database operations</li>
+<li>Service interactions</li>
+<li>External API calls</li>
+</ul>
+<h4>E2E Tests (Playwright)</h4>
+<ul>
+<li>Critical user flows</li>
+<li>Complete workflows</li>
+<li>Browser automation</li>
+<li>UI interactions</li>
+</ul>
+<h2>TDD Workflow Steps</h2>
+<h3>Step 1: Write User Journeys</h3>
+<pre><code>As a [role], I want to [action], so that [benefit]
+
+Example:
+As a user, I want to search for markets semantically,
+so that I can find relevant markets even without exact keywords.
+</code></pre>
+<h3>Step 2: Generate Test Cases</h3>
+<p>For each user journey, create comprehensive test cases:</p>
+<pre><code class="language-typescript">describe(&#39;Semantic Search&#39;, () =&gt; {
+  it(&#39;returns relevant markets for query&#39;, async () =&gt; {
+    // Test implementation
+  })
+
+  it(&#39;handles empty query gracefully&#39;, async () =&gt; {
+    // Test edge case
+  })
+
+  it(&#39;falls back to substring search when Redis unavailable&#39;, async () =&gt; {
+    // Test fallback behavior
+  })
+
+  it(&#39;sorts results by similarity score&#39;, async () =&gt; {
+    // Test sorting logic
+  })
+})
+</code></pre>
+<h3>Step 3: Run Tests (They Should Fail)</h3>
+<pre><code class="language-bash">npm test
+# Tests should fail - we haven&#39;t implemented yet
+</code></pre>
+<h3>Step 4: Implement Code</h3>
+<p>Write minimal code to make tests pass:</p>
+<pre><code class="language-typescript">// Implementation guided by tests
+export async function searchMarkets(query: string) {
+  // Implementation here
+}
+</code></pre>
+<h3>Step 5: Run Tests Again</h3>
+<pre><code class="language-bash">npm test
+# Tests should now pass
+</code></pre>
+<h3>Step 6: Refactor</h3>
+<p>Improve code quality while keeping tests green:</p>
+<ul>
+<li>Remove duplication</li>
+<li>Improve naming</li>
+<li>Optimize performance</li>
+<li>Enhance readability</li>
+</ul>
+<h3>Step 7: Verify Coverage</h3>
+<pre><code class="language-bash">npm run test:coverage
+# Verify 80%+ coverage achieved
+</code></pre>
+<h2>Testing Patterns</h2>
+<h3>Unit Test Pattern (Jest/Vitest)</h3>
+<pre><code class="language-typescript">import { render, screen, fireEvent } from &#39;@testing-library/react&#39;
+import { Button } from &#39;./Button&#39;
+
+describe(&#39;Button Component&#39;, () =&gt; {
+  it(&#39;renders with correct text&#39;, () =&gt; {
+    render(&lt;Button&gt;Click me&lt;/Button&gt;)
+    expect(screen.getByText(&#39;Click me&#39;)).toBeInTheDocument()
+  })
+
+  it(&#39;calls onClick when clicked&#39;, () =&gt; {
+    const handleClick = jest.fn()
+    render(&lt;Button onClick={handleClick}&gt;Click&lt;/Button&gt;)
+
+    fireEvent.click(screen.getByRole(&#39;button&#39;))
+
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  it(&#39;is disabled when disabled prop is true&#39;, () =&gt; {
+    render(&lt;Button disabled&gt;Click&lt;/Button&gt;)
+    expect(screen.getByRole(&#39;button&#39;)).toBeDisabled()
+  })
+})
+</code></pre>
+<h3>API Integration Test Pattern</h3>
+<pre><code class="language-typescript">import { NextRequest } from &#39;next/server&#39;
+import { GET } from &#39;./route&#39;
+
+describe(&#39;GET /api/markets&#39;, () =&gt; {
+  it(&#39;returns markets successfully&#39;, async () =&gt; {
+    const request = new NextRequest(&#39;http://localhost/api/markets&#39;)
+    const response = await GET(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(Array.isArray(data.data)).toBe(true)
+  })
+
+  it(&#39;validates query parameters&#39;, async () =&gt; {
+    const request = new NextRequest(&#39;http://localhost/api/markets?limit=invalid&#39;)
+    const response = await GET(request)
+
+    expect(response.status).toBe(400)
+  })
+
+  it(&#39;handles database errors gracefully&#39;, async () =&gt; {
+    // Mock database failure
+    const request = new NextRequest(&#39;http://localhost/api/markets&#39;)
+    // Test error handling
+  })
+})
+</code></pre>
+<h3>E2E Test Pattern (Playwright)</h3>
+<pre><code class="language-typescript">import { test, expect } from &#39;@playwright/test&#39;
+
+test(&#39;user can search and filter markets&#39;, async ({ page }) =&gt; {
+  // Navigate to markets page
+  await page.goto(&#39;/&#39;)
+  await page.click(&#39;a[href=&quot;/markets&quot;]&#39;)
+
+  // Verify page loaded
+  await expect(page.locator(&#39;h1&#39;)).toContainText(&#39;Markets&#39;)
+
+  // Search for markets
+  await page.fill(&#39;input[placeholder=&quot;Search markets&quot;]&#39;, &#39;election&#39;)
+
+  // Wait for debounce and results
+  await page.waitForTimeout(600)
+
+  // Verify search results displayed
+  const results = page.locator(&#39;[data-testid=&quot;market-card&quot;]&#39;)
+  await expect(results).toHaveCount(5, { timeout: 5000 })
+
+  // Verify results contain search term
+  const firstResult = results.first()
+  await expect(firstResult).toContainText(&#39;election&#39;, { ignoreCase: true })
+
+  // Filter by status
+  await page.click(&#39;button:has-text(&quot;Active&quot;)&#39;)
+
+  // Verify filtered results
+  await expect(results).toHaveCount(3)
+})
+
+test(&#39;user can create a new market&#39;, async ({ page }) =&gt; {
+  // Login first
+  await page.goto(&#39;/creator-dashboard&#39;)
+
+  // Fill market creation form
+  await page.fill(&#39;input[name=&quot;name&quot;]&#39;, &#39;Test Market&#39;)
+  await page.fill(&#39;textarea[name=&quot;description&quot;]&#39;, &#39;Test description&#39;)
+  await page.fill(&#39;input[name=&quot;endDate&quot;]&#39;, &#39;2025-12-31&#39;)
+
+  // Submit form
+  await page.click(&#39;button[type=&quot;submit&quot;]&#39;)
+
+  // Verify success message
+  await expect(page.locator(&#39;text=Market created successfully&#39;)).toBeVisible()
+
+  // Verify redirect to market page
+  await expect(page).toHaveURL(/\/markets\/test-market/)
+})
+</code></pre>
+<h2>Test File Organization</h2>
+<pre><code>src/
+├── components/
+│   ├── Button/
+│   │   ├── Button.tsx
+│   │   ├── Button.test.tsx          # Unit tests
+│   │   └── Button.stories.tsx       # Storybook
+│   └── MarketCard/
+│       ├── MarketCard.tsx
+│       └── MarketCard.test.tsx
+├── app/
+│   └── api/
+│       └── markets/
+│           ├── route.ts
+│           └── route.test.ts         # Integration tests
+└── e2e/
+    ├── markets.spec.ts               # E2E tests
+    ├── trading.spec.ts
+    └── auth.spec.ts
+</code></pre>
+<h2>Mocking External Services</h2>
+<h3>Supabase Mock</h3>
+<pre><code class="language-typescript">jest.mock(&#39;@/lib/supabase&#39;, () =&gt; ({
+  supabase: {
+    from: jest.fn(() =&gt; ({
+      select: jest.fn(() =&gt; ({
+        eq: jest.fn(() =&gt; Promise.resolve({
+          data: [{ id: 1, name: &#39;Test Market&#39; }],
+          error: null
+        }))
+      }))
+    }))
+  }
+}))
+</code></pre>
+<h3>Redis Mock</h3>
+<pre><code class="language-typescript">jest.mock(&#39;@/lib/redis&#39;, () =&gt; ({
+  searchMarketsByVector: jest.fn(() =&gt; Promise.resolve([
+    { slug: &#39;test-market&#39;, similarity_score: 0.95 }
+  ])),
+  checkRedisHealth: jest.fn(() =&gt; Promise.resolve({ connected: true }))
+}))
+</code></pre>
+<h3>OpenAI Mock</h3>
+<pre><code class="language-typescript">jest.mock(&#39;@/lib/openai&#39;, () =&gt; ({
+  generateEmbedding: jest.fn(() =&gt; Promise.resolve(
+    new Array(1536).fill(0.1) // Mock 1536-dim embedding
+  ))
+}))
+</code></pre>
+<h2>Test Coverage Verification</h2>
+<h3>Run Coverage Report</h3>
+<pre><code class="language-bash">npm run test:coverage
+</code></pre>
+<h3>Coverage Thresholds</h3>
+<pre><code class="language-json">{
+  &quot;jest&quot;: {
+    &quot;coverageThresholds&quot;: {
+      &quot;global&quot;: {
+        &quot;branches&quot;: 80,
+        &quot;functions&quot;: 80,
+        &quot;lines&quot;: 80,
+        &quot;statements&quot;: 80
+      }
+    }
+  }
+}
+</code></pre>
+<h2>Common Testing Mistakes to Avoid</h2>
+<h3>❌ WRONG: Testing Implementation Details</h3>
+<pre><code class="language-typescript">// Don&#39;t test internal state
+expect(component.state.count).toBe(5)
+</code></pre>
+<h3>✅ CORRECT: Test User-Visible Behavior</h3>
+<pre><code class="language-typescript">// Test what users see
+expect(screen.getByText(&#39;Count: 5&#39;)).toBeInTheDocument()
+</code></pre>
+<h3>❌ WRONG: Brittle Selectors</h3>
+<pre><code class="language-typescript">// Breaks easily
+await page.click(&#39;.css-class-xyz&#39;)
+</code></pre>
+<h3>✅ CORRECT: Semantic Selectors</h3>
+<pre><code class="language-typescript">// Resilient to changes
+await page.click(&#39;button:has-text(&quot;Submit&quot;)&#39;)
+await page.click(&#39;[data-testid=&quot;submit-button&quot;]&#39;)
+</code></pre>
+<h3>❌ WRONG: No Test Isolation</h3>
+<pre><code class="language-typescript">// Tests depend on each other
+test(&#39;creates user&#39;, () =&gt; { /* ... */ })
+test(&#39;updates same user&#39;, () =&gt; { /* depends on previous test */ })
+</code></pre>
+<h3>✅ CORRECT: Independent Tests</h3>
+<pre><code class="language-typescript">// Each test sets up its own data
+test(&#39;creates user&#39;, () =&gt; {
+  const user = createTestUser()
+  // Test logic
+})
+
+test(&#39;updates user&#39;, () =&gt; {
+  const user = createTestUser()
+  // Update logic
+})
+</code></pre>
+<h2>Continuous Testing</h2>
+<h3>Watch Mode During Development</h3>
+<pre><code class="language-bash">npm test -- --watch
+# Tests run automatically on file changes
+</code></pre>
+<h3>Pre-Commit Hook</h3>
+<pre><code class="language-bash"># Runs before every commit
+npm test &amp;&amp; npm run lint
+</code></pre>
+<h3>CI/CD Integration</h3>
+<pre><code class="language-yaml"># GitHub Actions
+- name: Run Tests
+  run: npm test -- --coverage
+- name: Upload Coverage
+  uses: codecov/codecov-action@v3
+</code></pre>
+<h2>Best Practices</h2>
+<ol>
+<li><strong>Write Tests First</strong> - Always TDD</li>
+<li><strong>One Assert Per Test</strong> - Focus on single behavior</li>
+<li><strong>Descriptive Test Names</strong> - Explain what&#39;s tested</li>
+<li><strong>Arrange-Act-Assert</strong> - Clear test structure</li>
+<li><strong>Mock External Dependencies</strong> - Isolate unit tests</li>
+<li><strong>Test Edge Cases</strong> - Null, undefined, empty, large</li>
+<li><strong>Test Error Paths</strong> - Not just happy paths</li>
+<li><strong>Keep Tests Fast</strong> - Unit tests &lt; 50ms each</li>
+<li><strong>Clean Up After Tests</strong> - No side effects</li>
+<li><strong>Review Coverage Reports</strong> - Identify gaps</li>
+</ol>
+<h2>Success Metrics</h2>
+<ul>
+<li>80%+ code coverage achieved</li>
+<li>All tests passing (green)</li>
+<li>No skipped or disabled tests</li>
+<li>Fast test execution (&lt; 30s for unit tests)</li>
+<li>E2E tests cover critical user flows</li>
+<li>Tests catch bugs before production</li>
+</ul>
+<hr>
+<p><strong>Remember</strong>: Tests are not optional. They are the safety net that enables confident refactoring, rapid development, and production reliability.</p>
+
+</body>
+</html>

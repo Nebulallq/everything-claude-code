@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: security-review<br>description: Use this skill when adding authentication, handling user input, working with secrets, creating API endpoints, or implementing payment/sensitive features. Provides comprehensive security checklist and patterns.<br>origin: ECC</h2>
+<h1>Security Review Skill</h1>
+<p>This skill ensures all code follows security best practices and identifies potential vulnerabilities.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Implementing authentication or authorization</li>
+<li>Handling user input or file uploads</li>
+<li>Creating new API endpoints</li>
+<li>Working with secrets or credentials</li>
+<li>Implementing payment features</li>
+<li>Storing or transmitting sensitive data</li>
+<li>Integrating third-party APIs</li>
+</ul>
+<h2>Security Checklist</h2>
+<h3>1. Secrets Management</h3>
+<h4>❌ NEVER Do This</h4>
+<pre><code class="language-typescript">const apiKey = &quot;sk-proj-xxxxx&quot;  // Hardcoded secret
+const dbPassword = &quot;password123&quot; // In source code
+</code></pre>
+<h4>✅ ALWAYS Do This</h4>
+<pre><code class="language-typescript">const apiKey = process.env.OPENAI_API_KEY
+const dbUrl = process.env.DATABASE_URL
+
+// Verify secrets exist
+if (!apiKey) {
+  throw new Error(&#39;OPENAI_API_KEY not configured&#39;)
+}
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> No hardcoded API keys, tokens, or passwords</li>
+<li><input disabled="" type="checkbox"> All secrets in environment variables</li>
+<li><input disabled="" type="checkbox"> <code>.env.local</code> in .gitignore</li>
+<li><input disabled="" type="checkbox"> No secrets in git history</li>
+<li><input disabled="" type="checkbox"> Production secrets in hosting platform (Vercel, Railway)</li>
+</ul>
+<h3>2. Input Validation</h3>
+<h4>Always Validate User Input</h4>
+<pre><code class="language-typescript">import { z } from &#39;zod&#39;
+
+// Define validation schema
+const CreateUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+  age: z.number().int().min(0).max(150)
+})
+
+// Validate before processing
+export async function createUser(input: unknown) {
+  try {
+    const validated = CreateUserSchema.parse(input)
+    return await db.users.create(validated)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, errors: error.errors }
+    }
+    throw error
+  }
+}
+</code></pre>
+<h4>File Upload Validation</h4>
+<pre><code class="language-typescript">function validateFileUpload(file: File) {
+  // Size check (5MB max)
+  const maxSize = 5 * 1024 * 1024
+  if (file.size &gt; maxSize) {
+    throw new Error(&#39;File too large (max 5MB)&#39;)
+  }
+
+  // Type check
+  const allowedTypes = [&#39;image/jpeg&#39;, &#39;image/png&#39;, &#39;image/gif&#39;]
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(&#39;Invalid file type&#39;)
+  }
+
+  // Extension check
+  const allowedExtensions = [&#39;.jpg&#39;, &#39;.jpeg&#39;, &#39;.png&#39;, &#39;.gif&#39;]
+  const extension = file.name.toLowerCase().match(/\.[^.]+$/)?.[0]
+  if (!extension || !allowedExtensions.includes(extension)) {
+    throw new Error(&#39;Invalid file extension&#39;)
+  }
+
+  return true
+}
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> All user inputs validated with schemas</li>
+<li><input disabled="" type="checkbox"> File uploads restricted (size, type, extension)</li>
+<li><input disabled="" type="checkbox"> No direct use of user input in queries</li>
+<li><input disabled="" type="checkbox"> Whitelist validation (not blacklist)</li>
+<li><input disabled="" type="checkbox"> Error messages don&#39;t leak sensitive info</li>
+</ul>
+<h3>3. SQL Injection Prevention</h3>
+<h4>❌ NEVER Concatenate SQL</h4>
+<pre><code class="language-typescript">// DANGEROUS - SQL Injection vulnerability
+const query = `SELECT * FROM users WHERE email = &#39;${userEmail}&#39;`
+await db.query(query)
+</code></pre>
+<h4>✅ ALWAYS Use Parameterized Queries</h4>
+<pre><code class="language-typescript">// Safe - parameterized query
+const { data } = await supabase
+  .from(&#39;users&#39;)
+  .select(&#39;*&#39;)
+  .eq(&#39;email&#39;, userEmail)
+
+// Or with raw SQL
+await db.query(
+  &#39;SELECT * FROM users WHERE email = $1&#39;,
+  [userEmail]
+)
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> All database queries use parameterized queries</li>
+<li><input disabled="" type="checkbox"> No string concatenation in SQL</li>
+<li><input disabled="" type="checkbox"> ORM/query builder used correctly</li>
+<li><input disabled="" type="checkbox"> Supabase queries properly sanitized</li>
+</ul>
+<h3>4. Authentication &amp; Authorization</h3>
+<h4>JWT Token Handling</h4>
+<pre><code class="language-typescript">// ❌ WRONG: localStorage (vulnerable to XSS)
+localStorage.setItem(&#39;token&#39;, token)
+
+// ✅ CORRECT: httpOnly cookies
+res.setHeader(&#39;Set-Cookie&#39;,
+  `token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=3600`)
+</code></pre>
+<h4>Authorization Checks</h4>
+<pre><code class="language-typescript">export async function deleteUser(userId: string, requesterId: string) {
+  // ALWAYS verify authorization first
+  const requester = await db.users.findUnique({
+    where: { id: requesterId }
+  })
+
+  if (requester.role !== &#39;admin&#39;) {
+    return NextResponse.json(
+      { error: &#39;Unauthorized&#39; },
+      { status: 403 }
+    )
+  }
+
+  // Proceed with deletion
+  await db.users.delete({ where: { id: userId } })
+}
+</code></pre>
+<h4>Row Level Security (Supabase)</h4>
+<pre><code class="language-sql">-- Enable RLS on all tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Users can only view their own data
+CREATE POLICY &quot;Users view own data&quot;
+  ON users FOR SELECT
+  USING (auth.uid() = id);
+
+-- Users can only update their own data
+CREATE POLICY &quot;Users update own data&quot;
+  ON users FOR UPDATE
+  USING (auth.uid() = id);
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> Tokens stored in httpOnly cookies (not localStorage)</li>
+<li><input disabled="" type="checkbox"> Authorization checks before sensitive operations</li>
+<li><input disabled="" type="checkbox"> Row Level Security enabled in Supabase</li>
+<li><input disabled="" type="checkbox"> Role-based access control implemented</li>
+<li><input disabled="" type="checkbox"> Session management secure</li>
+</ul>
+<h3>5. XSS Prevention</h3>
+<h4>Sanitize HTML</h4>
+<pre><code class="language-typescript">import DOMPurify from &#39;isomorphic-dompurify&#39;
+
+// ALWAYS sanitize user-provided HTML
+function renderUserContent(html: string) {
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [&#39;b&#39;, &#39;i&#39;, &#39;em&#39;, &#39;strong&#39;, &#39;p&#39;],
+    ALLOWED_ATTR: []
+  })
+  return &lt;div dangerouslySetInnerHTML={{ __html: clean }} /&gt;
+}
+</code></pre>
+<h4>Content Security Policy</h4>
+<pre><code class="language-typescript">// next.config.js
+const securityHeaders = [
+  {
+    key: &#39;Content-Security-Policy&#39;,
+    value: `
+      default-src &#39;self&#39;;
+      script-src &#39;self&#39; &#39;unsafe-eval&#39; &#39;unsafe-inline&#39;;
+      style-src &#39;self&#39; &#39;unsafe-inline&#39;;
+      img-src &#39;self&#39; data: https:;
+      font-src &#39;self&#39;;
+      connect-src &#39;self&#39; https://api.example.com;
+    `.replace(/\s{2,}/g, &#39; &#39;).trim()
+  }
+]
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> User-provided HTML sanitized</li>
+<li><input disabled="" type="checkbox"> CSP headers configured</li>
+<li><input disabled="" type="checkbox"> No unvalidated dynamic content rendering</li>
+<li><input disabled="" type="checkbox"> React&#39;s built-in XSS protection used</li>
+</ul>
+<h3>6. CSRF Protection</h3>
+<h4>CSRF Tokens</h4>
+<pre><code class="language-typescript">import { csrf } from &#39;@/lib/csrf&#39;
+
+export async function POST(request: Request) {
+  const token = request.headers.get(&#39;X-CSRF-Token&#39;)
+
+  if (!csrf.verify(token)) {
+    return NextResponse.json(
+      { error: &#39;Invalid CSRF token&#39; },
+      { status: 403 }
+    )
+  }
+
+  // Process request
+}
+</code></pre>
+<h4>SameSite Cookies</h4>
+<pre><code class="language-typescript">res.setHeader(&#39;Set-Cookie&#39;,
+  `session=${sessionId}; HttpOnly; Secure; SameSite=Strict`)
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> CSRF tokens on state-changing operations</li>
+<li><input disabled="" type="checkbox"> SameSite=Strict on all cookies</li>
+<li><input disabled="" type="checkbox"> Double-submit cookie pattern implemented</li>
+</ul>
+<h3>7. Rate Limiting</h3>
+<h4>API Rate Limiting</h4>
+<pre><code class="language-typescript">import rateLimit from &#39;express-rate-limit&#39;
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  message: &#39;Too many requests&#39;
+})
+
+// Apply to routes
+app.use(&#39;/api/&#39;, limiter)
+</code></pre>
+<h4>Expensive Operations</h4>
+<pre><code class="language-typescript">// Aggressive rate limiting for searches
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 requests per minute
+  message: &#39;Too many search requests&#39;
+})
+
+app.use(&#39;/api/search&#39;, searchLimiter)
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> Rate limiting on all API endpoints</li>
+<li><input disabled="" type="checkbox"> Stricter limits on expensive operations</li>
+<li><input disabled="" type="checkbox"> IP-based rate limiting</li>
+<li><input disabled="" type="checkbox"> User-based rate limiting (authenticated)</li>
+</ul>
+<h3>8. Sensitive Data Exposure</h3>
+<h4>Logging</h4>
+<pre><code class="language-typescript">// ❌ WRONG: Logging sensitive data
+console.log(&#39;User login:&#39;, { email, password })
+console.log(&#39;Payment:&#39;, { cardNumber, cvv })
+
+// ✅ CORRECT: Redact sensitive data
+console.log(&#39;User login:&#39;, { email, userId })
+console.log(&#39;Payment:&#39;, { last4: card.last4, userId })
+</code></pre>
+<h4>Error Messages</h4>
+<pre><code class="language-typescript">// ❌ WRONG: Exposing internal details
+catch (error) {
+  return NextResponse.json(
+    { error: error.message, stack: error.stack },
+    { status: 500 }
+  )
+}
+
+// ✅ CORRECT: Generic error messages
+catch (error) {
+  console.error(&#39;Internal error:&#39;, error)
+  return NextResponse.json(
+    { error: &#39;An error occurred. Please try again.&#39; },
+    { status: 500 }
+  )
+}
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> No passwords, tokens, or secrets in logs</li>
+<li><input disabled="" type="checkbox"> Error messages generic for users</li>
+<li><input disabled="" type="checkbox"> Detailed errors only in server logs</li>
+<li><input disabled="" type="checkbox"> No stack traces exposed to users</li>
+</ul>
+<h3>9. Blockchain Security (Solana)</h3>
+<h4>Wallet Verification</h4>
+<pre><code class="language-typescript">import { verify } from &#39;@solana/web3.js&#39;
+
+async function verifyWalletOwnership(
+  publicKey: string,
+  signature: string,
+  message: string
+) {
+  try {
+    const isValid = verify(
+      Buffer.from(message),
+      Buffer.from(signature, &#39;base64&#39;),
+      Buffer.from(publicKey, &#39;base64&#39;)
+    )
+    return isValid
+  } catch (error) {
+    return false
+  }
+}
+</code></pre>
+<h4>Transaction Verification</h4>
+<pre><code class="language-typescript">async function verifyTransaction(transaction: Transaction) {
+  // Verify recipient
+  if (transaction.to !== expectedRecipient) {
+    throw new Error(&#39;Invalid recipient&#39;)
+  }
+
+  // Verify amount
+  if (transaction.amount &gt; maxAmount) {
+    throw new Error(&#39;Amount exceeds limit&#39;)
+  }
+
+  // Verify user has sufficient balance
+  const balance = await getBalance(transaction.from)
+  if (balance &lt; transaction.amount) {
+    throw new Error(&#39;Insufficient balance&#39;)
+  }
+
+  return true
+}
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> Wallet signatures verified</li>
+<li><input disabled="" type="checkbox"> Transaction details validated</li>
+<li><input disabled="" type="checkbox"> Balance checks before transactions</li>
+<li><input disabled="" type="checkbox"> No blind transaction signing</li>
+</ul>
+<h3>10. Dependency Security</h3>
+<h4>Regular Updates</h4>
+<pre><code class="language-bash"># Check for vulnerabilities
+npm audit
+
+# Fix automatically fixable issues
+npm audit fix
+
+# Update dependencies
+npm update
+
+# Check for outdated packages
+npm outdated
+</code></pre>
+<h4>Lock Files</h4>
+<pre><code class="language-bash"># ALWAYS commit lock files
+git add package-lock.json
+
+# Use in CI/CD for reproducible builds
+npm ci  # Instead of npm install
+</code></pre>
+<h4>Verification Steps</h4>
+<ul>
+<li><input disabled="" type="checkbox"> Dependencies up to date</li>
+<li><input disabled="" type="checkbox"> No known vulnerabilities (npm audit clean)</li>
+<li><input disabled="" type="checkbox"> Lock files committed</li>
+<li><input disabled="" type="checkbox"> Dependabot enabled on GitHub</li>
+<li><input disabled="" type="checkbox"> Regular security updates</li>
+</ul>
+<h2>Security Testing</h2>
+<h3>Automated Security Tests</h3>
+<pre><code class="language-typescript">// Test authentication
+test(&#39;requires authentication&#39;, async () =&gt; {
+  const response = await fetch(&#39;/api/protected&#39;)
+  expect(response.status).toBe(401)
+})
+
+// Test authorization
+test(&#39;requires admin role&#39;, async () =&gt; {
+  const response = await fetch(&#39;/api/admin&#39;, {
+    headers: { Authorization: `Bearer ${userToken}` }
+  })
+  expect(response.status).toBe(403)
+})
+
+// Test input validation
+test(&#39;rejects invalid input&#39;, async () =&gt; {
+  const response = await fetch(&#39;/api/users&#39;, {
+    method: &#39;POST&#39;,
+    body: JSON.stringify({ email: &#39;not-an-email&#39; })
+  })
+  expect(response.status).toBe(400)
+})
+
+// Test rate limiting
+test(&#39;enforces rate limits&#39;, async () =&gt; {
+  const requests = Array(101).fill(null).map(() =&gt;
+    fetch(&#39;/api/endpoint&#39;)
+  )
+
+  const responses = await Promise.all(requests)
+  const tooManyRequests = responses.filter(r =&gt; r.status === 429)
+
+  expect(tooManyRequests.length).toBeGreaterThan(0)
+})
+</code></pre>
+<h2>Pre-Deployment Security Checklist</h2>
+<p>Before ANY production deployment:</p>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>Secrets</strong>: No hardcoded secrets, all in env vars</li>
+<li><input disabled="" type="checkbox"> <strong>Input Validation</strong>: All user inputs validated</li>
+<li><input disabled="" type="checkbox"> <strong>SQL Injection</strong>: All queries parameterized</li>
+<li><input disabled="" type="checkbox"> <strong>XSS</strong>: User content sanitized</li>
+<li><input disabled="" type="checkbox"> <strong>CSRF</strong>: Protection enabled</li>
+<li><input disabled="" type="checkbox"> <strong>Authentication</strong>: Proper token handling</li>
+<li><input disabled="" type="checkbox"> <strong>Authorization</strong>: Role checks in place</li>
+<li><input disabled="" type="checkbox"> <strong>Rate Limiting</strong>: Enabled on all endpoints</li>
+<li><input disabled="" type="checkbox"> <strong>HTTPS</strong>: Enforced in production</li>
+<li><input disabled="" type="checkbox"> <strong>Security Headers</strong>: CSP, X-Frame-Options configured</li>
+<li><input disabled="" type="checkbox"> <strong>Error Handling</strong>: No sensitive data in errors</li>
+<li><input disabled="" type="checkbox"> <strong>Logging</strong>: No sensitive data logged</li>
+<li><input disabled="" type="checkbox"> <strong>Dependencies</strong>: Up to date, no vulnerabilities</li>
+<li><input disabled="" type="checkbox"> <strong>Row Level Security</strong>: Enabled in Supabase</li>
+<li><input disabled="" type="checkbox"> <strong>CORS</strong>: Properly configured</li>
+<li><input disabled="" type="checkbox"> <strong>File Uploads</strong>: Validated (size, type)</li>
+<li><input disabled="" type="checkbox"> <strong>Wallet Signatures</strong>: Verified (if blockchain)</li>
+</ul>
+<h2>Resources</h2>
+<ul>
+<li><a href="https://owasp.org/www-project-top-ten/">OWASP Top 10</a></li>
+<li><a href="https://nextjs.org/docs/security">Next.js Security</a></li>
+<li><a href="https://supabase.com/docs/guides/auth">Supabase Security</a></li>
+<li><a href="https://portswigger.net/web-security">Web Security Academy</a></li>
+</ul>
+<hr>
+<p><strong>Remember</strong>: Security is not optional. One vulnerability can compromise the entire platform. When in doubt, err on the side of caution.</p>
+
+</body>
+</html>
