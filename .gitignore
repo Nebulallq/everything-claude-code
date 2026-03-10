@@ -40,3 +40,6 @@ examples/sessions/*.tmp
 
 # Local drafts
 marketing/
+
+# Generated HTML files (Markdown to HTML conversion)
+*.html
