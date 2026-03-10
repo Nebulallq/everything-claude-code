@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: agent-harness-construction<br>description: Design and optimize AI agent action spaces, tool definitions, and observation formatting for higher completion rates.<br>origin: ECC</h2>
+<h1>Agent Harness Construction</h1>
+<p>Use this skill when you are improving how an agent plans, calls tools, recovers from errors, and converges on completion.</p>
+<h2>Core Model</h2>
+<p>Agent output quality is constrained by:</p>
+<ol>
+<li>Action space quality</li>
+<li>Observation quality</li>
+<li>Recovery quality</li>
+<li>Context budget quality</li>
+</ol>
+<h2>Action Space Design</h2>
+<ol>
+<li>Use stable, explicit tool names.</li>
+<li>Keep inputs schema-first and narrow.</li>
+<li>Return deterministic output shapes.</li>
+<li>Avoid catch-all tools unless isolation is impossible.</li>
+</ol>
+<h2>Granularity Rules</h2>
+<ul>
+<li>Use micro-tools for high-risk operations (deploy, migration, permissions).</li>
+<li>Use medium tools for common edit/read/search loops.</li>
+<li>Use macro-tools only when round-trip overhead is the dominant cost.</li>
+</ul>
+<h2>Observation Design</h2>
+<p>Every tool response should include:</p>
+<ul>
+<li><code>status</code>: success|warning|error</li>
+<li><code>summary</code>: one-line result</li>
+<li><code>next_actions</code>: actionable follow-ups</li>
+<li><code>artifacts</code>: file paths / IDs</li>
+</ul>
+<h2>Error Recovery Contract</h2>
+<p>For every error path, include:</p>
+<ul>
+<li>root cause hint</li>
+<li>safe retry instruction</li>
+<li>explicit stop condition</li>
+</ul>
+<h2>Context Budgeting</h2>
+<ol>
+<li>Keep system prompt minimal and invariant.</li>
+<li>Move large guidance into skills loaded on demand.</li>
+<li>Prefer references to files over inlining long documents.</li>
+<li>Compact at phase boundaries, not arbitrary token thresholds.</li>
+</ol>
+<h2>Architecture Pattern Guidance</h2>
+<ul>
+<li>ReAct: best for exploratory tasks with uncertain path.</li>
+<li>Function-calling: best for structured deterministic flows.</li>
+<li>Hybrid (recommended): ReAct planning + typed tool execution.</li>
+</ul>
+<h2>Benchmarking</h2>
+<p>Track:</p>
+<ul>
+<li>completion rate</li>
+<li>retries per task</li>
+<li>pass@1 and pass@3</li>
+<li>cost per successful task</li>
+</ul>
+<h2>Anti-Patterns</h2>
+<ul>
+<li>Too many tools with overlapping semantics.</li>
+<li>Opaque tool output with no recovery hints.</li>
+<li>Error-only output without next steps.</li>
+<li>Context overloading with irrelevant references.</li>
+</ul>
+
+</body>
+</html>

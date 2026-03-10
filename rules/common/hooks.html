@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hooks</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Hooks System</h1>
+<h2>Hook Types</h2>
+<ul>
+<li><strong>PreToolUse</strong>: Before tool execution (validation, parameter modification)</li>
+<li><strong>PostToolUse</strong>: After tool execution (auto-format, checks)</li>
+<li><strong>Stop</strong>: When session ends (final verification)</li>
+</ul>
+<h2>Auto-Accept Permissions</h2>
+<p>Use with caution:</p>
+<ul>
+<li>Enable for trusted, well-defined plans</li>
+<li>Disable for exploratory work</li>
+<li>Never use dangerously-skip-permissions flag</li>
+<li>Configure <code>allowedTools</code> in <code>~/.claude.json</code> instead</li>
+</ul>
+<h2>TodoWrite Best Practices</h2>
+<p>Use TodoWrite tool to:</p>
+<ul>
+<li>Track progress on multi-step tasks</li>
+<li>Verify understanding of instructions</li>
+<li>Enable real-time steering</li>
+<li>Show granular implementation steps</li>
+</ul>
+<p>Todo list reveals:</p>
+<ul>
+<li>Out of order steps</li>
+<li>Missing items</li>
+<li>Extra unnecessary items</li>
+<li>Wrong granularity</li>
+<li>Misinterpreted requirements</li>
+</ul>
+
+</body>
+</html>

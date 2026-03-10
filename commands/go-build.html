@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>go-build</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Fix Go build errors, go vet warnings, and linter issues incrementally. Invokes the go-build-resolver agent for minimal, surgical fixes.</h2>
+<h1>Go Build and Fix</h1>
+<p>This command invokes the <strong>go-build-resolver</strong> agent to incrementally fix Go build errors with minimal changes.</p>
+<h2>What This Command Does</h2>
+<ol>
+<li><strong>Run Diagnostics</strong>: Execute <code>go build</code>, <code>go vet</code>, <code>staticcheck</code></li>
+<li><strong>Parse Errors</strong>: Group by file and sort by severity</li>
+<li><strong>Fix Incrementally</strong>: One error at a time</li>
+<li><strong>Verify Each Fix</strong>: Re-run build after each change</li>
+<li><strong>Report Summary</strong>: Show what was fixed and what remains</li>
+</ol>
+<h2>When to Use</h2>
+<p>Use <code>/go-build</code> when:</p>
+<ul>
+<li><code>go build ./...</code> fails with errors</li>
+<li><code>go vet ./...</code> reports issues</li>
+<li><code>golangci-lint run</code> shows warnings</li>
+<li>Module dependencies are broken</li>
+<li>After pulling changes that break the build</li>
+</ul>
+<h2>Diagnostic Commands Run</h2>
+<pre><code class="language-bash"># Primary build check
+go build ./...
+
+# Static analysis
+go vet ./...
+
+# Extended linting (if available)
+staticcheck ./...
+golangci-lint run
+
+# Module issues
+go mod verify
+go mod tidy -v
+</code></pre>
+<h2>Example Session</h2>
+<pre><code class="language-text">User: /go-build
+
+Agent:
+# Go Build Resolution
+
+## Initial Diagnostics
+
+```bash
+$ go build ./...
+internal/service/user.go:25:15: undefined: UserRepository
+internal/handler/api.go:42:9: cannot use x (type string) as type int
+internal/handler/api.go:58:2: missing return at end of function
+</code></pre>
+<p>Errors found: 3</p>
+<h2>Fix 1: Undefined Identifier</h2>
+<p>File: internal/service/user.go:25<br>Error: undefined: UserRepository<br>Cause: Missing import</p>
+<pre><code class="language-go">// Added import
+import &quot;project/internal/repository&quot;
+
+// Changed
+var repo UserRepository
+// To
+var repo repository.UserRepository
+</code></pre>
+<pre><code class="language-bash">$ go build ./...
+# 2 errors remaining
+</code></pre>
+<h2>Fix 2: Type Mismatch</h2>
+<p>File: internal/handler/api.go:42<br>Error: cannot use x (type string) as type int</p>
+<pre><code class="language-go">// Changed
+count := params.Get(&quot;count&quot;)
+// To
+countStr := params.Get(&quot;count&quot;)
+count, _ := strconv.Atoi(countStr)
+</code></pre>
+<pre><code class="language-bash">$ go build ./...
+# 1 error remaining
+</code></pre>
+<h2>Fix 3: Missing Return</h2>
+<p>File: internal/handler/api.go:58<br>Error: missing return at end of function</p>
+<pre><code class="language-go">func GetUser(id string) (*User, error) {
+    if id == &quot;&quot; {
+        return nil, ErrInvalidID
+    }
+    user := findUser(id)
+    // Added missing return
+    return user, nil
+}
+</code></pre>
+<pre><code class="language-bash">$ go build ./...
+# Build successful!
+</code></pre>
+<h2>Final Verification</h2>
+<pre><code class="language-bash">$ go vet ./...
+# No issues
+
+$ go test ./...
+ok      project/internal/service   0.015s
+ok      project/internal/handler   0.023s
+</code></pre>
+<h2>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Build errors fixed</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Vet warnings fixed</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Files modified</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Remaining issues</td>
+<td>0</td>
+</tr>
+</tbody></table>
+<p>Build Status: ✅ SUCCESS</p>
+<pre><code>
+## Common Errors Fixed
+
+| Error | Typical Fix |
+|-------|-------------|
+| `undefined: X` | Add import or fix typo |
+| `cannot use X as Y` | Type conversion or fix assignment |
+| `missing return` | Add return statement |
+| `X does not implement Y` | Add missing method |
+| `import cycle` | Restructure packages |
+| `declared but not used` | Remove or use variable |
+| `cannot find package` | `go get` or `go mod tidy` |
+
+## Fix Strategy
+
+1. **Build errors first** - Code must compile
+2. **Vet warnings second** - Fix suspicious constructs
+3. **Lint warnings third** - Style and best practices
+4. **One fix at a time** - Verify each change
+5. **Minimal changes** - Don&#39;t refactor, just fix
+
+## Stop Conditions
+
+The agent will stop and report if:
+- Same error persists after 3 attempts
+- Fix introduces more errors
+- Requires architectural changes
+- Missing external dependencies
+
+## Related Commands
+
+- `/go-test` - Run tests after build succeeds
+- `/go-review` - Review code quality
+- `/verify` - Full verification loop
+
+## Related
+
+- Agent: `agents/go-build-resolver.md`
+- Skill: `skills/golang-patterns/`
+</code></pre>
+
+</body>
+</html>

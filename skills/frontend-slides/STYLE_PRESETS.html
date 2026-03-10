@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STYLE_PRESETS</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Style Presets Reference</h1>
+<p>Curated visual styles for <code>frontend-slides</code>.</p>
+<p>Use this file for:</p>
+<ul>
+<li>the mandatory viewport-fitting CSS base</li>
+<li>preset selection and mood mapping</li>
+<li>CSS gotchas and validation rules</li>
+</ul>
+<p>Abstract shapes only. Avoid illustrations unless the user explicitly asks for them.</p>
+<h2>Viewport Fit Is Non-Negotiable</h2>
+<p>Every slide must fully fit in one viewport.</p>
+<h3>Golden Rule</h3>
+<pre><code class="language-text">Each slide = exactly one viewport height.
+Too much content = split into more slides.
+Never scroll inside a slide.
+</code></pre>
+<h3>Density Limits</h3>
+<table>
+<thead>
+<tr>
+<th>Slide Type</th>
+<th>Maximum Content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Title slide</td>
+<td>1 heading + 1 subtitle + optional tagline</td>
+</tr>
+<tr>
+<td>Content slide</td>
+<td>1 heading + 4-6 bullets or 2 paragraphs</td>
+</tr>
+<tr>
+<td>Feature grid</td>
+<td>6 cards maximum</td>
+</tr>
+<tr>
+<td>Code slide</td>
+<td>8-10 lines maximum</td>
+</tr>
+<tr>
+<td>Quote slide</td>
+<td>1 quote + attribution</td>
+</tr>
+<tr>
+<td>Image slide</td>
+<td>1 image, ideally under 60vh</td>
+</tr>
+</tbody></table>
+<h2>Mandatory Base CSS</h2>
+<p>Copy this block into every generated presentation and then theme on top of it.</p>
+<pre><code class="language-css">/* ===========================================
+   VIEWPORT FITTING: MANDATORY BASE STYLES
+   =========================================== */
+
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+}
+
+html {
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+}
+
+.slide {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 100%;
+    overflow: hidden;
+    padding: var(--slide-padding);
+}
+
+:root {
+    --title-size: clamp(1.5rem, 5vw, 4rem);
+    --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+    --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+    --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+    --small-size: clamp(0.65rem, 1vw, 0.875rem);
+
+    --slide-padding: clamp(1rem, 4vw, 4rem);
+    --content-gap: clamp(0.5rem, 2vw, 2rem);
+    --element-gap: clamp(0.25rem, 1vw, 1rem);
+}
+
+.card, .container, .content-box {
+    max-width: min(90vw, 1000px);
+    max-height: min(80vh, 700px);
+}
+
+.feature-list, .bullet-list {
+    gap: clamp(0.4rem, 1vh, 1rem);
+}
+
+.feature-list li, .bullet-list li {
+    font-size: var(--body-size);
+    line-height: 1.4;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+}
+
+img, .image-container {
+    max-width: 100%;
+    max-height: min(50vh, 400px);
+    object-fit: contain;
+}
+
+@media (max-height: 700px) {
+    :root {
+        --slide-padding: clamp(0.75rem, 3vw, 2rem);
+        --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+        --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+        --h2-size: clamp(1rem, 3vw, 1.75rem);
+    }
+}
+
+@media (max-height: 600px) {
+    :root {
+        --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+        --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+        --title-size: clamp(1.1rem, 4vw, 2rem);
+        --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+    }
+
+    .nav-dots, .keyboard-hint, .decorative {
+        display: none;
+    }
+}
+
+@media (max-height: 500px) {
+    :root {
+        --slide-padding: clamp(0.4rem, 2vw, 1rem);
+        --title-size: clamp(1rem, 3.5vw, 1.5rem);
+        --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+        --body-size: clamp(0.65rem, 1vw, 0.85rem);
+    }
+}
+
+@media (max-width: 600px) {
+    :root {
+        --title-size: clamp(1.25rem, 7vw, 2.5rem);
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+}
+</code></pre>
+<h2>Viewport Checklist</h2>
+<ul>
+<li>every <code>.slide</code> has <code>height: 100vh</code>, <code>height: 100dvh</code>, and <code>overflow: hidden</code></li>
+<li>all typography uses <code>clamp()</code></li>
+<li>all spacing uses <code>clamp()</code> or viewport units</li>
+<li>images have <code>max-height</code> constraints</li>
+<li>grids adapt with <code>auto-fit</code> + <code>minmax()</code></li>
+<li>short-height breakpoints exist at <code>700px</code>, <code>600px</code>, and <code>500px</code></li>
+<li>if anything feels cramped, split the slide</li>
+</ul>
+<h2>Mood to Preset Mapping</h2>
+<table>
+<thead>
+<tr>
+<th>Mood</th>
+<th>Good Presets</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Impressed / Confident</td>
+<td>Bold Signal, Electric Studio, Dark Botanical</td>
+</tr>
+<tr>
+<td>Excited / Energized</td>
+<td>Creative Voltage, Neon Cyber, Split Pastel</td>
+</tr>
+<tr>
+<td>Calm / Focused</td>
+<td>Notebook Tabs, Paper &amp; Ink, Swiss Modern</td>
+</tr>
+<tr>
+<td>Inspired / Moved</td>
+<td>Dark Botanical, Vintage Editorial, Pastel Geometry</td>
+</tr>
+</tbody></table>
+<h2>Preset Catalog</h2>
+<h3>1. Bold Signal</h3>
+<ul>
+<li>Vibe: confident, high-impact, keynote-ready</li>
+<li>Best for: pitch decks, launches, statements</li>
+<li>Fonts: Archivo Black + Space Grotesk</li>
+<li>Palette: charcoal base, hot orange focal card, crisp white text</li>
+<li>Signature: oversized section numbers, high-contrast card on dark field</li>
+</ul>
+<h3>2. Electric Studio</h3>
+<ul>
+<li>Vibe: clean, bold, agency-polished</li>
+<li>Best for: client presentations, strategic reviews</li>
+<li>Fonts: Manrope only</li>
+<li>Palette: black, white, saturated cobalt accent</li>
+<li>Signature: two-panel split and sharp editorial alignment</li>
+</ul>
+<h3>3. Creative Voltage</h3>
+<ul>
+<li>Vibe: energetic, retro-modern, playful confidence</li>
+<li>Best for: creative studios, brand work, product storytelling</li>
+<li>Fonts: Syne + Space Mono</li>
+<li>Palette: electric blue, neon yellow, deep navy</li>
+<li>Signature: halftone textures, badges, punchy contrast</li>
+</ul>
+<h3>4. Dark Botanical</h3>
+<ul>
+<li>Vibe: elegant, premium, atmospheric</li>
+<li>Best for: luxury brands, thoughtful narratives, premium product decks</li>
+<li>Fonts: Cormorant + IBM Plex Sans</li>
+<li>Palette: near-black, warm ivory, blush, gold, terracotta</li>
+<li>Signature: blurred abstract circles, fine rules, restrained motion</li>
+</ul>
+<h3>5. Notebook Tabs</h3>
+<ul>
+<li>Vibe: editorial, organized, tactile</li>
+<li>Best for: reports, reviews, structured storytelling</li>
+<li>Fonts: Bodoni Moda + DM Sans</li>
+<li>Palette: cream paper on charcoal with pastel tabs</li>
+<li>Signature: paper sheet, colored side tabs, binder details</li>
+</ul>
+<h3>6. Pastel Geometry</h3>
+<ul>
+<li>Vibe: approachable, modern, friendly</li>
+<li>Best for: product overviews, onboarding, lighter brand decks</li>
+<li>Fonts: Plus Jakarta Sans only</li>
+<li>Palette: pale blue field, cream card, soft pink/mint/lavender accents</li>
+<li>Signature: vertical pills, rounded cards, soft shadows</li>
+</ul>
+<h3>7. Split Pastel</h3>
+<ul>
+<li>Vibe: playful, modern, creative</li>
+<li>Best for: agency intros, workshops, portfolios</li>
+<li>Fonts: Outfit only</li>
+<li>Palette: peach + lavender split with mint badges</li>
+<li>Signature: split backdrop, rounded tags, light grid overlays</li>
+</ul>
+<h3>8. Vintage Editorial</h3>
+<ul>
+<li>Vibe: witty, personality-driven, magazine-inspired</li>
+<li>Best for: personal brands, opinionated talks, storytelling</li>
+<li>Fonts: Fraunces + Work Sans</li>
+<li>Palette: cream, charcoal, dusty warm accents</li>
+<li>Signature: geometric accents, bordered callouts, punchy serif headlines</li>
+</ul>
+<h3>9. Neon Cyber</h3>
+<ul>
+<li>Vibe: futuristic, techy, kinetic</li>
+<li>Best for: AI, infra, dev tools, future-of-X talks</li>
+<li>Fonts: Clash Display + Satoshi</li>
+<li>Palette: midnight navy, cyan, magenta</li>
+<li>Signature: glow, particles, grids, data-radar energy</li>
+</ul>
+<h3>10. Terminal Green</h3>
+<ul>
+<li>Vibe: developer-focused, hacker-clean</li>
+<li>Best for: APIs, CLI tools, engineering demos</li>
+<li>Fonts: JetBrains Mono only</li>
+<li>Palette: GitHub dark + terminal green</li>
+<li>Signature: scan lines, command-line framing, precise monospace rhythm</li>
+</ul>
+<h3>11. Swiss Modern</h3>
+<ul>
+<li>Vibe: minimal, precise, data-forward</li>
+<li>Best for: corporate, product strategy, analytics</li>
+<li>Fonts: Archivo + Nunito</li>
+<li>Palette: white, black, signal red</li>
+<li>Signature: visible grids, asymmetry, geometric discipline</li>
+</ul>
+<h3>12. Paper &amp; Ink</h3>
+<ul>
+<li>Vibe: literary, thoughtful, story-driven</li>
+<li>Best for: essays, keynote narratives, manifesto decks</li>
+<li>Fonts: Cormorant Garamond + Source Serif 4</li>
+<li>Palette: warm cream, charcoal, crimson accent</li>
+<li>Signature: pull quotes, drop caps, elegant rules</li>
+</ul>
+<h2>Direct Selection Prompts</h2>
+<p>If the user already knows the style they want, let them pick directly from the preset names above instead of forcing preview generation.</p>
+<h2>Animation Feel Mapping</h2>
+<table>
+<thead>
+<tr>
+<th>Feeling</th>
+<th>Motion Direction</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Dramatic / Cinematic</td>
+<td>slow fades, parallax, large scale-ins</td>
+</tr>
+<tr>
+<td>Techy / Futuristic</td>
+<td>glow, particles, grid motion, scramble text</td>
+</tr>
+<tr>
+<td>Playful / Friendly</td>
+<td>springy easing, rounded shapes, floating motion</td>
+</tr>
+<tr>
+<td>Professional / Corporate</td>
+<td>subtle 200-300ms transitions, clean slides</td>
+</tr>
+<tr>
+<td>Calm / Minimal</td>
+<td>very restrained movement, whitespace-first</td>
+</tr>
+<tr>
+<td>Editorial / Magazine</td>
+<td>strong hierarchy, staggered text and image interplay</td>
+</tr>
+</tbody></table>
+<h2>CSS Gotcha: Negating Functions</h2>
+<p>Never write these:</p>
+<pre><code class="language-css">right: -clamp(28px, 3.5vw, 44px);
+margin-left: -min(10vw, 100px);
+</code></pre>
+<p>Browsers ignore them silently.</p>
+<p>Always write this instead:</p>
+<pre><code class="language-css">right: calc(-1 * clamp(28px, 3.5vw, 44px));
+margin-left: calc(-1 * min(10vw, 100px));
+</code></pre>
+<h2>Validation Sizes</h2>
+<p>Test at minimum:</p>
+<ul>
+<li>Desktop: <code>1920x1080</code>, <code>1440x900</code>, <code>1280x720</code></li>
+<li>Tablet: <code>1024x768</code>, <code>768x1024</code></li>
+<li>Mobile: <code>375x667</code>, <code>414x896</code></li>
+<li>Landscape phone: <code>667x375</code>, <code>896x414</code></li>
+</ul>
+<h2>Anti-Patterns</h2>
+<p>Do not use:</p>
+<ul>
+<li>purple-on-white startup templates</li>
+<li>Inter / Roboto / Arial as the visual voice unless the user explicitly wants utilitarian neutrality</li>
+<li>bullet walls, tiny type, or code blocks that require scrolling</li>
+<li>decorative illustrations when abstract geometry would do the job better</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>performance</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Performance Optimization</h1>
+<h2>Model Selection Strategy</h2>
+<p><strong>Haiku 4.5</strong> (90% of Sonnet capability, 3x cost savings):</p>
+<ul>
+<li>Lightweight agents with frequent invocation</li>
+<li>Pair programming and code generation</li>
+<li>Worker agents in multi-agent systems</li>
+</ul>
+<p><strong>Sonnet 4.6</strong> (Best coding model):</p>
+<ul>
+<li>Main development work</li>
+<li>Orchestrating multi-agent workflows</li>
+<li>Complex coding tasks</li>
+</ul>
+<p><strong>Opus 4.5</strong> (Deepest reasoning):</p>
+<ul>
+<li>Complex architectural decisions</li>
+<li>Maximum reasoning requirements</li>
+<li>Research and analysis tasks</li>
+</ul>
+<h2>Context Window Management</h2>
+<p>Avoid last 20% of context window for:</p>
+<ul>
+<li>Large-scale refactoring</li>
+<li>Feature implementation spanning multiple files</li>
+<li>Debugging complex interactions</li>
+</ul>
+<p>Lower context sensitivity tasks:</p>
+<ul>
+<li>Single-file edits</li>
+<li>Independent utility creation</li>
+<li>Documentation updates</li>
+<li>Simple bug fixes</li>
+</ul>
+<h2>Extended Thinking + Plan Mode</h2>
+<p>Extended thinking is enabled by default, reserving up to 31,999 tokens for internal reasoning.</p>
+<p>Control extended thinking via:</p>
+<ul>
+<li><strong>Toggle</strong>: Option+T (macOS) / Alt+T (Windows/Linux)</li>
+<li><strong>Config</strong>: Set <code>alwaysThinkingEnabled</code> in <code>~/.claude/settings.json</code></li>
+<li><strong>Budget cap</strong>: <code>export MAX_THINKING_TOKENS=10000</code></li>
+<li><strong>Verbose mode</strong>: Ctrl+O to see thinking output</li>
+</ul>
+<p>For complex tasks requiring deep reasoning:</p>
+<ol>
+<li>Ensure extended thinking is enabled (on by default)</li>
+<li>Enable <strong>Plan Mode</strong> for structured approach</li>
+<li>Use multiple critique rounds for thorough analysis</li>
+<li>Use split role sub-agents for diverse perspectives</li>
+</ol>
+<h2>Build Troubleshooting</h2>
+<p>If build fails:</p>
+<ol>
+<li>Use <strong>build-error-resolver</strong> agent</li>
+<li>Analyze error messages</li>
+<li>Fix incrementally</li>
+<li>Verify after each fix</li>
+</ol>
+
+</body>
+</html>

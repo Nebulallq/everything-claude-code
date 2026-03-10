@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>the-shortform-guide</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>The Shorthand Guide to Everything Claude Code</h1>
+<p><img src="./assets/images/shortform/00-header.png" alt="Header: Anthropic Hackathon Winner - Tips &amp; Tricks for Claude Code"></p>
+<hr>
+<p><strong>Been an avid Claude Code user since the experimental rollout in Feb, and won the Anthropic x Forum Ventures hackathon with <a href="https://zenith.chat">zenith.chat</a> alongside <a href="https://x.com/DRodriguezFX">@DRodriguezFX</a> - completely using Claude Code.</strong></p>
+<p>Here&#39;s my complete setup after 10 months of daily use: skills, hooks, subagents, MCPs, plugins, and what actually works.</p>
+<hr>
+<h2>Skills and Commands</h2>
+<p>Skills operate like rules, constricted to certain scopes and workflows. They&#39;re shorthand to prompts when you need to execute a particular workflow.</p>
+<p>After a long session of coding with Opus 4.5, you want to clean out dead code and loose .md files? Run <code>/refactor-clean</code>. Need testing? <code>/tdd</code>, <code>/e2e</code>, <code>/test-coverage</code>. Skills can also include codemaps - a way for Claude to quickly navigate your codebase without burning context on exploration.</p>
+<p><img src="./assets/images/shortform/02-chaining-commands.jpeg" alt="Terminal showing chained commands"><br><em>Chaining commands together</em></p>
+<p>Commands are skills executed via slash commands. They overlap but are stored differently:</p>
+<ul>
+<li><strong>Skills</strong>: <code>~/.claude/skills/</code> - broader workflow definitions</li>
+<li><strong>Commands</strong>: <code>~/.claude/commands/</code> - quick executable prompts</li>
+</ul>
+<pre><code class="language-bash"># Example skill structure
+~/.claude/skills/
+  pmx-guidelines.md      # Project-specific patterns
+  coding-standards.md    # Language best practices
+  tdd-workflow/          # Multi-file skill with README.md
+  security-review/       # Checklist-based skill
+</code></pre>
+<hr>
+<h2>Hooks</h2>
+<p>Hooks are trigger-based automations that fire on specific events. Unlike skills, they&#39;re constricted to tool calls and lifecycle events.</p>
+<p><strong>Hook Types:</strong></p>
+<ol>
+<li><strong>PreToolUse</strong> - Before a tool executes (validation, reminders)</li>
+<li><strong>PostToolUse</strong> - After a tool finishes (formatting, feedback loops)</li>
+<li><strong>UserPromptSubmit</strong> - When you send a message</li>
+<li><strong>Stop</strong> - When Claude finishes responding</li>
+<li><strong>PreCompact</strong> - Before context compaction</li>
+<li><strong>Notification</strong> - Permission requests</li>
+</ol>
+<p><strong>Example: tmux reminder before long-running commands</strong></p>
+<pre><code class="language-json">{
+  &quot;PreToolUse&quot;: [
+    {
+      &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;(npm|pnpm|yarn|cargo|pytest)\&quot;&quot;,
+      &quot;hooks&quot;: [
+        {
+          &quot;type&quot;: &quot;command&quot;,
+          &quot;command&quot;: &quot;if [ -z \&quot;$TMUX\&quot; ]; then echo &#39;[Hook] Consider tmux for session persistence&#39; &gt;&amp;2; fi&quot;
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+<p><img src="./assets/images/shortform/03-posttooluse-hook.png" alt="PostToolUse hook feedback"><br><em>Example of what feedback you get in Claude Code, while running a PostToolUse hook</em></p>
+<p><strong>Pro tip:</strong> Use the <code>hookify</code> plugin to create hooks conversationally instead of writing JSON manually. Run <code>/hookify</code> and describe what you want.</p>
+<hr>
+<h2>Subagents</h2>
+<p>Subagents are processes your orchestrator (main Claude) can delegate tasks to with limited scopes. They can run in background or foreground, freeing up context for the main agent.</p>
+<p>Subagents work nicely with skills - a subagent capable of executing a subset of your skills can be delegated tasks and use those skills autonomously. They can also be sandboxed with specific tool permissions.</p>
+<pre><code class="language-bash"># Example subagent structure
+~/.claude/agents/
+  planner.md           # Feature implementation planning
+  architect.md         # System design decisions
+  tdd-guide.md         # Test-driven development
+  code-reviewer.md     # Quality/security review
+  security-reviewer.md # Vulnerability analysis
+  build-error-resolver.md
+  e2e-runner.md
+  refactor-cleaner.md
+</code></pre>
+<p>Configure allowed tools, MCPs, and permissions per subagent for proper scoping.</p>
+<hr>
+<h2>Rules and Memory</h2>
+<p>Your <code>.rules</code> folder holds <code>.md</code> files with best practices Claude should ALWAYS follow. Two approaches:</p>
+<ol>
+<li><strong>Single CLAUDE.md</strong> - Everything in one file (user or project level)</li>
+<li><strong>Rules folder</strong> - Modular <code>.md</code> files grouped by concern</li>
+</ol>
+<pre><code class="language-bash">~/.claude/rules/
+  security.md      # No hardcoded secrets, validate inputs
+  coding-style.md  # Immutability, file organization
+  testing.md       # TDD workflow, 80% coverage
+  git-workflow.md  # Commit format, PR process
+  agents.md        # When to delegate to subagents
+  performance.md   # Model selection, context management
+</code></pre>
+<p><strong>Example rules:</strong></p>
+<ul>
+<li>No emojis in codebase</li>
+<li>Refrain from purple hues in frontend</li>
+<li>Always test code before deployment</li>
+<li>Prioritize modular code over mega-files</li>
+<li>Never commit console.logs</li>
+</ul>
+<hr>
+<h2>MCPs (Model Context Protocol)</h2>
+<p>MCPs connect Claude to external services directly. Not a replacement for APIs - it&#39;s a prompt-driven wrapper around them, allowing more flexibility in navigating information.</p>
+<p><strong>Example:</strong> Supabase MCP lets Claude pull specific data, run SQL directly upstream without copy-paste. Same for databases, deployment platforms, etc.</p>
+<p><img src="./assets/images/shortform/04-supabase-mcp.jpeg" alt="Supabase MCP listing tables"><br><em>Example of the Supabase MCP listing the tables within the public schema</em></p>
+<p><strong>Chrome in Claude:</strong> is a built-in plugin MCP that lets Claude autonomously control your browser - clicking around to see how things work.</p>
+<p><strong>CRITICAL: Context Window Management</strong></p>
+<p>Be picky with MCPs. I keep all MCPs in user config but <strong>disable everything unused</strong>. Navigate to <code>/plugins</code> and scroll down or run <code>/mcp</code>.</p>
+<p><img src="./assets/images/shortform/05-plugins-interface.jpeg" alt="/plugins interface"><br><em>Using /plugins to navigate to MCPs to see which ones are currently installed and their status</em></p>
+<p>Your 200k context window before compacting might only be 70k with too many tools enabled. Performance degrades significantly.</p>
+<p><strong>Rule of thumb:</strong> Have 20-30 MCPs in config, but keep under 10 enabled / under 80 tools active.</p>
+<pre><code class="language-bash"># Check enabled MCPs
+/mcp
+
+# Disable unused ones in ~/.claude.json under projects.disabledMcpServers
+</code></pre>
+<hr>
+<h2>Plugins</h2>
+<p>Plugins package tools for easy installation instead of tedious manual setup. A plugin can be a skill + MCP combined, or hooks/tools bundled together.</p>
+<p><strong>Installing plugins:</strong></p>
+<pre><code class="language-bash"># Add a marketplace
+# mgrep plugin by @mixedbread-ai
+claude plugin marketplace add https://github.com/mixedbread-ai/mgrep
+
+# Open Claude, run /plugins, find new marketplace, install from there
+</code></pre>
+<p><img src="./assets/images/shortform/06-marketplaces-mgrep.jpeg" alt="Marketplaces tab showing mgrep"><br><em>Displaying the newly installed Mixedbread-Grep marketplace</em></p>
+<p><strong>LSP Plugins</strong> are particularly useful if you run Claude Code outside editors frequently. Language Server Protocol gives Claude real-time type checking, go-to-definition, and intelligent completions without needing an IDE open.</p>
+<pre><code class="language-bash"># Enabled plugins example
+typescript-lsp@claude-plugins-official  # TypeScript intelligence
+pyright-lsp@claude-plugins-official     # Python type checking
+hookify@claude-plugins-official         # Create hooks conversationally
+mgrep@Mixedbread-Grep                   # Better search than ripgrep
+</code></pre>
+<p>Same warning as MCPs - watch your context window.</p>
+<hr>
+<h2>Tips and Tricks</h2>
+<h3>Keyboard Shortcuts</h3>
+<ul>
+<li><code>Ctrl+U</code> - Delete entire line (faster than backspace spam)</li>
+<li><code>!</code> - Quick bash command prefix</li>
+<li><code>@</code> - Search for files</li>
+<li><code>/</code> - Initiate slash commands</li>
+<li><code>Shift+Enter</code> - Multi-line input</li>
+<li><code>Tab</code> - Toggle thinking display</li>
+<li><code>Esc Esc</code> - Interrupt Claude / restore code</li>
+</ul>
+<h3>Parallel Workflows</h3>
+<ul>
+<li><strong>Fork</strong> (<code>/fork</code>) - Fork conversations to do non-overlapping tasks in parallel instead of spamming queued messages</li>
+<li><strong>Git Worktrees</strong> - For overlapping parallel Claudes without conflicts. Each worktree is an independent checkout</li>
+</ul>
+<pre><code class="language-bash">git worktree add ../feature-branch feature-branch
+# Now run separate Claude instances in each worktree
+</code></pre>
+<h3>tmux for Long-Running Commands</h3>
+<p>Stream and watch logs/bash processes Claude runs:</p>
+<p><a href="https://github.com/user-attachments/assets/shortform/07-tmux-video.mp4">https://github.com/user-attachments/assets/shortform/07-tmux-video.mp4</a></p>
+<pre><code class="language-bash">tmux new -s dev
+# Claude runs commands here, you can detach and reattach
+tmux attach -t dev
+</code></pre>
+<h3>mgrep &gt; grep</h3>
+<p><code>mgrep</code> is a significant improvement from ripgrep/grep. Install via plugin marketplace, then use the <code>/mgrep</code> skill. Works with both local search and web search.</p>
+<pre><code class="language-bash">mgrep &quot;function handleSubmit&quot;  # Local search
+mgrep --web &quot;Next.js 15 app router changes&quot;  # Web search
+</code></pre>
+<h3>Other Useful Commands</h3>
+<ul>
+<li><code>/rewind</code> - Go back to a previous state</li>
+<li><code>/statusline</code> - Customize with branch, context %, todos</li>
+<li><code>/checkpoints</code> - File-level undo points</li>
+<li><code>/compact</code> - Manually trigger context compaction</li>
+</ul>
+<h3>GitHub Actions CI/CD</h3>
+<p>Set up code review on your PRs with GitHub Actions. Claude can review PRs automatically when configured.</p>
+<p><img src="./assets/images/shortform/08-github-pr-review.jpeg" alt="Claude bot approving a PR"><br><em>Claude approving a bug fix PR</em></p>
+<h3>Sandboxing</h3>
+<p>Use sandbox mode for risky operations - Claude runs in restricted environment without affecting your actual system.</p>
+<hr>
+<h2>On Editors</h2>
+<p>Your editor choice significantly impacts Claude Code workflow. While Claude Code works from any terminal, pairing it with a capable editor unlocks real-time file tracking, quick navigation, and integrated command execution.</p>
+<h3>Zed (My Preference)</h3>
+<p>I use <a href="https://zed.dev">Zed</a> - written in Rust, so it&#39;s genuinely fast. Opens instantly, handles massive codebases without breaking a sweat, and barely touches system resources.</p>
+<p><strong>Why Zed + Claude Code is a great combo:</strong></p>
+<ul>
+<li><strong>Speed</strong> - Rust-based performance means no lag when Claude is rapidly editing files. Your editor keeps up</li>
+<li><strong>Agent Panel Integration</strong> - Zed&#39;s Claude integration lets you track file changes in real-time as Claude edits. Jump between files Claude references without leaving the editor</li>
+<li><strong>CMD+Shift+R Command Palette</strong> - Quick access to all your custom slash commands, debuggers, build scripts in a searchable UI</li>
+<li><strong>Minimal Resource Usage</strong> - Won&#39;t compete with Claude for RAM/CPU during heavy operations. Important when running Opus</li>
+<li><strong>Vim Mode</strong> - Full vim keybindings if that&#39;s your thing</li>
+</ul>
+<p><img src="./assets/images/shortform/09-zed-editor.jpeg" alt="Zed Editor with custom commands"><br><em>Zed Editor with custom commands dropdown using CMD+Shift+R. Following mode shown as the bullseye in the bottom right.</em></p>
+<p><strong>Editor-Agnostic Tips:</strong></p>
+<ol>
+<li><strong>Split your screen</strong> - Terminal with Claude Code on one side, editor on the other</li>
+<li><strong>Ctrl + G</strong> - quickly open the file Claude is currently working on in Zed</li>
+<li><strong>Auto-save</strong> - Enable autosave so Claude&#39;s file reads are always current</li>
+<li><strong>Git integration</strong> - Use editor&#39;s git features to review Claude&#39;s changes before committing</li>
+<li><strong>File watchers</strong> - Most editors auto-reload changed files, verify this is enabled</li>
+</ol>
+<h3>VSCode / Cursor</h3>
+<p>This is also a viable choice and works well with Claude Code. You can use it in either terminal format, with automatic sync with your editor using <code>\ide</code> enabling LSP functionality (somewhat redundant with plugins now). Or you can opt for the extension which is more integrated with the Editor and has a matching UI.</p>
+<p><img src="./assets/images/shortform/10-vscode-extension.jpeg" alt="VS Code Claude Code Extension"><br><em>The VS Code extension provides a native graphical interface for Claude Code, integrated directly into your IDE.</em></p>
+<hr>
+<h2>My Setup</h2>
+<h3>Plugins</h3>
+<p><strong>Installed:</strong> (I usually only have 4-5 of these enabled at a time)</p>
+<pre><code class="language-markdown">ralph-wiggum@claude-code-plugins       # Loop automation
+frontend-design@claude-code-plugins    # UI/UX patterns
+commit-commands@claude-code-plugins    # Git workflow
+security-guidance@claude-code-plugins  # Security checks
+pr-review-toolkit@claude-code-plugins  # PR automation
+typescript-lsp@claude-plugins-official # TS intelligence
+hookify@claude-plugins-official        # Hook creation
+code-simplifier@claude-plugins-official
+feature-dev@claude-code-plugins
+explanatory-output-style@claude-code-plugins
+code-review@claude-code-plugins
+context7@claude-plugins-official       # Live documentation
+pyright-lsp@claude-plugins-official    # Python types
+mgrep@Mixedbread-Grep                  # Better search
+</code></pre>
+<h3>MCP Servers</h3>
+<p><strong>Configured (User Level):</strong></p>
+<pre><code class="language-json">{
+  &quot;github&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-github&quot;] },
+  &quot;firecrawl&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;firecrawl-mcp&quot;] },
+  &quot;supabase&quot;: {
+    &quot;command&quot;: &quot;npx&quot;,
+    &quot;args&quot;: [&quot;-y&quot;, &quot;@supabase/mcp-server-supabase@latest&quot;, &quot;--project-ref=YOUR_REF&quot;]
+  },
+  &quot;memory&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-memory&quot;] },
+  &quot;sequential-thinking&quot;: {
+    &quot;command&quot;: &quot;npx&quot;,
+    &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-sequential-thinking&quot;]
+  },
+  &quot;vercel&quot;: { &quot;type&quot;: &quot;http&quot;, &quot;url&quot;: &quot;https://mcp.vercel.com&quot; },
+  &quot;railway&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@railway/mcp-server&quot;] },
+  &quot;cloudflare-docs&quot;: { &quot;type&quot;: &quot;http&quot;, &quot;url&quot;: &quot;https://docs.mcp.cloudflare.com/mcp&quot; },
+  &quot;cloudflare-workers-bindings&quot;: {
+    &quot;type&quot;: &quot;http&quot;,
+    &quot;url&quot;: &quot;https://bindings.mcp.cloudflare.com/mcp&quot;
+  },
+  &quot;clickhouse&quot;: { &quot;type&quot;: &quot;http&quot;, &quot;url&quot;: &quot;https://mcp.clickhouse.cloud/mcp&quot; },
+  &quot;AbletonMCP&quot;: { &quot;command&quot;: &quot;uvx&quot;, &quot;args&quot;: [&quot;ableton-mcp&quot;] },
+  &quot;magic&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@magicuidesign/mcp@latest&quot;] }
+}
+</code></pre>
+<p>This is the key - I have 14 MCPs configured but only ~5-6 enabled per project. Keeps context window healthy.</p>
+<h3>Key Hooks</h3>
+<pre><code class="language-json">{
+  &quot;PreToolUse&quot;: [
+    { &quot;matcher&quot;: &quot;npm|pnpm|yarn|cargo|pytest&quot;, &quot;hooks&quot;: [&quot;tmux reminder&quot;] },
+    { &quot;matcher&quot;: &quot;Write &amp;&amp; .md file&quot;, &quot;hooks&quot;: [&quot;block unless README/CLAUDE&quot;] },
+    { &quot;matcher&quot;: &quot;git push&quot;, &quot;hooks&quot;: [&quot;open editor for review&quot;] }
+  ],
+  &quot;PostToolUse&quot;: [
+    { &quot;matcher&quot;: &quot;Edit &amp;&amp; .ts/.tsx/.js/.jsx&quot;, &quot;hooks&quot;: [&quot;prettier --write&quot;] },
+    { &quot;matcher&quot;: &quot;Edit &amp;&amp; .ts/.tsx&quot;, &quot;hooks&quot;: [&quot;tsc --noEmit&quot;] },
+    { &quot;matcher&quot;: &quot;Edit&quot;, &quot;hooks&quot;: [&quot;grep console.log warning&quot;] }
+  ],
+  &quot;Stop&quot;: [
+    { &quot;matcher&quot;: &quot;*&quot;, &quot;hooks&quot;: [&quot;check modified files for console.log&quot;] }
+  ]
+}
+</code></pre>
+<h3>Custom Status Line</h3>
+<p>Shows user, directory, git branch with dirty indicator, context remaining %, model, time, and todo count:</p>
+<p><img src="./assets/images/shortform/11-statusline.jpeg" alt="Custom status line"><br><em>Example statusline in my Mac root directory</em></p>
+<pre><code>affoon:~ ctx:65% Opus 4.5 19:52
+▌▌ plan mode on (shift+tab to cycle)
+</code></pre>
+<h3>Rules Structure</h3>
+<pre><code>~/.claude/rules/
+  security.md      # Mandatory security checks
+  coding-style.md  # Immutability, file size limits
+  testing.md       # TDD, 80% coverage
+  git-workflow.md  # Conventional commits
+  agents.md        # Subagent delegation rules
+  patterns.md      # API response formats
+  performance.md   # Model selection (Haiku vs Sonnet vs Opus)
+  hooks.md         # Hook documentation
+</code></pre>
+<h3>Subagents</h3>
+<pre><code>~/.claude/agents/
+  planner.md           # Break down features
+  architect.md         # System design
+  tdd-guide.md         # Write tests first
+  code-reviewer.md     # Quality review
+  security-reviewer.md # Vulnerability scan
+  build-error-resolver.md
+  e2e-runner.md        # Playwright tests
+  refactor-cleaner.md  # Dead code removal
+  doc-updater.md       # Keep docs synced
+</code></pre>
+<hr>
+<h2>Key Takeaways</h2>
+<ol>
+<li><strong>Don&#39;t overcomplicate</strong> - treat configuration like fine-tuning, not architecture</li>
+<li><strong>Context window is precious</strong> - disable unused MCPs and plugins</li>
+<li><strong>Parallel execution</strong> - fork conversations, use git worktrees</li>
+<li><strong>Automate the repetitive</strong> - hooks for formatting, linting, reminders</li>
+<li><strong>Scope your subagents</strong> - limited tools = focused execution</li>
+</ol>
+<hr>
+<h2>References</h2>
+<ul>
+<li><a href="https://code.claude.com/docs/en/plugins-reference">Plugins Reference</a></li>
+<li><a href="https://code.claude.com/docs/en/hooks">Hooks Documentation</a></li>
+<li><a href="https://code.claude.com/docs/en/checkpointing">Checkpointing</a></li>
+<li><a href="https://code.claude.com/docs/en/interactive-mode">Interactive Mode</a></li>
+<li><a href="https://code.claude.com/docs/en/memory">Memory System</a></li>
+<li><a href="https://code.claude.com/docs/en/sub-agents">Subagents</a></li>
+<li><a href="https://code.claude.com/docs/en/mcp-overview">MCP Overview</a></li>
+</ul>
+<hr>
+<p><strong>Note:</strong> This is a subset of detail. See the <a href="./the-longform-guide.md">Longform Guide</a> for advanced patterns.</p>
+<hr>
+<p><em>Won the Anthropic x Forum Ventures hackathon in NYC building <a href="https://zenith.chat">zenith.chat</a> with <a href="https://x.com/DRodriguezFX">@DRodriguezFX</a></em></p>
+
+</body>
+</html>

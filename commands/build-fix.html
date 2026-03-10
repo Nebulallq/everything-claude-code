@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>build-fix</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Build and Fix</h1>
+<p>Incrementally fix build and type errors with minimal, safe changes.</p>
+<h2>Step 1: Detect Build System</h2>
+<p>Identify the project&#39;s build tool and run the build:</p>
+<table>
+<thead>
+<tr>
+<th>Indicator</th>
+<th>Build Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>package.json</code> with <code>build</code> script</td>
+<td><code>npm run build</code> or <code>pnpm build</code></td>
+</tr>
+<tr>
+<td><code>tsconfig.json</code> (TypeScript only)</td>
+<td><code>npx tsc --noEmit</code></td>
+</tr>
+<tr>
+<td><code>Cargo.toml</code></td>
+<td><code>cargo build 2&gt;&amp;1</code></td>
+</tr>
+<tr>
+<td><code>pom.xml</code></td>
+<td><code>mvn compile</code></td>
+</tr>
+<tr>
+<td><code>build.gradle</code></td>
+<td><code>./gradlew compileJava</code></td>
+</tr>
+<tr>
+<td><code>go.mod</code></td>
+<td><code>go build ./...</code></td>
+</tr>
+<tr>
+<td><code>pyproject.toml</code></td>
+<td><code>python -m py_compile</code> or <code>mypy .</code></td>
+</tr>
+</tbody></table>
+<h2>Step 2: Parse and Group Errors</h2>
+<ol>
+<li>Run the build command and capture stderr</li>
+<li>Group errors by file path</li>
+<li>Sort by dependency order (fix imports/types before logic errors)</li>
+<li>Count total errors for progress tracking</li>
+</ol>
+<h2>Step 3: Fix Loop (One Error at a Time)</h2>
+<p>For each error:</p>
+<ol>
+<li><strong>Read the file</strong> — Use Read tool to see error context (10 lines around the error)</li>
+<li><strong>Diagnose</strong> — Identify root cause (missing import, wrong type, syntax error)</li>
+<li><strong>Fix minimally</strong> — Use Edit tool for the smallest change that resolves the error</li>
+<li><strong>Re-run build</strong> — Verify the error is gone and no new errors introduced</li>
+<li><strong>Move to next</strong> — Continue with remaining errors</li>
+</ol>
+<h2>Step 4: Guardrails</h2>
+<p>Stop and ask the user if:</p>
+<ul>
+<li>A fix introduces <strong>more errors than it resolves</strong></li>
+<li>The <strong>same error persists after 3 attempts</strong> (likely a deeper issue)</li>
+<li>The fix requires <strong>architectural changes</strong> (not just a build fix)</li>
+<li>Build errors stem from <strong>missing dependencies</strong> (need <code>npm install</code>, <code>cargo add</code>, etc.)</li>
+</ul>
+<h2>Step 5: Summary</h2>
+<p>Show results:</p>
+<ul>
+<li>Errors fixed (with file paths)</li>
+<li>Errors remaining (if any)</li>
+<li>New errors introduced (should be zero)</li>
+<li>Suggested next steps for unresolved issues</li>
+</ul>
+<h2>Recovery Strategies</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Missing module/import</td>
+<td>Check if package is installed; suggest install command</td>
+</tr>
+<tr>
+<td>Type mismatch</td>
+<td>Read both type definitions; fix the narrower type</td>
+</tr>
+<tr>
+<td>Circular dependency</td>
+<td>Identify cycle with import graph; suggest extraction</td>
+</tr>
+<tr>
+<td>Version conflict</td>
+<td>Check <code>package.json</code> / <code>Cargo.toml</code> for version constraints</td>
+</tr>
+<tr>
+<td>Build tool misconfiguration</td>
+<td>Read config file; compare with working defaults</td>
+</tr>
+</tbody></table>
+<p>Fix one error at a time for safety. Prefer minimal diffs over refactoring.</p>
+
+</body>
+</html>

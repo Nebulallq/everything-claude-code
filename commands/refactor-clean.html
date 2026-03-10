@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>refactor-clean</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Refactor Clean</h1>
+<p>Safely identify and remove dead code with test verification at every step.</p>
+<h2>Step 1: Detect Dead Code</h2>
+<p>Run analysis tools based on project type:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Finds</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>knip</td>
+<td>Unused exports, files, dependencies</td>
+<td><code>npx knip</code></td>
+</tr>
+<tr>
+<td>depcheck</td>
+<td>Unused npm dependencies</td>
+<td><code>npx depcheck</code></td>
+</tr>
+<tr>
+<td>ts-prune</td>
+<td>Unused TypeScript exports</td>
+<td><code>npx ts-prune</code></td>
+</tr>
+<tr>
+<td>vulture</td>
+<td>Unused Python code</td>
+<td><code>vulture src/</code></td>
+</tr>
+<tr>
+<td>deadcode</td>
+<td>Unused Go code</td>
+<td><code>deadcode ./...</code></td>
+</tr>
+<tr>
+<td>cargo-udeps</td>
+<td>Unused Rust dependencies</td>
+<td><code>cargo +nightly udeps</code></td>
+</tr>
+</tbody></table>
+<p>If no tool is available, use Grep to find exports with zero imports:</p>
+<pre><code># Find exports, then check if they&#39;re imported anywhere
+</code></pre>
+<h2>Step 2: Categorize Findings</h2>
+<p>Sort findings into safety tiers:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Examples</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SAFE</strong></td>
+<td>Unused utilities, test helpers, internal functions</td>
+<td>Delete with confidence</td>
+</tr>
+<tr>
+<td><strong>CAUTION</strong></td>
+<td>Components, API routes, middleware</td>
+<td>Verify no dynamic imports or external consumers</td>
+</tr>
+<tr>
+<td><strong>DANGER</strong></td>
+<td>Config files, entry points, type definitions</td>
+<td>Investigate before touching</td>
+</tr>
+</tbody></table>
+<h2>Step 3: Safe Deletion Loop</h2>
+<p>For each SAFE item:</p>
+<ol>
+<li><strong>Run full test suite</strong> — Establish baseline (all green)</li>
+<li><strong>Delete the dead code</strong> — Use Edit tool for surgical removal</li>
+<li><strong>Re-run test suite</strong> — Verify nothing broke</li>
+<li><strong>If tests fail</strong> — Immediately revert with <code>git checkout -- &lt;file&gt;</code> and skip this item</li>
+<li><strong>If tests pass</strong> — Move to next item</li>
+</ol>
+<h2>Step 4: Handle CAUTION Items</h2>
+<p>Before deleting CAUTION items:</p>
+<ul>
+<li>Search for dynamic imports: <code>import()</code>, <code>require()</code>, <code>__import__</code></li>
+<li>Search for string references: route names, component names in configs</li>
+<li>Check if exported from a public package API</li>
+<li>Verify no external consumers (check dependents if published)</li>
+</ul>
+<h2>Step 5: Consolidate Duplicates</h2>
+<p>After removing dead code, look for:</p>
+<ul>
+<li>Near-duplicate functions (&gt;80% similar) — merge into one</li>
+<li>Redundant type definitions — consolidate</li>
+<li>Wrapper functions that add no value — inline them</li>
+<li>Re-exports that serve no purpose — remove indirection</li>
+</ul>
+<h2>Step 6: Summary</h2>
+<p>Report results:</p>
+<pre><code>Dead Code Cleanup
+──────────────────────────────
+Deleted:   12 unused functions
+           3 unused files
+           5 unused dependencies
+Skipped:   2 items (tests failed)
+Saved:     ~450 lines removed
+──────────────────────────────
+All tests passing ✅
+</code></pre>
+<h2>Rules</h2>
+<ul>
+<li><strong>Never delete without running tests first</strong></li>
+<li><strong>One deletion at a time</strong> — Atomic changes make rollback easy</li>
+<li><strong>Skip if uncertain</strong> — Better to keep dead code than break production</li>
+<li><strong>Don&#39;t refactor while cleaning</strong> — Separate concerns (clean first, refactor later)</li>
+</ul>
+
+</body>
+</html>

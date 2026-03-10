@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>setup-pm</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Configure your preferred package manager (npm/pnpm/yarn/bun)<br>disable-model-invocation: true</h2>
+<h1>Package Manager Setup</h1>
+<p>Configure your preferred package manager for this project or globally.</p>
+<h2>Usage</h2>
+<pre><code class="language-bash"># Detect current package manager
+node scripts/setup-package-manager.js --detect
+
+# Set global preference
+node scripts/setup-package-manager.js --global pnpm
+
+# Set project preference
+node scripts/setup-package-manager.js --project bun
+
+# List available package managers
+node scripts/setup-package-manager.js --list
+</code></pre>
+<h2>Detection Priority</h2>
+<p>When determining which package manager to use, the following order is checked:</p>
+<ol>
+<li><strong>Environment variable</strong>: <code>CLAUDE_PACKAGE_MANAGER</code></li>
+<li><strong>Project config</strong>: <code>.claude/package-manager.json</code></li>
+<li><strong>package.json</strong>: <code>packageManager</code> field</li>
+<li><strong>Lock file</strong>: Presence of package-lock.json, yarn.lock, pnpm-lock.yaml, or bun.lockb</li>
+<li><strong>Global config</strong>: <code>~/.claude/package-manager.json</code></li>
+<li><strong>Fallback</strong>: First available package manager (pnpm &gt; bun &gt; yarn &gt; npm)</li>
+</ol>
+<h2>Configuration Files</h2>
+<h3>Global Configuration</h3>
+<pre><code class="language-json">// ~/.claude/package-manager.json
+{
+  &quot;packageManager&quot;: &quot;pnpm&quot;
+}
+</code></pre>
+<h3>Project Configuration</h3>
+<pre><code class="language-json">// .claude/package-manager.json
+{
+  &quot;packageManager&quot;: &quot;bun&quot;
+}
+</code></pre>
+<h3>package.json</h3>
+<pre><code class="language-json">{
+  &quot;packageManager&quot;: &quot;pnpm@8.6.0&quot;
+}
+</code></pre>
+<h2>Environment Variable</h2>
+<p>Set <code>CLAUDE_PACKAGE_MANAGER</code> to override all other detection methods:</p>
+<pre><code class="language-bash"># Windows (PowerShell)
+$env:CLAUDE_PACKAGE_MANAGER = &quot;pnpm&quot;
+
+# macOS/Linux
+export CLAUDE_PACKAGE_MANAGER=pnpm
+</code></pre>
+<h2>Run the Detection</h2>
+<p>To see current package manager detection results, run:</p>
+<pre><code class="language-bash">node scripts/setup-package-manager.js --detect
+</code></pre>
+
+</body>
+</html>

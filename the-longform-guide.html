@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>the-longform-guide</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>The Longform Guide to Everything Claude Code</h1>
+<p><img src="./assets/images/longform/01-header.png" alt="Header: The Longform Guide to Everything Claude Code"></p>
+<hr>
+<blockquote>
+<p><strong>Prerequisite</strong>: This guide builds on <a href="./the-shortform-guide.md">The Shorthand Guide to Everything Claude Code</a>. Read that first if you haven&#39;t set up skills, hooks, subagents, MCPs, and plugins.</p>
+</blockquote>
+<p><img src="./assets/images/longform/02-shortform-reference.png" alt="Reference to Shorthand Guide"><br><em>The Shorthand Guide - read it first</em></p>
+<p>In the shorthand guide, I covered the foundational setup: skills and commands, hooks, subagents, MCPs, plugins, and the configuration patterns that form the backbone of an effective Claude Code workflow. That was the setup guide and the base infrastructure.</p>
+<p>This longform guide goes into the techniques that separate productive sessions from wasteful ones. If you haven&#39;t read the shorthand guide, go back and set up your configs first. What follows assumes you have skills, agents, hooks, and MCPs already configured and working.</p>
+<p>The themes here: token economics, memory persistence, verification patterns, parallelization strategies, and the compound effects of building reusable workflows. These are the patterns I&#39;ve refined over 10+ months of daily use that make the difference between being plagued by context rot within the first hour, versus maintaining productive sessions for hours.</p>
+<p>Everything covered in the shorthand and longform guides is available on GitHub: <code>github.com/affaan-m/everything-claude-code</code></p>
+<hr>
+<h2>Tips and Tricks</h2>
+<h3>Some MCPs are Replaceable and Will Free Up Your Context Window</h3>
+<p>For MCPs such as version control (GitHub), databases (Supabase), deployment (Vercel, Railway) etc. - most of these platforms already have robust CLIs that the MCP is essentially just wrapping. The MCP is a nice wrapper but it comes at a cost.</p>
+<p>To have the CLI function more like an MCP without actually using the MCP (and the decreased context window that comes with it), consider bundling the functionality into skills and commands. Strip out the tools the MCP exposes that make things easy and turn those into commands.</p>
+<p>Example: instead of having the GitHub MCP loaded at all times, create a <code>/gh-pr</code> command that wraps <code>gh pr create</code> with your preferred options. Instead of the Supabase MCP eating context, create skills that use the Supabase CLI directly.</p>
+<p>With lazy loading, the context window issue is mostly solved. But token usage and cost is not solved in the same way. The CLI + skills approach is still a token optimization method.</p>
+<hr>
+<h2>IMPORTANT STUFF</h2>
+<h3>Context and Memory Management</h3>
+<p>For sharing memory across sessions, a skill or command that summarizes and checks in on progress then saves to a <code>.tmp</code> file in your <code>.claude</code> folder and appends to it until the end of your session is the best bet. The next day it can use that as context and pick up where you left off, create a new file for each session so you don&#39;t pollute old context into new work.</p>
+<p><img src="./assets/images/longform/03-session-storage.png" alt="Session Storage File Tree"><br><em>Example of session storage -&gt; <a href="https://github.com/affaan-m/everything-claude-code/tree/main/examples/sessions">https://github.com/affaan-m/everything-claude-code/tree/main/examples/sessions</a></em></p>
+<p>Claude creates a file summarizing current state. Review it, ask for edits if needed, then start fresh. For the new conversation, just provide the file path. Particularly useful when you&#39;re hitting context limits and need to continue complex work. These files should contain:</p>
+<ul>
+<li>What approaches worked (verifiably with evidence)</li>
+<li>Which approaches were attempted but did not work</li>
+<li>Which approaches have not been attempted and what&#39;s left to do</li>
+</ul>
+<p><strong>Clearing Context Strategically:</strong></p>
+<p>Once you have your plan set and context cleared (default option in plan mode in Claude Code now), you can work from the plan. This is useful when you&#39;ve accumulated a lot of exploration context that&#39;s no longer relevant to execution. For strategic compacting, disable auto compact. Manually compact at logical intervals or create a skill that does so for you.</p>
+<p><strong>Advanced: Dynamic System Prompt Injection</strong></p>
+<p>One pattern I picked up: instead of solely putting everything in CLAUDE.md (user scope) or <code>.claude/rules/</code> (project scope) which loads every session, use CLI flags to inject context dynamically.</p>
+<pre><code class="language-bash">claude --system-prompt &quot;$(cat memory.md)&quot;
+</code></pre>
+<p>This lets you be more surgical about what context loads when. System prompt content has higher authority than user messages, which have higher authority than tool results.</p>
+<p><strong>Practical setup:</strong></p>
+<pre><code class="language-bash"># Daily development
+alias claude-dev=&#39;claude --system-prompt &quot;$(cat ~/.claude/contexts/dev.md)&quot;&#39;
+
+# PR review mode
+alias claude-review=&#39;claude --system-prompt &quot;$(cat ~/.claude/contexts/review.md)&quot;&#39;
+
+# Research/exploration mode
+alias claude-research=&#39;claude --system-prompt &quot;$(cat ~/.claude/contexts/research.md)&quot;&#39;
+</code></pre>
+<p><strong>Advanced: Memory Persistence Hooks</strong></p>
+<p>There are hooks most people don&#39;t know about that help with memory:</p>
+<ul>
+<li><strong>PreCompact Hook</strong>: Before context compaction happens, save important state to a file</li>
+<li><strong>Stop Hook (Session End)</strong>: On session end, persist learnings to a file</li>
+<li><strong>SessionStart Hook</strong>: On new session, load previous context automatically</li>
+</ul>
+<p>I&#39;ve built these hooks and they&#39;re in the repo at <code>github.com/affaan-m/everything-claude-code/tree/main/hooks/memory-persistence</code></p>
+<hr>
+<h3>Continuous Learning / Memory</h3>
+<p>If you&#39;ve had to repeat a prompt multiple times and Claude ran into the same problem or gave you a response you&#39;ve heard before - those patterns must be appended to skills.</p>
+<p><strong>The Problem:</strong> Wasted tokens, wasted context, wasted time.</p>
+<p><strong>The Solution:</strong> When Claude Code discovers something that isn&#39;t trivial - a debugging technique, a workaround, some project-specific pattern - it saves that knowledge as a new skill. Next time a similar problem comes up, the skill gets loaded automatically.</p>
+<p>I&#39;ve built a continuous learning skill that does this: <code>github.com/affaan-m/everything-claude-code/tree/main/skills/continuous-learning</code></p>
+<p><strong>Why Stop Hook (Not UserPromptSubmit):</strong></p>
+<p>The key design decision is using a <strong>Stop hook</strong> instead of UserPromptSubmit. UserPromptSubmit runs on every single message - adds latency to every prompt. Stop runs once at session end - lightweight, doesn&#39;t slow you down during the session.</p>
+<hr>
+<h3>Token Optimization</h3>
+<p><strong>Primary Strategy: Subagent Architecture</strong></p>
+<p>Optimize the tools you use and subagent architecture designed to delegate the cheapest possible model that is sufficient for the task.</p>
+<p><strong>Model Selection Quick Reference:</strong></p>
+<p><img src="./assets/images/longform/04-model-selection.png" alt="Model Selection Table"><br><em>Hypothetical setup of subagents on various common tasks and reasoning behind the choices</em></p>
+<table>
+<thead>
+<tr>
+<th>Task Type</th>
+<th>Model</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Exploration/search</td>
+<td>Haiku</td>
+<td>Fast, cheap, good enough for finding files</td>
+</tr>
+<tr>
+<td>Simple edits</td>
+<td>Haiku</td>
+<td>Single-file changes, clear instructions</td>
+</tr>
+<tr>
+<td>Multi-file implementation</td>
+<td>Sonnet</td>
+<td>Best balance for coding</td>
+</tr>
+<tr>
+<td>Complex architecture</td>
+<td>Opus</td>
+<td>Deep reasoning needed</td>
+</tr>
+<tr>
+<td>PR reviews</td>
+<td>Sonnet</td>
+<td>Understands context, catches nuance</td>
+</tr>
+<tr>
+<td>Security analysis</td>
+<td>Opus</td>
+<td>Can&#39;t afford to miss vulnerabilities</td>
+</tr>
+<tr>
+<td>Writing docs</td>
+<td>Haiku</td>
+<td>Structure is simple</td>
+</tr>
+<tr>
+<td>Debugging complex bugs</td>
+<td>Opus</td>
+<td>Needs to hold entire system in mind</td>
+</tr>
+</tbody></table>
+<p>Default to Sonnet for 90% of coding tasks. Upgrade to Opus when first attempt failed, task spans 5+ files, architectural decisions, or security-critical code.</p>
+<p><strong>Pricing Reference:</strong></p>
+<p><img src="./assets/images/longform/05-pricing-table.png" alt="Claude Model Pricing"><br><em>Source: <a href="https://platform.claude.com/docs/en/about-claude/pricing">https://platform.claude.com/docs/en/about-claude/pricing</a></em></p>
+<p><strong>Tool-Specific Optimizations:</strong></p>
+<p>Replace grep with mgrep - ~50% token reduction on average compared to traditional grep or ripgrep:</p>
+<p><img src="./assets/images/longform/06-mgrep-benchmark.png" alt="mgrep Benchmark"><br><em>In our 50-task benchmark, mgrep + Claude Code used ~2x fewer tokens than grep-based workflows at similar or better judged quality. Source: mgrep by @mixedbread-ai</em></p>
+<p><strong>Modular Codebase Benefits:</strong></p>
+<p>Having a more modular codebase with main files being in the hundreds of lines instead of thousands of lines helps both in token optimization costs and getting a task done right on the first try.</p>
+<hr>
+<h3>Verification Loops and Evals</h3>
+<p><strong>Benchmarking Workflow:</strong></p>
+<p>Compare asking for the same thing with and without a skill and checking the output difference:</p>
+<p>Fork the conversation, initiate a new worktree in one of them without the skill, pull up a diff at the end, see what was logged.</p>
+<p><strong>Eval Pattern Types:</strong></p>
+<ul>
+<li><strong>Checkpoint-Based Evals</strong>: Set explicit checkpoints, verify against defined criteria, fix before proceeding</li>
+<li><strong>Continuous Evals</strong>: Run every N minutes or after major changes, full test suite + lint</li>
+</ul>
+<p><strong>Key Metrics:</strong></p>
+<pre><code>pass@k: At least ONE of k attempts succeeds
+        k=1: 70%  k=3: 91%  k=5: 97%
+
+pass^k: ALL k attempts must succeed
+        k=1: 70%  k=3: 34%  k=5: 17%
+</code></pre>
+<p>Use <strong>pass@k</strong> when you just need it to work. Use <strong>pass^k</strong> when consistency is essential.</p>
+<hr>
+<h2>PARALLELIZATION</h2>
+<p>When forking conversations in a multi-Claude terminal setup, make sure the scope is well-defined for the actions in the fork and the original conversation. Aim for minimal overlap when it comes to code changes.</p>
+<p><strong>My Preferred Pattern:</strong></p>
+<p>Main chat for code changes, forks for questions about the codebase and its current state, or research on external services.</p>
+<p><strong>On Arbitrary Terminal Counts:</strong></p>
+<p><img src="./assets/images/longform/07-boris-parallel.png" alt="Boris on Parallel Terminals"><br><em>Boris (Anthropic) on running multiple Claude instances</em></p>
+<p>Boris has tips on parallelization. He&#39;s suggested things like running 5 Claude instances locally and 5 upstream. I advise against setting arbitrary terminal amounts. The addition of a terminal should be out of true necessity.</p>
+<p>Your goal should be: <strong>how much can you get done with the minimum viable amount of parallelization.</strong></p>
+<p><strong>Git Worktrees for Parallel Instances:</strong></p>
+<pre><code class="language-bash"># Create worktrees for parallel work
+git worktree add ../project-feature-a feature-a
+git worktree add ../project-feature-b feature-b
+git worktree add ../project-refactor refactor-branch
+
+# Each worktree gets its own Claude instance
+cd ../project-feature-a &amp;&amp; claude
+</code></pre>
+<p>IF you are to begin scaling your instances AND you have multiple instances of Claude working on code that overlaps with one another, it&#39;s imperative you use git worktrees and have a very well-defined plan for each. Use <code>/rename &lt;name here&gt;</code> to name all your chats.</p>
+<p><img src="./assets/images/longform/08-two-terminals.png" alt="Two Terminal Setup"><br><em>Starting Setup: Left Terminal for Coding, Right Terminal for Questions - use /rename and /fork</em></p>
+<p><strong>The Cascade Method:</strong></p>
+<p>When running multiple Claude Code instances, organize with a &quot;cascade&quot; pattern:</p>
+<ul>
+<li>Open new tasks in new tabs to the right</li>
+<li>Sweep left to right, oldest to newest</li>
+<li>Focus on at most 3-4 tasks at a time</li>
+</ul>
+<hr>
+<h2>GROUNDWORK</h2>
+<p><strong>The Two-Instance Kickoff Pattern:</strong></p>
+<p>For my own workflow management, I like to start an empty repo with 2 open Claude instances.</p>
+<p><strong>Instance 1: Scaffolding Agent</strong></p>
+<ul>
+<li>Lays down the scaffold and groundwork</li>
+<li>Creates project structure</li>
+<li>Sets up configs (CLAUDE.md, rules, agents)</li>
+</ul>
+<p><strong>Instance 2: Deep Research Agent</strong></p>
+<ul>
+<li>Connects to all your services, web search</li>
+<li>Creates the detailed PRD</li>
+<li>Creates architecture mermaid diagrams</li>
+<li>Compiles the references with actual documentation clips</li>
+</ul>
+<p><strong>llms.txt Pattern:</strong></p>
+<p>If available, you can find an <code>llms.txt</code> on many documentation references by doing <code>/llms.txt</code> on them once you reach their docs page. This gives you a clean, LLM-optimized version of the documentation.</p>
+<p><strong>Philosophy: Build Reusable Patterns</strong></p>
+<p>From @omarsar0: &quot;Early on, I spent time building reusable workflows/patterns. Tedious to build, but this had a wild compounding effect as models and agent harnesses improved.&quot;</p>
+<p><strong>What to invest in:</strong></p>
+<ul>
+<li>Subagents</li>
+<li>Skills</li>
+<li>Commands</li>
+<li>Planning patterns</li>
+<li>MCP tools</li>
+<li>Context engineering patterns</li>
+</ul>
+<hr>
+<h2>Best Practices for Agents &amp; Sub-Agents</h2>
+<p><strong>The Sub-Agent Context Problem:</strong></p>
+<p>Sub-agents exist to save context by returning summaries instead of dumping everything. But the orchestrator has semantic context the sub-agent lacks. The sub-agent only knows the literal query, not the PURPOSE behind the request.</p>
+<p><strong>Iterative Retrieval Pattern:</strong></p>
+<ol>
+<li>Orchestrator evaluates every sub-agent return</li>
+<li>Ask follow-up questions before accepting it</li>
+<li>Sub-agent goes back to source, gets answers, returns</li>
+<li>Loop until sufficient (max 3 cycles)</li>
+</ol>
+<p><strong>Key:</strong> Pass objective context, not just the query.</p>
+<p><strong>Orchestrator with Sequential Phases:</strong></p>
+<pre><code class="language-markdown">Phase 1: RESEARCH (use Explore agent) → research-summary.md
+Phase 2: PLAN (use planner agent) → plan.md
+Phase 3: IMPLEMENT (use tdd-guide agent) → code changes
+Phase 4: REVIEW (use code-reviewer agent) → review-comments.md
+Phase 5: VERIFY (use build-error-resolver if needed) → done or loop back
+</code></pre>
+<p><strong>Key rules:</strong></p>
+<ol>
+<li>Each agent gets ONE clear input and produces ONE clear output</li>
+<li>Outputs become inputs for next phase</li>
+<li>Never skip phases</li>
+<li>Use <code>/clear</code> between agents</li>
+<li>Store intermediate outputs in files</li>
+</ol>
+<hr>
+<h2>FUN STUFF / NOT CRITICAL JUST FUN TIPS</h2>
+<h3>Custom Status Line</h3>
+<p>You can set it using <code>/statusline</code> - then Claude will say you don&#39;t have one but can set it up for you and ask what you want in it.</p>
+<p>See also: ccstatusline (community project for custom Claude Code status lines)</p>
+<h3>Voice Transcription</h3>
+<p>Talk to Claude Code with your voice. Faster than typing for many people.</p>
+<ul>
+<li>superwhisper, MacWhisper on Mac</li>
+<li>Even with transcription mistakes, Claude understands intent</li>
+</ul>
+<h3>Terminal Aliases</h3>
+<pre><code class="language-bash">alias c=&#39;claude&#39;
+alias gb=&#39;github&#39;
+alias co=&#39;code&#39;
+alias q=&#39;cd ~/Desktop/projects&#39;
+</code></pre>
+<hr>
+<h2>Milestone</h2>
+<p><img src="./assets/images/longform/09-25k-stars.png" alt="25k+ GitHub Stars"><br><em>25,000+ GitHub stars in under a week</em></p>
+<hr>
+<h2>Resources</h2>
+<p><strong>Agent Orchestration:</strong></p>
+<ul>
+<li>claude-flow — Community-built enterprise orchestration platform with 54+ specialized agents</li>
+</ul>
+<p><strong>Self-Improving Memory:</strong></p>
+<ul>
+<li>See <code>skills/continuous-learning/</code> in this repo</li>
+<li>rlancemartin.github.io/2025/12/01/claude_diary/ - Session reflection pattern</li>
+</ul>
+<p><strong>System Prompts Reference:</strong></p>
+<ul>
+<li>system-prompts-and-models-of-ai-tools — Community collection of AI system prompts (110k+ stars)</li>
+</ul>
+<p><strong>Official:</strong></p>
+<ul>
+<li>Anthropic Academy: anthropic.skilljar.com</li>
+</ul>
+<hr>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents">Anthropic: Demystifying evals for AI agents</a></li>
+<li><a href="https://agenticcoding.substack.com/p/32-claude-code-tips-from-basics-to">YK: 32 Claude Code Tips</a></li>
+<li><a href="https://rlancemartin.github.io/2025/12/01/claude_diary/">RLanceMartin: Session Reflection Pattern</a></li>
+<li>@PerceptualPeak: Sub-Agent Context Negotiation</li>
+<li>@menhguin: Agent Abstractions Tierlist</li>
+<li>@omarsar0: Compound Effects Philosophy</li>
+</ul>
+<hr>
+<p><em>Everything covered in both guides is available on GitHub at <a href="https://github.com/affaan-m/everything-claude-code">everything-claude-code</a></em></p>
+
+</body>
+</html>

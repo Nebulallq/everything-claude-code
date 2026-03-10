@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: enterprise-agent-ops<br>description: Operate long-lived agent workloads with observability, security boundaries, and lifecycle management.<br>origin: ECC</h2>
+<h1>Enterprise Agent Ops</h1>
+<p>Use this skill for cloud-hosted or continuously running agent systems that need operational controls beyond single CLI sessions.</p>
+<h2>Operational Domains</h2>
+<ol>
+<li>runtime lifecycle (start, pause, stop, restart)</li>
+<li>observability (logs, metrics, traces)</li>
+<li>safety controls (scopes, permissions, kill switches)</li>
+<li>change management (rollout, rollback, audit)</li>
+</ol>
+<h2>Baseline Controls</h2>
+<ul>
+<li>immutable deployment artifacts</li>
+<li>least-privilege credentials</li>
+<li>environment-level secret injection</li>
+<li>hard timeout and retry budgets</li>
+<li>audit log for high-risk actions</li>
+</ul>
+<h2>Metrics to Track</h2>
+<ul>
+<li>success rate</li>
+<li>mean retries per task</li>
+<li>time to recovery</li>
+<li>cost per successful task</li>
+<li>failure class distribution</li>
+</ul>
+<h2>Incident Pattern</h2>
+<p>When failure spikes:</p>
+<ol>
+<li>freeze new rollout</li>
+<li>capture representative traces</li>
+<li>isolate failing route</li>
+<li>patch with smallest safe change</li>
+<li>run regression + security checks</li>
+<li>resume gradually</li>
+</ol>
+<h2>Deployment Integrations</h2>
+<p>This skill pairs with:</p>
+<ul>
+<li>PM2 workflows</li>
+<li>systemd services</li>
+<li>container orchestrators</li>
+<li>CI/CD gates</li>
+</ul>
+
+</body>
+</html>

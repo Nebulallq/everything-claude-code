@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>multi-plan</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Plan - Multi-Model Collaborative Planning</h1>
+<p>Multi-model collaborative planning - Context retrieval + Dual-model analysis → Generate step-by-step implementation plan.</p>
+<p>$ARGUMENTS</p>
+<hr>
+<h2>Core Protocols</h2>
+<ul>
+<li><strong>Language Protocol</strong>: Use <strong>English</strong> when interacting with tools/models, communicate with user in their language</li>
+<li><strong>Mandatory Parallel</strong>: Codex/Gemini calls MUST use <code>run_in_background: true</code> (including single model calls, to avoid blocking main thread)</li>
+<li><strong>Code Sovereignty</strong>: External models have <strong>zero filesystem write access</strong>, all modifications by Claude</li>
+<li><strong>Stop-Loss Mechanism</strong>: Do not proceed to next phase until current phase output is validated</li>
+<li><strong>Planning Only</strong>: This command allows reading context and writing to <code>.claude/plan/*</code> plan files, but <strong>NEVER modify production code</strong></li>
+</ul>
+<hr>
+<h2>Multi-Model Call Specification</h2>
+<p><strong>Call Syntax</strong> (parallel: use <code>run_in_background: true</code>):</p>
+<pre><code>Bash({
+  command: &quot;~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend &lt;codex|gemini&gt; {{GEMINI_MODEL_FLAG}}- \&quot;$PWD\&quot; &lt;&lt;&#39;EOF&#39;
+ROLE_FILE: &lt;role prompt path&gt;
+&lt;TASK&gt;
+Requirement: &lt;enhanced requirement&gt;
+Context: &lt;retrieved project context&gt;
+&lt;/TASK&gt;
+OUTPUT: Step-by-step implementation plan with pseudo-code. DO NOT modify any files.
+EOF&quot;,
+  run_in_background: true,
+  timeout: 3600000,
+  description: &quot;Brief description&quot;
+})
+</code></pre>
+<p><strong>Model Parameter Notes</strong>:</p>
+<ul>
+<li><code>{{GEMINI_MODEL_FLAG}}</code>: When using <code>--backend gemini</code>, replace with <code>--gemini-model gemini-3-pro-preview</code> (note trailing space); use empty string for codex</li>
+</ul>
+<p><strong>Role Prompts</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Codex</th>
+<th>Gemini</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Analysis</td>
+<td><code>~/.claude/.ccg/prompts/codex/analyzer.md</code></td>
+<td><code>~/.claude/.ccg/prompts/gemini/analyzer.md</code></td>
+</tr>
+<tr>
+<td>Planning</td>
+<td><code>~/.claude/.ccg/prompts/codex/architect.md</code></td>
+<td><code>~/.claude/.ccg/prompts/gemini/architect.md</code></td>
+</tr>
+</tbody></table>
+<p><strong>Session Reuse</strong>: Each call returns <code>SESSION_ID: xxx</code> (typically output by wrapper), <strong>MUST save</strong> for subsequent <code>/ccg:execute</code> use.</p>
+<p><strong>Wait for Background Tasks</strong> (max timeout 600000ms = 10 minutes):</p>
+<pre><code>TaskOutput({ task_id: &quot;&lt;task_id&gt;&quot;, block: true, timeout: 600000 })
+</code></pre>
+<p><strong>IMPORTANT</strong>:</p>
+<ul>
+<li>Must specify <code>timeout: 600000</code>, otherwise default 30 seconds will cause premature timeout</li>
+<li>If still incomplete after 10 minutes, continue polling with <code>TaskOutput</code>, <strong>NEVER kill the process</strong></li>
+<li>If waiting is skipped due to timeout, <strong>MUST call <code>AskUserQuestion</code> to ask user whether to continue waiting or kill task</strong></li>
+</ul>
+<hr>
+<h2>Execution Workflow</h2>
+<p><strong>Planning Task</strong>: $ARGUMENTS</p>
+<h3>Phase 1: Full Context Retrieval</h3>
+<p><code>[Mode: Research]</code></p>
+<h4>1.1 Prompt Enhancement (MUST execute first)</h4>
+<p><strong>If ace-tool MCP is available</strong>, call <code>mcp__ace-tool__enhance_prompt</code> tool:</p>
+<pre><code>mcp__ace-tool__enhance_prompt({
+  prompt: &quot;$ARGUMENTS&quot;,
+  conversation_history: &quot;&lt;last 5-10 conversation turns&gt;&quot;,
+  project_root_path: &quot;$PWD&quot;
+})
+</code></pre>
+<p>Wait for enhanced prompt, <strong>replace original $ARGUMENTS with enhanced result</strong> for all subsequent phases.</p>
+<p><strong>If ace-tool MCP is NOT available</strong>: Skip this step and use the original <code>$ARGUMENTS</code> as-is for all subsequent phases.</p>
+<h4>1.2 Context Retrieval</h4>
+<p><strong>If ace-tool MCP is available</strong>, call <code>mcp__ace-tool__search_context</code> tool:</p>
+<pre><code>mcp__ace-tool__search_context({
+  query: &quot;&lt;semantic query based on enhanced requirement&gt;&quot;,
+  project_root_path: &quot;$PWD&quot;
+})
+</code></pre>
+<ul>
+<li>Build semantic query using natural language (Where/What/How)</li>
+<li><strong>NEVER answer based on assumptions</strong></li>
+</ul>
+<p><strong>If ace-tool MCP is NOT available</strong>, use Claude Code built-in tools as fallback:</p>
+<ol>
+<li><strong>Glob</strong>: Find relevant files by pattern (e.g., <code>Glob(&quot;**/*.ts&quot;)</code>, <code>Glob(&quot;src/**/*.py&quot;)</code>)</li>
+<li><strong>Grep</strong>: Search for key symbols, function names, class definitions (e.g., <code>Grep(&quot;className|functionName&quot;)</code>)</li>
+<li><strong>Read</strong>: Read the discovered files to gather complete context</li>
+<li><strong>Task (Explore agent)</strong>: For deeper exploration, use <code>Task</code> with <code>subagent_type: &quot;Explore&quot;</code> to search across the codebase</li>
+</ol>
+<h4>1.3 Completeness Check</h4>
+<ul>
+<li>Must obtain <strong>complete definitions and signatures</strong> for relevant classes, functions, variables</li>
+<li>If context insufficient, trigger <strong>recursive retrieval</strong></li>
+<li>Prioritize output: entry file + line number + key symbol name; add minimal code snippets only when necessary to resolve ambiguity</li>
+</ul>
+<h4>1.4 Requirement Alignment</h4>
+<ul>
+<li>If requirements still have ambiguity, <strong>MUST</strong> output guiding questions for user</li>
+<li>Until requirement boundaries are clear (no omissions, no redundancy)</li>
+</ul>
+<h3>Phase 2: Multi-Model Collaborative Analysis</h3>
+<p><code>[Mode: Analysis]</code></p>
+<h4>2.1 Distribute Inputs</h4>
+<p><strong>Parallel call</strong> Codex and Gemini (<code>run_in_background: true</code>):</p>
+<p>Distribute <strong>original requirement</strong> (without preset opinions) to both models:</p>
+<ol>
+<li><p><strong>Codex Backend Analysis</strong>:</p>
+<ul>
+<li>ROLE_FILE: <code>~/.claude/.ccg/prompts/codex/analyzer.md</code></li>
+<li>Focus: Technical feasibility, architecture impact, performance considerations, potential risks</li>
+<li>OUTPUT: Multi-perspective solutions + pros/cons analysis</li>
+</ul>
+</li>
+<li><p><strong>Gemini Frontend Analysis</strong>:</p>
+<ul>
+<li>ROLE_FILE: <code>~/.claude/.ccg/prompts/gemini/analyzer.md</code></li>
+<li>Focus: UI/UX impact, user experience, visual design</li>
+<li>OUTPUT: Multi-perspective solutions + pros/cons analysis</li>
+</ul>
+</li>
+</ol>
+<p>Wait for both models&#39; complete results with <code>TaskOutput</code>. <strong>Save SESSION_ID</strong> (<code>CODEX_SESSION</code> and <code>GEMINI_SESSION</code>).</p>
+<h4>2.2 Cross-Validation</h4>
+<p>Integrate perspectives and iterate for optimization:</p>
+<ol>
+<li><strong>Identify consensus</strong> (strong signal)</li>
+<li><strong>Identify divergence</strong> (needs weighing)</li>
+<li><strong>Complementary strengths</strong>: Backend logic follows Codex, Frontend design follows Gemini</li>
+<li><strong>Logical reasoning</strong>: Eliminate logical gaps in solutions</li>
+</ol>
+<h4>2.3 (Optional but Recommended) Dual-Model Plan Draft</h4>
+<p>To reduce risk of omissions in Claude&#39;s synthesized plan, can parallel have both models output &quot;plan drafts&quot; (still <strong>NOT allowed</strong> to modify files):</p>
+<ol>
+<li><p><strong>Codex Plan Draft</strong> (Backend authority):</p>
+<ul>
+<li>ROLE_FILE: <code>~/.claude/.ccg/prompts/codex/architect.md</code></li>
+<li>OUTPUT: Step-by-step plan + pseudo-code (focus: data flow/edge cases/error handling/test strategy)</li>
+</ul>
+</li>
+<li><p><strong>Gemini Plan Draft</strong> (Frontend authority):</p>
+<ul>
+<li>ROLE_FILE: <code>~/.claude/.ccg/prompts/gemini/architect.md</code></li>
+<li>OUTPUT: Step-by-step plan + pseudo-code (focus: information architecture/interaction/accessibility/visual consistency)</li>
+</ul>
+</li>
+</ol>
+<p>Wait for both models&#39; complete results with <code>TaskOutput</code>, record key differences in their suggestions.</p>
+<h4>2.4 Generate Implementation Plan (Claude Final Version)</h4>
+<p>Synthesize both analyses, generate <strong>Step-by-step Implementation Plan</strong>:</p>
+<pre><code class="language-markdown">## Implementation Plan: &lt;Task Name&gt;
+
+### Task Type
+- [ ] Frontend (→ Gemini)
+- [ ] Backend (→ Codex)
+- [ ] Fullstack (→ Parallel)
+
+### Technical Solution
+&lt;Optimal solution synthesized from Codex + Gemini analysis&gt;
+
+### Implementation Steps
+1. &lt;Step 1&gt; - Expected deliverable
+2. &lt;Step 2&gt; - Expected deliverable
+...
+
+### Key Files
+| File | Operation | Description |
+|------|-----------|-------------|
+| path/to/file.ts:L10-L50 | Modify | Description |
+
+### Risks and Mitigation
+| Risk | Mitigation |
+|------|------------|
+
+### SESSION_ID (for /ccg:execute use)
+- CODEX_SESSION: &lt;session_id&gt;
+- GEMINI_SESSION: &lt;session_id&gt;
+</code></pre>
+<h3>Phase 2 End: Plan Delivery (Not Execution)</h3>
+<p><strong><code>/ccg:plan</code> responsibilities end here, MUST execute the following actions</strong>:</p>
+<ol>
+<li><p>Present complete implementation plan to user (including pseudo-code)</p>
+</li>
+<li><p>Save plan to <code>.claude/plan/&lt;feature-name&gt;.md</code> (extract feature name from requirement, e.g., <code>user-auth</code>, <code>payment-module</code>)</p>
+</li>
+<li><p>Output prompt in <strong>bold text</strong> (MUST use actual saved file path):</p>
+<hr>
+<p><strong>Plan generated and saved to <code>.claude/plan/actual-feature-name.md</code></strong></p>
+<p><strong>Please review the plan above. You can:</strong></p>
+<ul>
+<li><strong>Modify plan</strong>: Tell me what needs adjustment, I&#39;ll update the plan</li>
+<li><strong>Execute plan</strong>: Copy the following command to a new session</li>
+</ul>
+<pre><code>/ccg:execute .claude/plan/actual-feature-name.md
+</code></pre>
+<hr>
+<p><strong>NOTE</strong>: The <code>actual-feature-name.md</code> above MUST be replaced with the actual saved filename!</p>
+</li>
+<li><p><strong>Immediately terminate current response</strong> (Stop here. No more tool calls.)</p>
+</li>
+</ol>
+<p><strong>ABSOLUTELY FORBIDDEN</strong>:</p>
+<ul>
+<li>Ask user &quot;Y/N&quot; then auto-execute (execution is <code>/ccg:execute</code>&#39;s responsibility)</li>
+<li>Any write operations to production code</li>
+<li>Automatically call <code>/ccg:execute</code> or any implementation actions</li>
+<li>Continue triggering model calls when user hasn&#39;t explicitly requested modifications</li>
+</ul>
+<hr>
+<h2>Plan Saving</h2>
+<p>After planning completes, save plan to:</p>
+<ul>
+<li><strong>First planning</strong>: <code>.claude/plan/&lt;feature-name&gt;.md</code></li>
+<li><strong>Iteration versions</strong>: <code>.claude/plan/&lt;feature-name&gt;-v2.md</code>, <code>.claude/plan/&lt;feature-name&gt;-v3.md</code>...</li>
+</ul>
+<p>Plan file write should complete before presenting plan to user.</p>
+<hr>
+<h2>Plan Modification Flow</h2>
+<p>If user requests plan modifications:</p>
+<ol>
+<li>Adjust plan content based on user feedback</li>
+<li>Update <code>.claude/plan/&lt;feature-name&gt;.md</code> file</li>
+<li>Re-present modified plan</li>
+<li>Prompt user to review or execute again</li>
+</ol>
+<hr>
+<h2>Next Steps</h2>
+<p>After user approves, <strong>manually</strong> execute:</p>
+<pre><code class="language-bash">/ccg:execute .claude/plan/&lt;feature-name&gt;.md
+</code></pre>
+<hr>
+<h2>Key Rules</h2>
+<ol>
+<li><strong>Plan only, no implementation</strong> – This command does not execute any code changes</li>
+<li><strong>No Y/N prompts</strong> – Only present plan, let user decide next steps</li>
+<li><strong>Trust Rules</strong> – Backend follows Codex, Frontend follows Gemini</li>
+<li>External models have <strong>zero filesystem write access</strong></li>
+<li><strong>SESSION_ID Handoff</strong> – Plan must include <code>CODEX_SESSION</code> / <code>GEMINI_SESSION</code> at end (for <code>/ccg:execute resume &lt;SESSION_ID&gt;</code> use)</li>
+</ol>
+
+</body>
+</html>

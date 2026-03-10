@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: foundation-models-on-device<br>description: Apple FoundationModels framework for on-device LLM — text generation, guided generation with @Generable, tool calling, and snapshot streaming in iOS 26+.</h2>
+<h1>FoundationModels: On-Device LLM (iOS 26)</h1>
+<p>Patterns for integrating Apple&#39;s on-device language model into apps using the FoundationModels framework. Covers text generation, structured output with <code>@Generable</code>, custom tool calling, and snapshot streaming — all running on-device for privacy and offline support.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Building AI-powered features using Apple Intelligence on-device</li>
+<li>Generating or summarizing text without cloud dependency</li>
+<li>Extracting structured data from natural language input</li>
+<li>Implementing custom tool calling for domain-specific AI actions</li>
+<li>Streaming structured responses for real-time UI updates</li>
+<li>Need privacy-preserving AI (no data leaves the device)</li>
+</ul>
+<h2>Core Pattern — Availability Check</h2>
+<p>Always check model availability before creating a session:</p>
+<pre><code class="language-swift">struct GenerativeView: View {
+    private var model = SystemLanguageModel.default
+
+    var body: some View {
+        switch model.availability {
+        case .available:
+            ContentView()
+        case .unavailable(.deviceNotEligible):
+            Text(&quot;Device not eligible for Apple Intelligence&quot;)
+        case .unavailable(.appleIntelligenceNotEnabled):
+            Text(&quot;Please enable Apple Intelligence in Settings&quot;)
+        case .unavailable(.modelNotReady):
+            Text(&quot;Model is downloading or not ready&quot;)
+        case .unavailable(let other):
+            Text(&quot;Model unavailable: \(other)&quot;)
+        }
+    }
+}
+</code></pre>
+<h2>Core Pattern — Basic Session</h2>
+<pre><code class="language-swift">// Single-turn: create a new session each time
+let session = LanguageModelSession()
+let response = try await session.respond(to: &quot;What&#39;s a good month to visit Paris?&quot;)
+print(response.content)
+
+// Multi-turn: reuse session for conversation context
+let session = LanguageModelSession(instructions: &quot;&quot;&quot;
+    You are a cooking assistant.
+    Provide recipe suggestions based on ingredients.
+    Keep suggestions brief and practical.
+    &quot;&quot;&quot;)
+
+let first = try await session.respond(to: &quot;I have chicken and rice&quot;)
+let followUp = try await session.respond(to: &quot;What about a vegetarian option?&quot;)
+</code></pre>
+<p>Key points for instructions:</p>
+<ul>
+<li>Define the model&#39;s role (&quot;You are a mentor&quot;)</li>
+<li>Specify what to do (&quot;Help extract calendar events&quot;)</li>
+<li>Set style preferences (&quot;Respond as briefly as possible&quot;)</li>
+<li>Add safety measures (&quot;Respond with &#39;I can&#39;t help with that&#39; for dangerous requests&quot;)</li>
+</ul>
+<h2>Core Pattern — Guided Generation with @Generable</h2>
+<p>Generate structured Swift types instead of raw strings:</p>
+<h3>1. Define a Generable Type</h3>
+<pre><code class="language-swift">@Generable(description: &quot;Basic profile information about a cat&quot;)
+struct CatProfile {
+    var name: String
+
+    @Guide(description: &quot;The age of the cat&quot;, .range(0...20))
+    var age: Int
+
+    @Guide(description: &quot;A one sentence profile about the cat&#39;s personality&quot;)
+    var profile: String
+}
+</code></pre>
+<h3>2. Request Structured Output</h3>
+<pre><code class="language-swift">let response = try await session.respond(
+    to: &quot;Generate a cute rescue cat&quot;,
+    generating: CatProfile.self
+)
+
+// Access structured fields directly
+print(&quot;Name: \(response.content.name)&quot;)
+print(&quot;Age: \(response.content.age)&quot;)
+print(&quot;Profile: \(response.content.profile)&quot;)
+</code></pre>
+<h3>Supported @Guide Constraints</h3>
+<ul>
+<li><code>.range(0...20)</code> — numeric range</li>
+<li><code>.count(3)</code> — array element count</li>
+<li><code>description:</code> — semantic guidance for generation</li>
+</ul>
+<h2>Core Pattern — Tool Calling</h2>
+<p>Let the model invoke custom code for domain-specific tasks:</p>
+<h3>1. Define a Tool</h3>
+<pre><code class="language-swift">struct RecipeSearchTool: Tool {
+    let name = &quot;recipe_search&quot;
+    let description = &quot;Search for recipes matching a given term and return a list of results.&quot;
+
+    @Generable
+    struct Arguments {
+        var searchTerm: String
+        var numberOfResults: Int
+    }
+
+    func call(arguments: Arguments) async throws -&gt; ToolOutput {
+        let recipes = await searchRecipes(
+            term: arguments.searchTerm,
+            limit: arguments.numberOfResults
+        )
+        return .string(recipes.map { &quot;- \($0.name): \($0.description)&quot; }.joined(separator: &quot;\n&quot;))
+    }
+}
+</code></pre>
+<h3>2. Create Session with Tools</h3>
+<pre><code class="language-swift">let session = LanguageModelSession(tools: [RecipeSearchTool()])
+let response = try await session.respond(to: &quot;Find me some pasta recipes&quot;)
+</code></pre>
+<h3>3. Handle Tool Errors</h3>
+<pre><code class="language-swift">do {
+    let answer = try await session.respond(to: &quot;Find a recipe for tomato soup.&quot;)
+} catch let error as LanguageModelSession.ToolCallError {
+    print(error.tool.name)
+    if case .databaseIsEmpty = error.underlyingError as? RecipeSearchToolError {
+        // Handle specific tool error
+    }
+}
+</code></pre>
+<h2>Core Pattern — Snapshot Streaming</h2>
+<p>Stream structured responses for real-time UI with <code>PartiallyGenerated</code> types:</p>
+<pre><code class="language-swift">@Generable
+struct TripIdeas {
+    @Guide(description: &quot;Ideas for upcoming trips&quot;)
+    var ideas: [String]
+}
+
+let stream = session.streamResponse(
+    to: &quot;What are some exciting trip ideas?&quot;,
+    generating: TripIdeas.self
+)
+
+for try await partial in stream {
+    // partial: TripIdeas.PartiallyGenerated (all properties Optional)
+    print(partial)
+}
+</code></pre>
+<h3>SwiftUI Integration</h3>
+<pre><code class="language-swift">@State private var partialResult: TripIdeas.PartiallyGenerated?
+@State private var errorMessage: String?
+
+var body: some View {
+    List {
+        ForEach(partialResult?.ideas ?? [], id: \.self) { idea in
+            Text(idea)
+        }
+    }
+    .overlay {
+        if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
+    }
+    .task {
+        do {
+            let stream = session.streamResponse(to: prompt, generating: TripIdeas.self)
+            for try await partial in stream {
+                partialResult = partial
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+</code></pre>
+<h2>Key Design Decisions</h2>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>On-device execution</td>
+<td>Privacy — no data leaves the device; works offline</td>
+</tr>
+<tr>
+<td>4,096 token limit</td>
+<td>On-device model constraint; chunk large data across sessions</td>
+</tr>
+<tr>
+<td>Snapshot streaming (not deltas)</td>
+<td>Structured output friendly; each snapshot is a complete partial state</td>
+</tr>
+<tr>
+<td><code>@Generable</code> macro</td>
+<td>Compile-time safety for structured generation; auto-generates <code>PartiallyGenerated</code> type</td>
+</tr>
+<tr>
+<td>Single request per session</td>
+<td><code>isResponding</code> prevents concurrent requests; create multiple sessions if needed</td>
+</tr>
+<tr>
+<td><code>response.content</code> (not <code>.output</code>)</td>
+<td>Correct API — always access results via <code>.content</code> property</td>
+</tr>
+</tbody></table>
+<h2>Best Practices</h2>
+<ul>
+<li><strong>Always check <code>model.availability</code></strong> before creating a session — handle all unavailability cases</li>
+<li><strong>Use <code>instructions</code></strong> to guide model behavior — they take priority over prompts</li>
+<li><strong>Check <code>isResponding</code></strong> before sending a new request — sessions handle one request at a time</li>
+<li><strong>Access <code>response.content</code></strong> for results — not <code>.output</code></li>
+<li><strong>Break large inputs into chunks</strong> — 4,096 token limit applies to instructions + prompt + output combined</li>
+<li><strong>Use <code>@Generable</code></strong> for structured output — stronger guarantees than parsing raw strings</li>
+<li><strong>Use <code>GenerationOptions(temperature:)</code></strong> to tune creativity (higher = more creative)</li>
+<li><strong>Monitor with Instruments</strong> — use Xcode Instruments to profile request performance</li>
+</ul>
+<h2>Anti-Patterns to Avoid</h2>
+<ul>
+<li>Creating sessions without checking <code>model.availability</code> first</li>
+<li>Sending inputs exceeding the 4,096 token context window</li>
+<li>Attempting concurrent requests on a single session</li>
+<li>Using <code>.output</code> instead of <code>.content</code> to access response data</li>
+<li>Parsing raw string responses when <code>@Generable</code> structured output would work</li>
+<li>Building complex multi-step logic in a single prompt — break into multiple focused prompts</li>
+<li>Assuming the model is always available — device eligibility and settings vary</li>
+</ul>
+<h2>When to Use</h2>
+<ul>
+<li>On-device text generation for privacy-sensitive apps</li>
+<li>Structured data extraction from user input (forms, natural language commands)</li>
+<li>AI-assisted features that must work offline</li>
+<li>Streaming UI that progressively shows generated content</li>
+<li>Domain-specific AI actions via tool calling (search, compute, lookup)</li>
+</ul>
+
+</body>
+</html>

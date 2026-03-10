@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: continuous-agent-loop<br>description: Patterns for continuous autonomous agent loops with quality gates, evals, and recovery controls.<br>origin: ECC</h2>
+<h1>Continuous Agent Loop</h1>
+<p>This is the v1.8+ canonical loop skill name. It supersedes <code>autonomous-loops</code> while keeping compatibility for one release.</p>
+<h2>Loop Selection Flow</h2>
+<pre><code class="language-text">Start
+  |
+  +-- Need strict CI/PR control? -- yes --&gt; continuous-pr
+  |                                    
+  +-- Need RFC decomposition? -- yes --&gt; rfc-dag
+  |
+  +-- Need exploratory parallel generation? -- yes --&gt; infinite
+  |
+  +-- default --&gt; sequential
+</code></pre>
+<h2>Combined Pattern</h2>
+<p>Recommended production stack:</p>
+<ol>
+<li>RFC decomposition (<code>ralphinho-rfc-pipeline</code>)</li>
+<li>quality gates (<code>plankton-code-quality</code> + <code>/quality-gate</code>)</li>
+<li>eval loop (<code>eval-harness</code>)</li>
+<li>session persistence (<code>nanoclaw-repl</code>)</li>
+</ol>
+<h2>Failure Modes</h2>
+<ul>
+<li>loop churn without measurable progress</li>
+<li>repeated retries with same root cause</li>
+<li>merge queue stalls</li>
+<li>cost drift from unbounded escalation</li>
+</ul>
+<h2>Recovery</h2>
+<ul>
+<li>freeze loop</li>
+<li>run <code>/harness-audit</code></li>
+<li>reduce scope to failing unit</li>
+<li>replay with explicit acceptance criteria</li>
+</ul>
+
+</body>
+</html>

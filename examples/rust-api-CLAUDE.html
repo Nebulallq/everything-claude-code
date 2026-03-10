@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rust-api-CLAUDE</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Rust API Service — Project CLAUDE.md</h1>
+<blockquote>
+<p>Real-world example for a Rust API service with Axum, PostgreSQL, and Docker.<br>Copy this to your project root and customize for your service.</p>
+</blockquote>
+<h2>Project Overview</h2>
+<p><strong>Stack:</strong> Rust 1.78+, Axum (web framework), SQLx (async database), PostgreSQL, Tokio (async runtime), Docker</p>
+<p><strong>Architecture:</strong> Layered architecture with handler → service → repository separation. Axum for HTTP, SQLx for type-checked SQL at compile time, Tower middleware for cross-cutting concerns.</p>
+<h2>Critical Rules</h2>
+<h3>Rust Conventions</h3>
+<ul>
+<li>Use <code>thiserror</code> for library errors, <code>anyhow</code> only in binary crates or tests</li>
+<li>No <code>.unwrap()</code> or <code>.expect()</code> in production code — propagate errors with <code>?</code></li>
+<li>Prefer <code>&amp;str</code> over <code>String</code> in function parameters; return <code>String</code> when ownership transfers</li>
+<li>Use <code>clippy</code> with <code>#![deny(clippy::all, clippy::pedantic)]</code> — fix all warnings</li>
+<li>Derive <code>Debug</code> on all public types; derive <code>Clone</code>, <code>PartialEq</code> only when needed</li>
+<li>No <code>unsafe</code> blocks unless justified with a <code>// SAFETY:</code> comment</li>
+</ul>
+<h3>Database</h3>
+<ul>
+<li>All queries use SQLx <code>query!</code> or <code>query_as!</code> macros — compile-time verified against the schema</li>
+<li>Migrations in <code>migrations/</code> using <code>sqlx migrate</code> — never alter the database directly</li>
+<li>Use <code>sqlx::Pool&lt;Postgres&gt;</code> as shared state — never create connections per request</li>
+<li>All queries use parameterized placeholders (<code>$1</code>, <code>$2</code>) — never string formatting</li>
+</ul>
+<pre><code class="language-rust">// BAD: String interpolation (SQL injection risk)
+let q = format!(&quot;SELECT * FROM users WHERE id = &#39;{}&#39;&quot;, id);
+
+// GOOD: Parameterized query, compile-time checked
+let user = sqlx::query_as!(User, &quot;SELECT * FROM users WHERE id = $1&quot;, id)
+    .fetch_optional(&amp;pool)
+    .await?;
+</code></pre>
+<h3>Error Handling</h3>
+<ul>
+<li>Define a domain error enum per module with <code>thiserror</code></li>
+<li>Map errors to HTTP responses via <code>IntoResponse</code> — never expose internal details</li>
+<li>Use <code>tracing</code> for structured logging — never <code>println!</code> or <code>eprintln!</code></li>
+</ul>
+<pre><code class="language-rust">use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum AppError {
+    #[error(&quot;Resource not found&quot;)]
+    NotFound,
+    #[error(&quot;Validation failed: {0}&quot;)]
+    Validation(String),
+    #[error(&quot;Unauthorized&quot;)]
+    Unauthorized,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -&gt; Response {
+        let (status, message) = match &amp;self {
+            Self::NotFound =&gt; (StatusCode::NOT_FOUND, self.to_string()),
+            Self::Validation(msg) =&gt; (StatusCode::BAD_REQUEST, msg.clone()),
+            Self::Unauthorized =&gt; (StatusCode::UNAUTHORIZED, self.to_string()),
+            Self::Internal(err) =&gt; {
+                tracing::error!(?err, &quot;internal error&quot;);
+                (StatusCode::INTERNAL_SERVER_ERROR, &quot;Internal error&quot;.into())
+            }
+        };
+        (status, Json(json!({ &quot;error&quot;: message }))).into_response()
+    }
+}
+</code></pre>
+<h3>Testing</h3>
+<ul>
+<li>Unit tests in <code>#[cfg(test)]</code> modules within each source file</li>
+<li>Integration tests in <code>tests/</code> directory using a real PostgreSQL (Testcontainers or Docker)</li>
+<li>Use <code>#[sqlx::test]</code> for database tests with automatic migration and rollback</li>
+<li>Mock external services with <code>mockall</code> or <code>wiremock</code></li>
+</ul>
+<h3>Code Style</h3>
+<ul>
+<li>Max line length: 100 characters (enforced by rustfmt)</li>
+<li>Group imports: <code>std</code>, external crates, <code>crate</code>/<code>super</code> — separated by blank lines</li>
+<li>Modules: one file per module, <code>mod.rs</code> only for re-exports</li>
+<li>Types: PascalCase, functions/variables: snake_case, constants: UPPER_SNAKE_CASE</li>
+</ul>
+<h2>File Structure</h2>
+<pre><code>src/
+  main.rs              # Entrypoint, server setup, graceful shutdown
+  lib.rs               # Re-exports for integration tests
+  config.rs            # Environment config with envy or figment
+  router.rs            # Axum router with all routes
+  middleware/
+    auth.rs            # JWT extraction and validation
+    logging.rs         # Request/response tracing
+  handlers/
+    mod.rs             # Route handlers (thin — delegate to services)
+    users.rs
+    orders.rs
+  services/
+    mod.rs             # Business logic
+    users.rs
+    orders.rs
+  repositories/
+    mod.rs             # Database access (SQLx queries)
+    users.rs
+    orders.rs
+  domain/
+    mod.rs             # Domain types, error enums
+    user.rs
+    order.rs
+migrations/
+  001_create_users.sql
+  002_create_orders.sql
+tests/
+  common/mod.rs        # Shared test helpers, test server setup
+  api_users.rs         # Integration tests for user endpoints
+  api_orders.rs        # Integration tests for order endpoints
+</code></pre>
+<h2>Key Patterns</h2>
+<h3>Handler (Thin)</h3>
+<pre><code class="language-rust">async fn create_user(
+    State(ctx): State&lt;AppState&gt;,
+    Json(payload): Json&lt;CreateUserRequest&gt;,
+) -&gt; Result&lt;(StatusCode, Json&lt;UserResponse&gt;), AppError&gt; {
+    let user = ctx.user_service.create(payload).await?;
+    Ok((StatusCode::CREATED, Json(UserResponse::from(user))))
+}
+</code></pre>
+<h3>Service (Business Logic)</h3>
+<pre><code class="language-rust">impl UserService {
+    pub async fn create(&amp;self, req: CreateUserRequest) -&gt; Result&lt;User, AppError&gt; {
+        if self.repo.find_by_email(&amp;req.email).await?.is_some() {
+            return Err(AppError::Validation(&quot;Email already registered&quot;.into()));
+        }
+
+        let password_hash = hash_password(&amp;req.password)?;
+        let user = self.repo.insert(&amp;req.email, &amp;req.name, &amp;password_hash).await?;
+
+        Ok(user)
+    }
+}
+</code></pre>
+<h3>Repository (Data Access)</h3>
+<pre><code class="language-rust">impl UserRepository {
+    pub async fn find_by_email(&amp;self, email: &amp;str) -&gt; Result&lt;Option&lt;User&gt;, sqlx::Error&gt; {
+        sqlx::query_as!(User, &quot;SELECT * FROM users WHERE email = $1&quot;, email)
+            .fetch_optional(&amp;self.pool)
+            .await
+    }
+
+    pub async fn insert(
+        &amp;self,
+        email: &amp;str,
+        name: &amp;str,
+        password_hash: &amp;str,
+    ) -&gt; Result&lt;User, sqlx::Error&gt; {
+        sqlx::query_as!(
+            User,
+            r#&quot;INSERT INTO users (email, name, password_hash)
+               VALUES ($1, $2, $3) RETURNING *&quot;#,
+            email, name, password_hash,
+        )
+        .fetch_one(&amp;self.pool)
+        .await
+    }
+}
+</code></pre>
+<h3>Integration Test</h3>
+<pre><code class="language-rust">#[tokio::test]
+async fn test_create_user() {
+    let app = spawn_test_app().await;
+
+    let response = app
+        .client
+        .post(&amp;format!(&quot;{}/api/v1/users&quot;, app.address))
+        .json(&amp;json!({
+            &quot;email&quot;: &quot;alice@example.com&quot;,
+            &quot;name&quot;: &quot;Alice&quot;,
+            &quot;password&quot;: &quot;securepassword123&quot;
+        }))
+        .send()
+        .await
+        .expect(&quot;Failed to send request&quot;);
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body[&quot;email&quot;], &quot;alice@example.com&quot;);
+}
+
+#[tokio::test]
+async fn test_create_user_duplicate_email() {
+    let app = spawn_test_app().await;
+    // Create first user
+    create_test_user(&amp;app, &quot;alice@example.com&quot;).await;
+    // Attempt duplicate
+    let response = create_user_request(&amp;app, &quot;alice@example.com&quot;).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+</code></pre>
+<h2>Environment Variables</h2>
+<pre><code class="language-bash"># Server
+HOST=0.0.0.0
+PORT=8080
+RUST_LOG=info,tower_http=debug
+
+# Database
+DATABASE_URL=postgres://user:pass@localhost:5432/myapp
+
+# Auth
+JWT_SECRET=your-secret-key-min-32-chars
+JWT_EXPIRY_HOURS=24
+
+# Optional
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+</code></pre>
+<h2>Testing Strategy</h2>
+<pre><code class="language-bash"># Run all tests
+cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test module
+cargo test api_users
+
+# Check coverage (requires cargo-llvm-cov)
+cargo llvm-cov --html
+open target/llvm-cov/html/index.html
+
+# Lint
+cargo clippy -- -D warnings
+
+# Format check
+cargo fmt -- --check
+</code></pre>
+<h2>ECC Workflow</h2>
+<pre><code class="language-bash"># Planning
+/plan &quot;Add order fulfillment with Stripe payment&quot;
+
+# Development with TDD
+/tdd                    # cargo test-based TDD workflow
+
+# Review
+/code-review            # Rust-specific code review
+/security-scan          # Dependency audit + unsafe scan
+
+# Verification
+/verify                 # Build, clippy, test, security scan
+</code></pre>
+<h2>Git Workflow</h2>
+<ul>
+<li><code>feat:</code> new features, <code>fix:</code> bug fixes, <code>refactor:</code> code changes</li>
+<li>Feature branches from <code>main</code>, PRs required</li>
+<li>CI: <code>cargo fmt --check</code>, <code>cargo clippy</code>, <code>cargo test</code>, <code>cargo audit</code></li>
+<li>Deploy: Docker multi-stage build with <code>scratch</code> or <code>distroless</code> base</li>
+</ul>
+
+</body>
+</html>

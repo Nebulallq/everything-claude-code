@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>plan</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Restate requirements, assess risks, and create step-by-step implementation plan. WAIT for user CONFIRM before touching any code.</h2>
+<h1>Plan Command</h1>
+<p>This command invokes the <strong>planner</strong> agent to create a comprehensive implementation plan before writing any code.</p>
+<h2>What This Command Does</h2>
+<ol>
+<li><strong>Restate Requirements</strong> - Clarify what needs to be built</li>
+<li><strong>Identify Risks</strong> - Surface potential issues and blockers</li>
+<li><strong>Create Step Plan</strong> - Break down implementation into phases</li>
+<li><strong>Wait for Confirmation</strong> - MUST receive user approval before proceeding</li>
+</ol>
+<h2>When to Use</h2>
+<p>Use <code>/plan</code> when:</p>
+<ul>
+<li>Starting a new feature</li>
+<li>Making significant architectural changes</li>
+<li>Working on complex refactoring</li>
+<li>Multiple files/components will be affected</li>
+<li>Requirements are unclear or ambiguous</li>
+</ul>
+<h2>How It Works</h2>
+<p>The planner agent will:</p>
+<ol>
+<li><strong>Analyze the request</strong> and restate requirements in clear terms</li>
+<li><strong>Break down into phases</strong> with specific, actionable steps</li>
+<li><strong>Identify dependencies</strong> between components</li>
+<li><strong>Assess risks</strong> and potential blockers</li>
+<li><strong>Estimate complexity</strong> (High/Medium/Low)</li>
+<li><strong>Present the plan</strong> and WAIT for your explicit confirmation</li>
+</ol>
+<h2>Example Usage</h2>
+<pre><code>User: /plan I need to add real-time notifications when markets resolve
+
+Agent (planner):
+# Implementation Plan: Real-Time Market Resolution Notifications
+
+## Requirements Restatement
+- Send notifications to users when markets they&#39;re watching resolve
+- Support multiple notification channels (in-app, email, webhook)
+- Ensure notifications are delivered reliably
+- Include market outcome and user&#39;s position result
+
+## Implementation Phases
+
+### Phase 1: Database Schema
+- Add notifications table with columns: id, user_id, market_id, type, status, created_at
+- Add user_notification_preferences table for channel preferences
+- Create indexes on user_id and market_id for performance
+
+### Phase 2: Notification Service
+- Create notification service in lib/notifications.ts
+- Implement notification queue using BullMQ/Redis
+- Add retry logic for failed deliveries
+- Create notification templates
+
+### Phase 3: Integration Points
+- Hook into market resolution logic (when status changes to &quot;resolved&quot;)
+- Query all users with positions in market
+- Enqueue notifications for each user
+
+### Phase 4: Frontend Components
+- Create NotificationBell component in header
+- Add NotificationList modal
+- Implement real-time updates via Supabase subscriptions
+- Add notification preferences page
+
+## Dependencies
+- Redis (for queue)
+- Email service (SendGrid/Resend)
+- Supabase real-time subscriptions
+
+## Risks
+- HIGH: Email deliverability (SPF/DKIM required)
+- MEDIUM: Performance with 1000+ users per market
+- MEDIUM: Notification spam if markets resolve frequently
+- LOW: Real-time subscription overhead
+
+## Estimated Complexity: MEDIUM
+- Backend: 4-6 hours
+- Frontend: 3-4 hours
+- Testing: 2-3 hours
+- Total: 9-13 hours
+
+**WAITING FOR CONFIRMATION**: Proceed with this plan? (yes/no/modify)
+</code></pre>
+<h2>Important Notes</h2>
+<p><strong>CRITICAL</strong>: The planner agent will <strong>NOT</strong> write any code until you explicitly confirm the plan with &quot;yes&quot; or &quot;proceed&quot; or similar affirmative response.</p>
+<p>If you want changes, respond with:</p>
+<ul>
+<li>&quot;modify: [your changes]&quot;</li>
+<li>&quot;different approach: [alternative]&quot;</li>
+<li>&quot;skip phase 2 and do phase 3 first&quot;</li>
+</ul>
+<h2>Integration with Other Commands</h2>
+<p>After planning:</p>
+<ul>
+<li>Use <code>/tdd</code> to implement with test-driven development</li>
+<li>Use <code>/build-fix</code> if build errors occur</li>
+<li>Use <code>/code-review</code> to review completed implementation</li>
+</ul>
+<h2>Related Agents</h2>
+<p>This command invokes the <code>planner</code> agent located at:<br><code>~/.claude/agents/planner.md</code></p>
+
+</body>
+</html>

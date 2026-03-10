@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>evolve</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: evolve<br>description: Analyze instincts and suggest or generate evolved structures<br>command: true</h2>
+<h1>Evolve Command</h1>
+<h2>Implementation</h2>
+<p>Run the instinct CLI using the plugin root path:</p>
+<pre><code class="language-bash">python3 &quot;${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py&quot; evolve [--generate]
+</code></pre>
+<p>Or if <code>CLAUDE_PLUGIN_ROOT</code> is not set (manual installation):</p>
+<pre><code class="language-bash">python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py evolve [--generate]
+</code></pre>
+<p>Analyzes instincts and clusters related ones into higher-level structures:</p>
+<ul>
+<li><strong>Commands</strong>: When instincts describe user-invoked actions</li>
+<li><strong>Skills</strong>: When instincts describe auto-triggered behaviors</li>
+<li><strong>Agents</strong>: When instincts describe complex, multi-step processes</li>
+</ul>
+<h2>Usage</h2>
+<pre><code>/evolve                    # Analyze all instincts and suggest evolutions
+/evolve --generate         # Also generate files under evolved/{skills,commands,agents}
+</code></pre>
+<h2>Evolution Rules</h2>
+<h3>→ Command (User-Invoked)</h3>
+<p>When instincts describe actions a user would explicitly request:</p>
+<ul>
+<li>Multiple instincts about &quot;when user asks to...&quot;</li>
+<li>Instincts with triggers like &quot;when creating a new X&quot;</li>
+<li>Instincts that follow a repeatable sequence</li>
+</ul>
+<p>Example:</p>
+<ul>
+<li><code>new-table-step1</code>: &quot;when adding a database table, create migration&quot;</li>
+<li><code>new-table-step2</code>: &quot;when adding a database table, update schema&quot;</li>
+<li><code>new-table-step3</code>: &quot;when adding a database table, regenerate types&quot;</li>
+</ul>
+<p>→ Creates: <strong>new-table</strong> command</p>
+<h3>→ Skill (Auto-Triggered)</h3>
+<p>When instincts describe behaviors that should happen automatically:</p>
+<ul>
+<li>Pattern-matching triggers</li>
+<li>Error handling responses</li>
+<li>Code style enforcement</li>
+</ul>
+<p>Example:</p>
+<ul>
+<li><code>prefer-functional</code>: &quot;when writing functions, prefer functional style&quot;</li>
+<li><code>use-immutable</code>: &quot;when modifying state, use immutable patterns&quot;</li>
+<li><code>avoid-classes</code>: &quot;when designing modules, avoid class-based design&quot;</li>
+</ul>
+<p>→ Creates: <code>functional-patterns</code> skill</p>
+<h3>→ Agent (Needs Depth/Isolation)</h3>
+<p>When instincts describe complex, multi-step processes that benefit from isolation:</p>
+<ul>
+<li>Debugging workflows</li>
+<li>Refactoring sequences</li>
+<li>Research tasks</li>
+</ul>
+<p>Example:</p>
+<ul>
+<li><code>debug-step1</code>: &quot;when debugging, first check logs&quot;</li>
+<li><code>debug-step2</code>: &quot;when debugging, isolate the failing component&quot;</li>
+<li><code>debug-step3</code>: &quot;when debugging, create minimal reproduction&quot;</li>
+<li><code>debug-step4</code>: &quot;when debugging, verify fix with test&quot;</li>
+</ul>
+<p>→ Creates: <strong>debugger</strong> agent</p>
+<h2>What to Do</h2>
+<ol>
+<li>Detect current project context</li>
+<li>Read project + global instincts (project takes precedence on ID conflicts)</li>
+<li>Group instincts by trigger/domain patterns</li>
+<li>Identify:<ul>
+<li>Skill candidates (trigger clusters with 2+ instincts)</li>
+<li>Command candidates (high-confidence workflow instincts)</li>
+<li>Agent candidates (larger, high-confidence clusters)</li>
+</ul>
+</li>
+<li>Show promotion candidates (project -&gt; global) when applicable</li>
+<li>If <code>--generate</code> is passed, write files to:<ul>
+<li>Project scope: <code>~/.claude/homunculus/projects/&lt;project-id&gt;/evolved/</code></li>
+<li>Global fallback: <code>~/.claude/homunculus/evolved/</code></li>
+</ul>
+</li>
+</ol>
+<h2>Output Format</h2>
+<pre><code>============================================================
+  EVOLVE ANALYSIS - 12 instincts
+  Project: my-app (a1b2c3d4e5f6)
+  Project-scoped: 8 | Global: 4
+============================================================
+
+High confidence instincts (&gt;=80%): 5
+
+## SKILL CANDIDATES
+1. Cluster: &quot;adding tests&quot;
+   Instincts: 3
+   Avg confidence: 82%
+   Domains: testing
+   Scopes: project
+
+## COMMAND CANDIDATES (2)
+  /adding-tests
+    From: test-first-workflow [project]
+    Confidence: 84%
+
+## AGENT CANDIDATES (1)
+  adding-tests-agent
+    Covers 3 instincts
+    Avg confidence: 82%
+</code></pre>
+<h2>Flags</h2>
+<ul>
+<li><code>--generate</code>: Generate evolved files in addition to analysis output</li>
+</ul>
+<h2>Generated File Format</h2>
+<h3>Command</h3>
+<pre><code class="language-markdown">---
+name: new-table
+description: Create a new database table with migration, schema update, and type generation
+command: /new-table
+evolved_from:
+  - new-table-migration
+  - update-schema
+  - regenerate-types
+---
+
+# New Table Command
+
+[Generated content based on clustered instincts]
+
+## Steps
+1. ...
+2. ...
+</code></pre>
+<h3>Skill</h3>
+<pre><code class="language-markdown">---
+name: functional-patterns
+description: Enforce functional programming patterns
+evolved_from:
+  - prefer-functional
+  - use-immutable
+  - avoid-classes
+---
+
+# Functional Patterns Skill
+
+[Generated content based on clustered instincts]
+</code></pre>
+<h3>Agent</h3>
+<pre><code class="language-markdown">---
+name: debugger
+description: Systematic debugging agent
+model: sonnet
+evolved_from:
+  - debug-check-logs
+  - debug-isolate
+  - debug-reproduce
+---
+
+# Debugger Agent
+
+[Generated content based on clustered instincts]
+</code></pre>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: java-coding-standards<br>description: &quot;Java coding standards for Spring Boot services: naming, immutability, Optional usage, streams, exceptions, generics, and project layout.&quot;<br>origin: ECC</h2>
+<h1>Java Coding Standards</h1>
+<p>Standards for readable, maintainable Java (17+) code in Spring Boot services.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Writing or reviewing Java code in Spring Boot projects</li>
+<li>Enforcing naming, immutability, or exception handling conventions</li>
+<li>Working with records, sealed classes, or pattern matching (Java 17+)</li>
+<li>Reviewing use of Optional, streams, or generics</li>
+<li>Structuring packages and project layout</li>
+</ul>
+<h2>Core Principles</h2>
+<ul>
+<li>Prefer clarity over cleverness</li>
+<li>Immutable by default; minimize shared mutable state</li>
+<li>Fail fast with meaningful exceptions</li>
+<li>Consistent naming and package structure</li>
+</ul>
+<h2>Naming</h2>
+<pre><code class="language-java">// ✅ Classes/Records: PascalCase
+public class MarketService {}
+public record Money(BigDecimal amount, Currency currency) {}
+
+// ✅ Methods/fields: camelCase
+private final MarketRepository marketRepository;
+public Market findBySlug(String slug) {}
+
+// ✅ Constants: UPPER_SNAKE_CASE
+private static final int MAX_PAGE_SIZE = 100;
+</code></pre>
+<h2>Immutability</h2>
+<pre><code class="language-java">// ✅ Favor records and final fields
+public record MarketDto(Long id, String name, MarketStatus status) {}
+
+public class Market {
+  private final Long id;
+  private final String name;
+  // getters only, no setters
+}
+</code></pre>
+<h2>Optional Usage</h2>
+<pre><code class="language-java">// ✅ Return Optional from find* methods
+Optional&lt;Market&gt; market = marketRepository.findBySlug(slug);
+
+// ✅ Map/flatMap instead of get()
+return market
+    .map(MarketResponse::from)
+    .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Market not found&quot;));
+</code></pre>
+<h2>Streams Best Practices</h2>
+<pre><code class="language-java">// ✅ Use streams for transformations, keep pipelines short
+List&lt;String&gt; names = markets.stream()
+    .map(Market::name)
+    .filter(Objects::nonNull)
+    .toList();
+
+// ❌ Avoid complex nested streams; prefer loops for clarity
+</code></pre>
+<h2>Exceptions</h2>
+<ul>
+<li>Use unchecked exceptions for domain errors; wrap technical exceptions with context</li>
+<li>Create domain-specific exceptions (e.g., <code>MarketNotFoundException</code>)</li>
+<li>Avoid broad <code>catch (Exception ex)</code> unless rethrowing/logging centrally</li>
+</ul>
+<pre><code class="language-java">throw new MarketNotFoundException(slug);
+</code></pre>
+<h2>Generics and Type Safety</h2>
+<ul>
+<li>Avoid raw types; declare generic parameters</li>
+<li>Prefer bounded generics for reusable utilities</li>
+</ul>
+<pre><code class="language-java">public &lt;T extends Identifiable&gt; Map&lt;Long, T&gt; indexById(Collection&lt;T&gt; items) { ... }
+</code></pre>
+<h2>Project Structure (Maven/Gradle)</h2>
+<pre><code>src/main/java/com/example/app/
+  config/
+  controller/
+  service/
+  repository/
+  domain/
+  dto/
+  util/
+src/main/resources/
+  application.yml
+src/test/java/... (mirrors main)
+</code></pre>
+<h2>Formatting and Style</h2>
+<ul>
+<li>Use 2 or 4 spaces consistently (project standard)</li>
+<li>One public top-level type per file</li>
+<li>Keep methods short and focused; extract helpers</li>
+<li>Order members: constants, fields, constructors, public methods, protected, private</li>
+</ul>
+<h2>Code Smells to Avoid</h2>
+<ul>
+<li>Long parameter lists → use DTO/builders</li>
+<li>Deep nesting → early returns</li>
+<li>Magic numbers → named constants</li>
+<li>Static mutable state → prefer dependency injection</li>
+<li>Silent catch blocks → log and act or rethrow</li>
+</ul>
+<h2>Logging</h2>
+<pre><code class="language-java">private static final Logger log = LoggerFactory.getLogger(MarketService.class);
+log.info(&quot;fetch_market slug={}&quot;, slug);
+log.error(&quot;failed_fetch_market slug={}&quot;, slug, ex);
+</code></pre>
+<h2>Null Handling</h2>
+<ul>
+<li>Accept <code>@Nullable</code> only when unavoidable; otherwise use <code>@NonNull</code></li>
+<li>Use Bean Validation (<code>@NotNull</code>, <code>@NotBlank</code>) on inputs</li>
+</ul>
+<h2>Testing Expectations</h2>
+<ul>
+<li>JUnit 5 + AssertJ for fluent assertions</li>
+<li>Mockito for mocking; avoid partial mocks where possible</li>
+<li>Favor deterministic tests; no hidden sleeps</li>
+</ul>
+<p><strong>Remember</strong>: Keep code intentional, typed, and observable. Optimize for maintainability over micro-optimizations unless proven necessary.</p>
+
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CONTRIBUTING</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Everything Claude Codeに貢献する</h1>
+<p>貢献いただきありがとうございます！このリポジトリはClaude Codeユーザーのためのコミュニティリソースです。</p>
+<h2>目次</h2>
+<ul>
+<li><a href="#%E6%8E%A2%E3%81%97%E3%81%A6%E3%81%84%E3%82%8B%E3%82%82%E3%81%AE">探しているもの</a></li>
+<li><a href="#%E3%82%AF%E3%82%A4%E3%83%83%E3%82%AF%E3%82%B9%E3%82%BF%E3%83%BC%E3%83%88">クイックスタート</a></li>
+<li><a href="#%E3%82%B9%E3%82%AD%E3%83%AB%E3%81%AE%E8%B2%A2%E7%8C%AE">スキルの貢献</a></li>
+<li><a href="#%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88%E3%81%AE%E8%B2%A2%E7%8C%AE">エージェントの貢献</a></li>
+<li><a href="#%E3%83%95%E3%83%83%E3%82%AF%E3%81%AE%E8%B2%A2%E7%8C%AE">フックの貢献</a></li>
+<li><a href="#%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AE%E8%B2%A2%E7%8C%AE">コマンドの貢献</a></li>
+<li><a href="#%E3%83%97%E3%83%AB%E3%83%AA%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%83%97%E3%83%AD%E3%82%BB%E3%82%B9">プルリクエストプロセス</a></li>
+</ul>
+<hr>
+<h2>探しているもの</h2>
+<h3>エージェント</h3>
+<p>特定のタスクをうまく処理できる新しいエージェント：</p>
+<ul>
+<li>言語固有のレビュアー（Python、Go、Rust）</li>
+<li>フレームワークエキスパート（Django、Rails、Laravel、Spring）</li>
+<li>DevOpsスペシャリスト（Kubernetes、Terraform、CI/CD）</li>
+<li>ドメインエキスパート（MLパイプライン、データエンジニアリング、モバイル）</li>
+</ul>
+<h3>スキル</h3>
+<p>ワークフロー定義とドメイン知識：</p>
+<ul>
+<li>言語のベストプラクティス</li>
+<li>フレームワークのパターン</li>
+<li>テスト戦略</li>
+<li>アーキテクチャガイド</li>
+</ul>
+<h3>フック</h3>
+<p>有用な自動化：</p>
+<ul>
+<li>リンティング/フォーマッティングフック</li>
+<li>セキュリティチェック</li>
+<li>バリデーションフック</li>
+<li>通知フック</li>
+</ul>
+<h3>コマンド</h3>
+<p>有用なワークフローを呼び出すスラッシュコマンド：</p>
+<ul>
+<li>デプロイコマンド</li>
+<li>テストコマンド</li>
+<li>コード生成コマンド</li>
+</ul>
+<hr>
+<h2>クイックスタート</h2>
+<pre><code class="language-bash"># 1. Fork とクローン
+gh repo fork affaan-m/everything-claude-code --clone
+cd everything-claude-code
+
+# 2. ブランチを作成
+git checkout -b feat/my-contribution
+
+# 3. 貢献を追加（以下のセクション参照）
+
+# 4. ローカルでテスト
+cp -r skills/my-skill ~/.claude/skills/  # スキルの場合
+# その後、Claude Codeでテスト
+
+# 5. PR を送信
+git add . &amp;&amp; git commit -m &quot;feat: add my-skill&quot; &amp;&amp; git push
+</code></pre>
+<hr>
+<h2>スキルの貢献</h2>
+<p>スキルは、コンテキストに基づいてClaude Codeが読み込む知識モジュールです。</p>
+<h3>ディレクトリ構造</h3>
+<pre><code>skills/
+└── your-skill-name/
+    └── SKILL.md
+</code></pre>
+<h3>SKILL.md テンプレート</h3>
+<pre><code class="language-markdown">---
+name: your-skill-name
+description: スキルリストに表示される短い説明
+---
+
+# Your Skill Title
+
+このスキルがカバーする内容の概要。
+
+## Core Concepts
+
+主要なパターンとガイドラインを説明します。
+
+## Code Examples
+
+\`\`\`typescript
+// 実践的なテスト済みの例を含める
+function example() {
+  // よくコメントされたコード
+}
+\`\`\`
+
+## Best Practices
+
+- 実行可能なガイドライン
+- すべき事とすべきでない事
+- 回避すべき一般的な落とし穴
+
+## When to Use
+
+このスキルが適用されるシナリオを説明します。
+</code></pre>
+<h3>スキルチェックリスト</h3>
+<ul>
+<li><input disabled="" type="checkbox"> 1つのドメイン/テクノロジーに焦点を当てている</li>
+<li><input disabled="" type="checkbox"> 実践的なコード例を含む</li>
+<li><input disabled="" type="checkbox"> 500行以下</li>
+<li><input disabled="" type="checkbox"> 明確なセクションヘッダーを使用</li>
+<li><input disabled="" type="checkbox"> Claude Codeでテスト済み</li>
+</ul>
+<h3>サンプルスキル</h3>
+<table>
+<thead>
+<tr>
+<th>スキル</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>coding-standards/</code></td>
+<td>TypeScript/JavaScriptパターン</td>
+</tr>
+<tr>
+<td><code>frontend-patterns/</code></td>
+<td>ReactとNext.jsのベストプラクティス</td>
+</tr>
+<tr>
+<td><code>backend-patterns/</code></td>
+<td>APIとデータベースのパターン</td>
+</tr>
+<tr>
+<td><code>security-review/</code></td>
+<td>セキュリティチェックリスト</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>エージェントの貢献</h2>
+<p>エージェントはTaskツールで呼び出される特殊なアシスタントです。</p>
+<h3>ファイルの場所</h3>
+<pre><code>agents/your-agent-name.md
+</code></pre>
+<h3>エージェントテンプレート</h3>
+<pre><code class="language-markdown">---
+name: your-agent-name
+description: このエージェントが実行する操作と、Claude が呼び出すべき時期。具体的に！
+tools: [&quot;Read&quot;, &quot;Write&quot;, &quot;Edit&quot;, &quot;Bash&quot;, &quot;Grep&quot;, &quot;Glob&quot;]
+model: sonnet
+---
+
+あなたは[役割]スペシャリストです。
+
+## Your Role
+
+- 主な責任
+- 副次的な責任
+- あなたが実行しないこと（境界）
+
+## Workflow
+
+### Step 1: Understand
+タスクへのアプローチ方法。
+
+### Step 2: Execute
+作業をどのように実行するか。
+
+### Step 3: Verify
+結果をどのように検証するか。
+
+## Output Format
+
+ユーザーに返すもの。
+
+## Examples
+
+### Example: [Scenario]
+Input: [ユーザーが提供するもの]
+Action: [実行する操作]
+Output: [返すもの]
+</code></pre>
+<h3>エージェントフィールド</h3>
+<table>
+<thead>
+<tr>
+<th>フィールド</th>
+<th>説明</th>
+<th>オプション</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>小文字、ハイフン区切り</td>
+<td><code>code-reviewer</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>呼び出すかどうかを判断するために使用</td>
+<td>具体的に！</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>必要なものだけ</td>
+<td><code>Read, Write, Edit, Bash, Grep, Glob, WebFetch, Task</code></td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>複雑さレベル</td>
+<td><code>haiku</code>（シンプル）、<code>sonnet</code>（コーディング）、<code>opus</code>（複雑）</td>
+</tr>
+</tbody></table>
+<h3>サンプルエージェント</h3>
+<table>
+<thead>
+<tr>
+<th>エージェント</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tdd-guide.md</code></td>
+<td>テスト駆動開発</td>
+</tr>
+<tr>
+<td><code>code-reviewer.md</code></td>
+<td>コードレビュー</td>
+</tr>
+<tr>
+<td><code>security-reviewer.md</code></td>
+<td>セキュリティスキャン</td>
+</tr>
+<tr>
+<td><code>build-error-resolver.md</code></td>
+<td>ビルドエラーの修正</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>フックの貢献</h2>
+<p>フックはClaude Codeイベントによってトリガーされる自動的な動作です。</p>
+<h3>ファイルの場所</h3>
+<pre><code>hooks/hooks.json
+</code></pre>
+<h3>フックの種類</h3>
+<table>
+<thead>
+<tr>
+<th>種類</th>
+<th>トリガー</th>
+<th>ユースケース</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PreToolUse</code></td>
+<td>ツール実行前</td>
+<td>検証、警告、ブロック</td>
+</tr>
+<tr>
+<td><code>PostToolUse</code></td>
+<td>ツール実行後</td>
+<td>フォーマット、チェック、通知</td>
+</tr>
+<tr>
+<td><code>SessionStart</code></td>
+<td>セッション開始</td>
+<td>コンテキストの読み込み</td>
+</tr>
+<tr>
+<td><code>Stop</code></td>
+<td>セッション終了</td>
+<td>クリーンアップ、監査</td>
+</tr>
+</tbody></table>
+<h3>フックフォーマット</h3>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [
+      {
+        &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;rm -rf /\&quot;&quot;,
+        &quot;hooks&quot;: [
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;echo &#39;[Hook] BLOCKED: Dangerous command&#39; &amp;&amp; exit 1&quot;
+          }
+        ],
+        &quot;description&quot;: &quot;危険な rm コマンドをブロック&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<h3>マッチャー構文</h3>
+<pre><code class="language-javascript">// 特定のツールにマッチ
+tool == &quot;Bash&quot;
+tool == &quot;Edit&quot;
+tool == &quot;Write&quot;
+
+// 入力パターンにマッチ
+tool_input.command matches &quot;npm install&quot;
+tool_input.file_path matches &quot;\\.tsx?$&quot;
+
+// 条件を組み合わせ
+tool == &quot;Bash&quot; &amp;&amp; tool_input.command matches &quot;git push&quot;
+</code></pre>
+<h3>フック例</h3>
+<pre><code class="language-json">// tmux の外で開発サーバーをブロック
+{
+  &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;npm run dev\&quot;&quot;,
+  &quot;hooks&quot;: [{&quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;echo &#39;Use tmux for dev servers&#39; &amp;&amp; exit 1&quot;}],
+  &quot;description&quot;: &quot;開発サーバーが tmux で実行されることを確認&quot;
+}
+
+// TypeScript 編集後に自動フォーマット
+{
+  &quot;matcher&quot;: &quot;tool == \&quot;Edit\&quot; &amp;&amp; tool_input.file_path matches \&quot;\\.tsx?$\&quot;&quot;,
+  &quot;hooks&quot;: [{&quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;npx prettier --write \&quot;$file_path\&quot;&quot;}],
+  &quot;description&quot;: &quot;編集後に TypeScript ファイルをフォーマット&quot;
+}
+
+// git push 前に警告
+{
+  &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;git push\&quot;&quot;,
+  &quot;hooks&quot;: [{&quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;echo &#39;[Hook] Review changes before pushing&#39;&quot;}],
+  &quot;description&quot;: &quot;プッシュ前に変更をレビューするリマインダー&quot;
+}
+</code></pre>
+<h3>フックチェックリスト</h3>
+<ul>
+<li><input disabled="" type="checkbox"> マッチャーが具体的（過度に広くない）</li>
+<li><input disabled="" type="checkbox"> 明確なエラー/情報メッセージを含む</li>
+<li><input disabled="" type="checkbox"> 正しい終了コードを使用（<code>exit 1</code>はブロック、<code>exit 0</code>は許可）</li>
+<li><input disabled="" type="checkbox"> 徹底的にテスト済み</li>
+<li><input disabled="" type="checkbox"> 説明を含む</li>
+</ul>
+<hr>
+<h2>コマンドの貢献</h2>
+<p>コマンドは<code>/command-name</code>で呼び出されるユーザー起動アクションです。</p>
+<h3>ファイルの場所</h3>
+<pre><code>commands/your-command.md
+</code></pre>
+<h3>コマンドテンプレート</h3>
+<pre><code class="language-markdown">---
+description: /help に表示される短い説明
+---
+
+# Command Name
+
+## Purpose
+
+このコマンドが実行する操作。
+
+## Usage
+
+\`\`\`
+/your-command [args]
+\`\`\`
+
+## Workflow
+
+1. 最初のステップ
+2. 2番目のステップ
+3. 最終ステップ
+
+## Output
+
+ユーザーが受け取るもの。
+</code></pre>
+<h3>サンプルコマンド</h3>
+<table>
+<thead>
+<tr>
+<th>コマンド</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>commit.md</code></td>
+<td>gitコミットの作成</td>
+</tr>
+<tr>
+<td><code>code-review.md</code></td>
+<td>コード変更のレビュー</td>
+</tr>
+<tr>
+<td><code>tdd.md</code></td>
+<td>TDDワークフロー</td>
+</tr>
+<tr>
+<td><code>e2e.md</code></td>
+<td>E2Eテスト</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>プルリクエストプロセス</h2>
+<h3>1. PRタイトル形式</h3>
+<pre><code>feat(skills): add rust-patterns skill
+feat(agents): add api-designer agent
+feat(hooks): add auto-format hook
+fix(skills): update React patterns
+docs: improve contributing guide
+</code></pre>
+<h3>2. PR説明</h3>
+<pre><code class="language-markdown">## Summary
+何を追加しているのか、その理由。
+
+## Type
+- [ ] Skill
+- [ ] Agent
+- [ ] Hook
+- [ ] Command
+
+## Testing
+これをどのようにテストしたか。
+
+## Checklist
+- [ ] フォーマットガイドに従う
+- [ ] Claude Codeでテスト済み
+- [ ] 機密情報なし（APIキー、パス）
+- [ ] 明確な説明
+</code></pre>
+<h3>3. レビュープロセス</h3>
+<ol>
+<li>メンテナーが48時間以内にレビュー</li>
+<li>リクエストされた場合はフィードバックに対応</li>
+<li>承認後、mainにマージ</li>
+</ol>
+<hr>
+<h2>ガイドライン</h2>
+<h3>すべきこと</h3>
+<ul>
+<li>貢献は焦点を絞って、モジュラーに保つ</li>
+<li>明確な説明を含める</li>
+<li>提出前にテストする</li>
+<li>既存のパターンに従う</li>
+<li>依存関係を文書化する</li>
+</ul>
+<h3>すべきでないこと</h3>
+<ul>
+<li>機密データを含める（APIキー、トークン、パス）</li>
+<li>過度に複雑またはニッチな設定を追加する</li>
+<li>テストされていない貢献を提出する</li>
+<li>既存機能の重複を作成する</li>
+</ul>
+<hr>
+<h2>ファイル命名規則</h2>
+<ul>
+<li>小文字とハイフンを使用：<code>python-reviewer.md</code></li>
+<li>説明的に：<code>workflow.md</code>ではなく<code>tdd-workflow.md</code></li>
+<li>名前をファイル名に一致させる</li>
+</ul>
+<hr>
+<h2>質問がありますか？</h2>
+<ul>
+<li><strong>Issues:</strong> <a href="https://github.com/affaan-m/everything-claude-code/issues">github.com/affaan-m/everything-claude-code/issues</a></li>
+<li><strong>X/Twitter:</strong> <a href="https://x.com/affaanmustafa">@affaanmustafa</a></li>
+</ul>
+<hr>
+<p>貢献いただきありがとうございます。一緒に素晴らしいリソースを構築しましょう。</p>
+
+</body>
+</html>

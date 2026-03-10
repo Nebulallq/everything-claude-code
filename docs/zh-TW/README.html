@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Everything Claude Code</h1>
+<p><a href="https://github.com/affaan-m/everything-claude-code/stargazers"><img src="https://img.shields.io/github/stars/affaan-m/everything-claude-code?style=flat" alt="Stars"></a><br><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a><br><img src="https://img.shields.io/badge/-Shell-4EAA25?logo=gnu-bash&logoColor=white" alt="Shell"><br><img src="https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"><br><img src="https://img.shields.io/badge/-Go-00ADD8?logo=go&logoColor=white" alt="Go"><br><img src="https://img.shields.io/badge/-Markdown-000000?logo=markdown&logoColor=white" alt="Markdown"></p>
+<hr>
+<div align="center">
+
+<p><strong>🌐 Language / 语言 / 語言</strong></p>
+<p><a href="../../README.md"><strong>English</strong></a> | <a href="../../README.zh-CN.md">简体中文</a> | <a href="README.md">繁體中文</a> | <a href="../../docs/ja-JP/README.md">日本語</a></p>
+</div>
+
+<hr>
+<p><strong>來自 Anthropic 黑客松冠軍的完整 Claude Code 設定集合。</strong></p>
+<p>經過 10 個月以上密集日常使用、打造真實產品所淬煉出的生產就緒代理程式、技能、鉤子、指令、規則和 MCP 設定。</p>
+<hr>
+<h2>指南</h2>
+<p>本儲存庫僅包含原始程式碼。指南會解釋所有內容。</p>
+<table>
+<tr>
+<td width="50%">
+<a href="https://x.com/affaanmustafa/status/2012378465664745795">
+<img src="https://github.com/user-attachments/assets/1a471488-59cc-425b-8345-5245c7efbcef" alt="Everything Claude Code 簡明指南" />
+</a>
+</td>
+<td width="50%">
+<a href="https://x.com/affaanmustafa/status/2014040193557471352">
+<img src="https://github.com/user-attachments/assets/c9ca43bc-b149-427f-b551-af6840c368f0" alt="Everything Claude Code 完整指南" />
+</a>
+</td>
+</tr>
+<tr>
+<td align="center"><b>簡明指南</b><br/>設定、基礎、理念。<b>請先閱讀此指南。</b></td>
+<td align="center"><b>完整指南</b><br/>權杖最佳化、記憶持久化、評估、平行處理。</td>
+</tr>
+</table>
+
+<table>
+<thead>
+<tr>
+<th>主題</th>
+<th>學習內容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>權杖最佳化</td>
+<td>模型選擇、系統提示精簡、背景程序</td>
+</tr>
+<tr>
+<td>記憶持久化</td>
+<td>自動跨工作階段儲存/載入上下文的鉤子</td>
+</tr>
+<tr>
+<td>持續學習</td>
+<td>從工作階段自動擷取模式並轉化為可重用技能</td>
+</tr>
+<tr>
+<td>驗證迴圈</td>
+<td>檢查點 vs 持續評估、評分器類型、pass@k 指標</td>
+</tr>
+<tr>
+<td>平行處理</td>
+<td>Git worktrees、串聯方法、何時擴展實例</td>
+</tr>
+<tr>
+<td>子代理程式協調</td>
+<td>上下文問題、漸進式檢索模式</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>🚀 快速開始</h2>
+<p>在 2 分鐘內快速上手：</p>
+<h3>第一步：安裝外掛程式</h3>
+<pre><code class="language-bash"># 新增市集
+/plugin marketplace add affaan-m/everything-claude-code
+
+# 安裝外掛程式
+/plugin install everything-claude-code@everything-claude-code
+</code></pre>
+<h3>第二步：安裝規則（必需）</h3>
+<blockquote>
+<p>⚠️ <strong>重要提示：</strong> Claude Code 外掛程式無法自動分發 <code>rules</code>，需要手動安裝：</p>
+</blockquote>
+<pre><code class="language-bash"># 首先複製儲存庫
+git clone https://github.com/affaan-m/everything-claude-code.git
+
+# 複製規則（應用於所有專案）
+cp -r everything-claude-code/rules/* ~/.claude/rules/
+</code></pre>
+<h3>第三步：開始使用</h3>
+<pre><code class="language-bash"># 嘗試一個指令（外掛安裝使用命名空間形式）
+/everything-claude-code:plan &quot;新增使用者認證&quot;
+
+# 手動安裝（選項2）使用簡短形式：
+# /plan &quot;新增使用者認證&quot;
+
+# 查看可用指令
+/plugin list everything-claude-code@everything-claude-code
+</code></pre>
+<p>✨ <strong>完成！</strong> 您現在使用 15+ 代理程式、30+ 技能和 20+ 指令。</p>
+<hr>
+<h2>🌐 跨平台支援</h2>
+<p>此外掛程式現已完整支援 <strong>Windows、macOS 和 Linux</strong>。所有鉤子和腳本已使用 Node.js 重寫以獲得最佳相容性。</p>
+<h3>套件管理器偵測</h3>
+<p>外掛程式會自動偵測您偏好的套件管理器（npm、pnpm、yarn 或 bun），優先順序如下：</p>
+<ol>
+<li><strong>環境變數</strong>：<code>CLAUDE_PACKAGE_MANAGER</code></li>
+<li><strong>專案設定</strong>：<code>.claude/package-manager.json</code></li>
+<li><strong>package.json</strong>：<code>packageManager</code> 欄位</li>
+<li><strong>鎖定檔案</strong>：從 package-lock.json、yarn.lock、pnpm-lock.yaml 或 bun.lockb 偵測</li>
+<li><strong>全域設定</strong>：<code>~/.claude/package-manager.json</code></li>
+<li><strong>備援方案</strong>：第一個可用的套件管理器</li>
+</ol>
+<p>設定您偏好的套件管理器：</p>
+<pre><code class="language-bash"># 透過環境變數
+export CLAUDE_PACKAGE_MANAGER=pnpm
+
+# 透過全域設定
+node scripts/setup-package-manager.js --global pnpm
+
+# 透過專案設定
+node scripts/setup-package-manager.js --project bun
+
+# 偵測目前設定
+node scripts/setup-package-manager.js --detect
+</code></pre>
+<p>或在 Claude Code 中使用 <code>/setup-pm</code> 指令。</p>
+<hr>
+<h2>📦 內容概覽</h2>
+<p>本儲存庫是一個 <strong>Claude Code 外掛程式</strong> - 可直接安裝或手動複製元件。</p>
+<pre><code>everything-claude-code/
+|-- .claude-plugin/   # 外掛程式和市集清單
+|   |-- plugin.json         # 外掛程式中繼資料和元件路徑
+|   |-- marketplace.json    # 用於 /plugin marketplace add 的市集目錄
+|
+|-- agents/           # 用於委派任務的專門子代理程式
+|   |-- planner.md           # 功能實作規劃
+|   |-- architect.md         # 系統設計決策
+|   |-- tdd-guide.md         # 測試驅動開發
+|   |-- code-reviewer.md     # 品質與安全審查
+|   |-- security-reviewer.md # 弱點分析
+|   |-- build-error-resolver.md
+|   |-- e2e-runner.md        # Playwright E2E 測試
+|   |-- refactor-cleaner.md  # 無用程式碼清理
+|   |-- doc-updater.md       # 文件同步
+|   |-- go-reviewer.md       # Go 程式碼審查（新增）
+|   |-- go-build-resolver.md # Go 建置錯誤解決（新增）
+|
+|-- skills/           # 工作流程定義和領域知識
+|   |-- coding-standards/           # 程式語言最佳實務
+|   |-- backend-patterns/           # API、資料庫、快取模式
+|   |-- frontend-patterns/          # React、Next.js 模式
+|   |-- continuous-learning/        # 從工作階段自動擷取模式（完整指南）
+|   |-- continuous-learning-v2/     # 基於本能的學習與信心評分
+|   |-- iterative-retrieval/        # 子代理程式的漸進式上下文精煉
+|   |-- strategic-compact/          # 手動壓縮建議（完整指南）
+|   |-- tdd-workflow/               # TDD 方法論
+|   |-- security-review/            # 安全性檢查清單
+|   |-- eval-harness/               # 驗證迴圈評估（完整指南）
+|   |-- verification-loop/          # 持續驗證（完整指南）
+|   |-- golang-patterns/            # Go 慣用語法和最佳實務（新增）
+|   |-- golang-testing/             # Go 測試模式、TDD、基準測試（新增）
+|
+|-- commands/         # 快速執行的斜線指令
+|   |-- tdd.md              # /tdd - 測試驅動開發
+|   |-- plan.md             # /plan - 實作規劃
+|   |-- e2e.md              # /e2e - E2E 測試生成
+|   |-- code-review.md      # /code-review - 品質審查
+|   |-- build-fix.md        # /build-fix - 修復建置錯誤
+|   |-- refactor-clean.md   # /refactor-clean - 移除無用程式碼
+|   |-- learn.md            # /learn - 工作階段中擷取模式（完整指南）
+|   |-- checkpoint.md       # /checkpoint - 儲存驗證狀態（完整指南）
+|   |-- verify.md           # /verify - 執行驗證迴圈（完整指南）
+|   |-- setup-pm.md         # /setup-pm - 設定套件管理器
+|   |-- go-review.md        # /go-review - Go 程式碼審查（新增）
+|   |-- go-test.md          # /go-test - Go TDD 工作流程（新增）
+|   |-- go-build.md         # /go-build - 修復 Go 建置錯誤（新增）
+|
+|-- rules/            # 必須遵守的準則（複製到 ~/.claude/rules/）
+|   |-- security.md         # 強制性安全檢查
+|   |-- coding-style.md     # 不可變性、檔案組織
+|   |-- testing.md          # TDD、80% 覆蓋率要求
+|   |-- git-workflow.md     # 提交格式、PR 流程
+|   |-- agents.md           # 何時委派給子代理程式
+|   |-- performance.md      # 模型選擇、上下文管理
+|
+|-- hooks/            # 基於觸發器的自動化
+|   |-- hooks.json                # 所有鉤子設定（PreToolUse、PostToolUse、Stop 等）
+|   |-- memory-persistence/       # 工作階段生命週期鉤子（完整指南）
+|   |-- strategic-compact/        # 壓縮建議（完整指南）
+|
+|-- scripts/          # 跨平台 Node.js 腳本（新增）
+|   |-- lib/                     # 共用工具
+|   |   |-- utils.js             # 跨平台檔案/路徑/系統工具
+|   |   |-- package-manager.js   # 套件管理器偵測與選擇
+|   |-- hooks/                   # 鉤子實作
+|   |   |-- session-start.js     # 工作階段開始時載入上下文
+|   |   |-- session-end.js       # 工作階段結束時儲存狀態
+|   |   |-- pre-compact.js       # 壓縮前狀態儲存
+|   |   |-- suggest-compact.js   # 策略性壓縮建議
+|   |   |-- evaluate-session.js  # 從工作階段擷取模式
+|   |-- setup-package-manager.js # 互動式套件管理器設定
+|
+|-- tests/            # 測試套件（新增）
+|   |-- lib/                     # 函式庫測試
+|   |-- hooks/                   # 鉤子測試
+|   |-- run-all.js               # 執行所有測試
+|
+|-- contexts/         # 動態系統提示注入上下文（完整指南）
+|   |-- dev.md              # 開發模式上下文
+|   |-- review.md           # 程式碼審查模式上下文
+|   |-- research.md         # 研究/探索模式上下文
+|
+|-- examples/         # 範例設定和工作階段
+|   |-- CLAUDE.md           # 專案層級設定範例
+|   |-- user-CLAUDE.md      # 使用者層級設定範例
+|
+|-- mcp-configs/      # MCP 伺服器設定
+|   |-- mcp-servers.json    # GitHub、Supabase、Vercel、Railway 等
+|
+|-- marketplace.json  # 自託管市集設定（用於 /plugin marketplace add）
+</code></pre>
+<hr>
+<h2>🛠️ 生態系統工具</h2>
+<h3>ecc.tools - 技能建立器</h3>
+<p>從您的儲存庫自動生成 Claude Code 技能。</p>
+<p><a href="https://github.com/apps/skill-creator">安裝 GitHub App</a> | <a href="https://ecc.tools">ecc.tools</a></p>
+<p>分析您的儲存庫並建立：</p>
+<ul>
+<li><strong>SKILL.md 檔案</strong> - 可直接用於 Claude Code 的技能</li>
+<li><strong>本能集合</strong> - 用於 continuous-learning-v2</li>
+<li><strong>模式擷取</strong> - 從您的提交歷史學習</li>
+</ul>
+<pre><code class="language-bash"># 安裝 GitHub App 後，技能會出現在：
+~/.claude/skills/generated/
+</code></pre>
+<p>與 <code>continuous-learning-v2</code> 技能無縫整合以繼承本能。</p>
+<hr>
+<h2>📥 安裝</h2>
+<h3>選項 1：以外掛程式安裝（建議）</h3>
+<p>使用本儲存庫最簡單的方式 - 安裝為 Claude Code 外掛程式：</p>
+<pre><code class="language-bash"># 將此儲存庫新增為市集
+/plugin marketplace add affaan-m/everything-claude-code
+
+# 安裝外掛程式
+/plugin install everything-claude-code@everything-claude-code
+</code></pre>
+<p>或直接新增到您的 <code>~/.claude/settings.json</code>：</p>
+<pre><code class="language-json">{
+  &quot;extraKnownMarketplaces&quot;: {
+    &quot;everything-claude-code&quot;: {
+      &quot;source&quot;: {
+        &quot;source&quot;: &quot;github&quot;,
+        &quot;repo&quot;: &quot;affaan-m/everything-claude-code&quot;
+      }
+    }
+  },
+  &quot;enabledPlugins&quot;: {
+    &quot;everything-claude-code@everything-claude-code&quot;: true
+  }
+}
+</code></pre>
+<p>這會讓您立即存取所有指令、代理程式、技能和鉤子。</p>
+<hr>
+<h3>🔧 選項 2：手動安裝</h3>
+<p>如果您偏好手動控制安裝內容：</p>
+<pre><code class="language-bash"># 複製儲存庫
+git clone https://github.com/affaan-m/everything-claude-code.git
+
+# 將代理程式複製到您的 Claude 設定
+cp everything-claude-code/agents/*.md ~/.claude/agents/
+
+# 複製規則
+cp everything-claude-code/rules/*.md ~/.claude/rules/
+
+# 複製指令
+cp everything-claude-code/commands/*.md ~/.claude/commands/
+
+# 複製技能
+cp -r everything-claude-code/skills/* ~/.claude/skills/
+</code></pre>
+<h4>將鉤子新增到 settings.json</h4>
+<p>將 <code>hooks/hooks.json</code> 中的鉤子複製到您的 <code>~/.claude/settings.json</code>。</p>
+<h4>設定 MCP</h4>
+<p>將 <code>mcp-configs/mcp-servers.json</code> 中所需的 MCP 伺服器複製到您的 <code>~/.claude.json</code>。</p>
+<p><strong>重要：</strong> 將 <code>YOUR_*_HERE</code> 佔位符替換為您實際的 API 金鑰。</p>
+<hr>
+<h2>🎯 核心概念</h2>
+<h3>代理程式（Agents）</h3>
+<p>子代理程式以有限範圍處理委派的任務。範例：</p>
+<pre><code class="language-markdown">---
+name: code-reviewer
+description: Reviews code for quality, security, and maintainability
+tools: [&quot;Read&quot;, &quot;Grep&quot;, &quot;Glob&quot;, &quot;Bash&quot;]
+model: opus
+---
+
+You are a senior code reviewer...
+</code></pre>
+<h3>技能（Skills）</h3>
+<p>技能是由指令或代理程式調用的工作流程定義：</p>
+<pre><code class="language-markdown"># TDD Workflow
+
+1. Define interfaces first
+2. Write failing tests (RED)
+3. Implement minimal code (GREEN)
+4. Refactor (IMPROVE)
+5. Verify 80%+ coverage
+</code></pre>
+<h3>鉤子（Hooks）</h3>
+<p>鉤子在工具事件時觸發。範例 - 警告 console.log：</p>
+<pre><code class="language-json">{
+  &quot;matcher&quot;: &quot;tool == \&quot;Edit\&quot; &amp;&amp; tool_input.file_path matches \&quot;\\\\.(ts|tsx|js|jsx)$\&quot;&quot;,
+  &quot;hooks&quot;: [{
+    &quot;type&quot;: &quot;command&quot;,
+    &quot;command&quot;: &quot;#!/bin/bash\ngrep -n &#39;console\\.log&#39; \&quot;$file_path\&quot; &amp;&amp; echo &#39;[Hook] Remove console.log&#39; &gt;&amp;2&quot;
+  }]
+}
+</code></pre>
+<h3>規則（Rules）</h3>
+<p>規則是必須遵守的準則。保持模組化：</p>
+<pre><code>~/.claude/rules/
+  security.md      # 禁止寫死密鑰
+  coding-style.md  # 不可變性、檔案限制
+  testing.md       # TDD、覆蓋率要求
+</code></pre>
+<hr>
+<h2>🧪 執行測試</h2>
+<p>外掛程式包含完整的測試套件：</p>
+<pre><code class="language-bash"># 執行所有測試
+node tests/run-all.js
+
+# 執行個別測試檔案
+node tests/lib/utils.test.js
+node tests/lib/package-manager.test.js
+node tests/hooks/hooks.test.js
+</code></pre>
+<hr>
+<h2>🤝 貢獻</h2>
+<p><strong>歡迎並鼓勵貢獻。</strong></p>
+<p>本儲存庫旨在成為社群資源。如果您有：</p>
+<ul>
+<li>實用的代理程式或技能</li>
+<li>巧妙的鉤子</li>
+<li>更好的 MCP 設定</li>
+<li>改進的規則</li>
+</ul>
+<p>請貢獻！詳見 <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> 的指南。</p>
+<h3>貢獻想法</h3>
+<ul>
+<li>特定語言的技能（Python、Rust 模式）- Go 現已包含！</li>
+<li>特定框架的設定（Django、Rails、Laravel）</li>
+<li>DevOps 代理程式（Kubernetes、Terraform、AWS）</li>
+<li>測試策略（不同框架）</li>
+<li>特定領域知識（ML、資料工程、行動開發）</li>
+</ul>
+<hr>
+<h2>📖 背景</h2>
+<p>我從實驗性推出就開始使用 Claude Code。2025 年 9 月與 <a href="https://x.com/DRodriguezFX">@DRodriguezFX</a> 一起使用 Claude Code 打造 <a href="https://zenith.chat">zenith.chat</a>，贏得了 Anthropic x Forum Ventures 黑客松。</p>
+<p>這些設定已在多個生產應用程式中經過實戰測試。</p>
+<hr>
+<h2>⚠️ 重要注意事項</h2>
+<h3>上下文視窗管理</h3>
+<p><strong>關鍵：</strong> 不要同時啟用所有 MCP。啟用過多工具會讓您的 200k 上下文視窗縮減至 70k。</p>
+<p>經驗法則：</p>
+<ul>
+<li>設定 20-30 個 MCP</li>
+<li>每個專案啟用少於 10 個</li>
+<li>啟用的工具少於 80 個</li>
+</ul>
+<p>在專案設定中使用 <code>disabledMcpServers</code> 來停用未使用的 MCP。</p>
+<h3>自訂</h3>
+<p>這些設定適合我的工作流程。您應該：</p>
+<ol>
+<li>從您認同的部分開始</li>
+<li>根據您的技術堆疊修改</li>
+<li>移除不需要的部分</li>
+<li>添加您自己的模式</li>
+</ol>
+<hr>
+<h2>🌟 Star 歷史</h2>
+<p><a href="https://star-history.com/#affaan-m/everything-claude-code&Date"><img src="https://api.star-history.com/svg?repos=affaan-m/everything-claude-code&type=Date" alt="Star History Chart"></a></p>
+<hr>
+<h2>🔗 連結</h2>
+<ul>
+<li><strong>簡明指南（從這裡開始）：</strong> <a href="https://x.com/affaanmustafa/status/2012378465664745795">Everything Claude Code 簡明指南</a></li>
+<li><strong>完整指南（進階）：</strong> <a href="https://x.com/affaanmustafa/status/2014040193557471352">Everything Claude Code 完整指南</a></li>
+<li><strong>追蹤：</strong> <a href="https://x.com/affaanmustafa">@affaanmustafa</a></li>
+<li><strong>zenith.chat：</strong> <a href="https://zenith.chat">zenith.chat</a></li>
+<li><strong>技能目錄：</strong> awesome-agent-skills（社區維護的智能體技能目錄）</li>
+</ul>
+<hr>
+<h2>📄 授權</h2>
+<p>MIT - 自由使用、依需求修改、如可能請回饋貢獻。</p>
+<hr>
+<p><strong>如果有幫助請為本儲存庫加星。閱讀兩份指南。打造偉大的作品。</strong></p>
+
+</body>
+</html>

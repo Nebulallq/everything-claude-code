@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CONTRIBUTING</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>貢獻 Everything Claude Code</h1>
+<p>感謝您想要貢獻。本儲存庫旨在成為 Claude Code 使用者的社群資源。</p>
+<h2>我們正在尋找什麼</h2>
+<h3>代理程式（Agents）</h3>
+<p>能夠妥善處理特定任務的新代理程式：</p>
+<ul>
+<li>特定語言審查員（Python、Go、Rust）</li>
+<li>框架專家（Django、Rails、Laravel、Spring）</li>
+<li>DevOps 專家（Kubernetes、Terraform、CI/CD）</li>
+<li>領域專家（ML 管線、資料工程、行動開發）</li>
+</ul>
+<h3>技能（Skills）</h3>
+<p>工作流程定義和領域知識：</p>
+<ul>
+<li>語言最佳實務</li>
+<li>框架模式</li>
+<li>測試策略</li>
+<li>架構指南</li>
+<li>特定領域知識</li>
+</ul>
+<h3>指令（Commands）</h3>
+<p>調用實用工作流程的斜線指令：</p>
+<ul>
+<li>部署指令</li>
+<li>測試指令</li>
+<li>文件指令</li>
+<li>程式碼生成指令</li>
+</ul>
+<h3>鉤子（Hooks）</h3>
+<p>實用的自動化：</p>
+<ul>
+<li>Lint/格式化鉤子</li>
+<li>安全檢查</li>
+<li>驗證鉤子</li>
+<li>通知鉤子</li>
+</ul>
+<h3>規則（Rules）</h3>
+<p>必須遵守的準則：</p>
+<ul>
+<li>安全規則</li>
+<li>程式碼風格規則</li>
+<li>測試需求</li>
+<li>命名慣例</li>
+</ul>
+<h3>MCP 設定</h3>
+<p>新的或改進的 MCP 伺服器設定：</p>
+<ul>
+<li>資料庫整合</li>
+<li>雲端供應商 MCP</li>
+<li>監控工具</li>
+<li>通訊工具</li>
+</ul>
+<hr>
+<h2>如何貢獻</h2>
+<h3>1. Fork 儲存庫</h3>
+<pre><code class="language-bash">git clone https://github.com/YOUR_USERNAME/everything-claude-code.git
+cd everything-claude-code
+</code></pre>
+<h3>2. 建立分支</h3>
+<pre><code class="language-bash">git checkout -b add-python-reviewer
+</code></pre>
+<h3>3. 新增您的貢獻</h3>
+<p>將檔案放置在適當的目錄：</p>
+<ul>
+<li><code>agents/</code> 用於新代理程式</li>
+<li><code>skills/</code> 用於技能（可以是單一 .md 或目錄）</li>
+<li><code>commands/</code> 用於斜線指令</li>
+<li><code>rules/</code> 用於規則檔案</li>
+<li><code>hooks/</code> 用於鉤子設定</li>
+<li><code>mcp-configs/</code> 用於 MCP 伺服器設定</li>
+</ul>
+<h3>4. 遵循格式</h3>
+<p><strong>代理程式</strong>應包含 frontmatter：</p>
+<pre><code class="language-markdown">---
+name: agent-name
+description: What it does
+tools: Read, Grep, Glob, Bash
+model: sonnet
+---
+
+Instructions here...
+</code></pre>
+<p><strong>技能</strong>應清晰且可操作：</p>
+<pre><code class="language-markdown"># Skill Name
+
+## When to Use
+
+...
+
+## How It Works
+
+...
+
+## Examples
+
+...
+</code></pre>
+<p><strong>指令</strong>應說明其功能：</p>
+<pre><code class="language-markdown">---
+description: Brief description of command
+---
+
+# Command Name
+
+Detailed instructions...
+</code></pre>
+<p><strong>鉤子</strong>應包含描述：</p>
+<pre><code class="language-json">{
+  &quot;matcher&quot;: &quot;...&quot;,
+  &quot;hooks&quot;: [...],
+  &quot;description&quot;: &quot;What this hook does&quot;
+}
+</code></pre>
+<h3>5. 測試您的貢獻</h3>
+<p>在提交前確保您的設定能與 Claude Code 正常運作。</p>
+<h3>6. 提交 PR</h3>
+<pre><code class="language-bash">git add .
+git commit -m &quot;Add Python code reviewer agent&quot;
+git push origin add-python-reviewer
+</code></pre>
+<p>然後開啟一個 PR，包含：</p>
+<ul>
+<li>您新增了什麼</li>
+<li>為什麼它有用</li>
+<li>您如何測試它</li>
+</ul>
+<hr>
+<h2>指南</h2>
+<h3>建議做法</h3>
+<ul>
+<li>保持設定專注且模組化</li>
+<li>包含清晰的描述</li>
+<li>提交前先測試</li>
+<li>遵循現有模式</li>
+<li>記錄任何相依性</li>
+</ul>
+<h3>避免做法</h3>
+<ul>
+<li>包含敏感資料（API 金鑰、權杖、路徑）</li>
+<li>新增過於複雜或小眾的設定</li>
+<li>提交未測試的設定</li>
+<li>建立重複的功能</li>
+<li>新增需要特定付費服務但無替代方案的設定</li>
+</ul>
+<hr>
+<h2>檔案命名</h2>
+<ul>
+<li>使用小寫加連字號：<code>python-reviewer.md</code></li>
+<li>具描述性：<code>tdd-workflow.md</code> 而非 <code>workflow.md</code></li>
+<li>將代理程式/技能名稱與檔名對應</li>
+</ul>
+<hr>
+<h2>有問題？</h2>
+<p>開啟 issue 或在 X 上聯繫：<a href="https://x.com/affaanmustafa">@affaanmustafa</a></p>
+<hr>
+<p>感謝您的貢獻。讓我們一起打造優質的資源。</p>
+
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENTS</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Everything Claude Code (ECC) — 智能体指令</h1>
+<p>这是一个<strong>生产就绪的 AI 编码插件</strong>，提供 13 个专业智能体、50+ 项技能、33 条命令以及用于软件开发的自动化钩子工作流。</p>
+<h2>核心原则</h2>
+<ol>
+<li><strong>智能体优先</strong> — 将领域任务委托给专业智能体</li>
+<li><strong>测试驱动</strong> — 先写测试再实现，要求 80%+ 覆盖率</li>
+<li><strong>安全第一</strong> — 绝不妥协安全；验证所有输入</li>
+<li><strong>不可变性</strong> — 总是创建新对象，永不修改现有对象</li>
+<li><strong>先规划后执行</strong> — 在编写代码前规划复杂功能</li>
+</ol>
+<h2>可用智能体</h2>
+<table>
+<thead>
+<tr>
+<th>智能体</th>
+<th>目的</th>
+<th>何时使用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>planner</td>
+<td>实施规划</td>
+<td>复杂功能、重构</td>
+</tr>
+<tr>
+<td>architect</td>
+<td>系统设计与可扩展性</td>
+<td>架构决策</td>
+</tr>
+<tr>
+<td>tdd-guide</td>
+<td>测试驱动开发</td>
+<td>新功能、错误修复</td>
+</tr>
+<tr>
+<td>code-reviewer</td>
+<td>代码质量与可维护性</td>
+<td>编写/修改代码后</td>
+</tr>
+<tr>
+<td>security-reviewer</td>
+<td>漏洞检测</td>
+<td>提交前、敏感代码</td>
+</tr>
+<tr>
+<td>build-error-resolver</td>
+<td>修复构建/类型错误</td>
+<td>构建失败时</td>
+</tr>
+<tr>
+<td>e2e-runner</td>
+<td>端到端 Playwright 测试</td>
+<td>关键用户流程</td>
+</tr>
+<tr>
+<td>refactor-cleaner</td>
+<td>清理无用代码</td>
+<td>代码维护</td>
+</tr>
+<tr>
+<td>doc-updater</td>
+<td>文档和代码地图更新</td>
+<td>更新文档</td>
+</tr>
+<tr>
+<td>go-reviewer</td>
+<td>Go 代码审查</td>
+<td>Go 项目</td>
+</tr>
+<tr>
+<td>go-build-resolver</td>
+<td>Go 构建错误</td>
+<td>Go 构建失败</td>
+</tr>
+<tr>
+<td>database-reviewer</td>
+<td>PostgreSQL/Supabase 专家</td>
+<td>模式设计、查询优化</td>
+</tr>
+<tr>
+<td>python-reviewer</td>
+<td>Python 代码审查</td>
+<td>Python 项目</td>
+</tr>
+</tbody></table>
+<h2>智能体编排</h2>
+<p>主动使用智能体，无需用户提示：</p>
+<ul>
+<li>复杂功能请求 → <strong>planner</strong></li>
+<li>刚编写/修改的代码 → <strong>code-reviewer</strong></li>
+<li>错误修复或新功能 → <strong>tdd-guide</strong></li>
+<li>架构决策 → <strong>architect</strong></li>
+<li>安全敏感代码 → <strong>security-reviewer</strong></li>
+</ul>
+<p>对于独立操作使用并行执行 — 同时启动多个智能体。</p>
+<h2>安全指南</h2>
+<p><strong>在任何提交之前：</strong></p>
+<ul>
+<li>没有硬编码的密钥（API 密钥、密码、令牌）</li>
+<li>所有用户输入都经过验证</li>
+<li>防止 SQL 注入（参数化查询）</li>
+<li>防止 XSS（已清理的 HTML）</li>
+<li>启用 CSRF 保护</li>
+<li>已验证身份验证/授权</li>
+<li>所有端点都有限速</li>
+<li>错误消息不泄露敏感数据</li>
+</ul>
+<p><strong>密钥管理：</strong> 绝不硬编码密钥。使用环境变量或密钥管理器。在启动时验证所需的密钥。立即轮换任何暴露的密钥。</p>
+<p><strong>如果发现安全问题：</strong> 停止 → 使用 security-reviewer 智能体 → 修复 CRITICAL 问题 → 轮换暴露的密钥 → 审查代码库中的类似问题。</p>
+<h2>编码风格</h2>
+<p><strong>不可变性（关键）：</strong> 总是创建新对象，永不修改。返回带有更改的新副本。</p>
+<p><strong>文件组织：</strong> 许多小文件优于少数大文件。通常 200-400 行，最多 800 行。按功能/领域组织，而不是按类型组织。高内聚，低耦合。</p>
+<p><strong>错误处理：</strong> 在每个层级处理错误。在 UI 代码中提供用户友好的消息。在服务器端记录详细的上下文。绝不静默地忽略错误。</p>
+<p><strong>输入验证：</strong> 在系统边界验证所有用户输入。使用基于模式的验证。快速失败并给出清晰的消息。绝不信任外部数据。</p>
+<p><strong>代码质量检查清单：</strong></p>
+<ul>
+<li>函数小巧（&lt;50 行），文件专注（&lt;800 行）</li>
+<li>没有深层嵌套（&gt;4 层）</li>
+<li>适当的错误处理，没有硬编码的值</li>
+<li>可读性强、命名良好的标识符</li>
+</ul>
+<h2>测试要求</h2>
+<p><strong>最低覆盖率：80%</strong></p>
+<p>测试类型（全部必需）：</p>
+<ol>
+<li><strong>单元测试</strong> — 单个函数、工具、组件</li>
+<li><strong>集成测试</strong> — API 端点、数据库操作</li>
+<li><strong>端到端测试</strong> — 关键用户流程</li>
+</ol>
+<p><strong>TDD 工作流（强制）：</strong></p>
+<ol>
+<li>先写测试（RED） — 测试应该失败</li>
+<li>编写最小实现（GREEN） — 测试应该通过</li>
+<li>重构（IMPROVE） — 验证覆盖率 80%+</li>
+</ol>
+<p>故障排除：检查测试隔离 → 验证模拟 → 修复实现（而不是测试，除非测试是错误的）。</p>
+<h2>开发工作流</h2>
+<ol>
+<li><strong>规划</strong> — 使用 planner 智能体，识别依赖项和风险，分解为阶段</li>
+<li><strong>TDD</strong> — 使用 tdd-guide 智能体，先写测试，实现，重构</li>
+<li><strong>审查</strong> — 立即使用 code-reviewer 智能体，解决 CRITICAL/HIGH 问题</li>
+<li><strong>提交</strong> — 约定式提交格式，全面的 PR 摘要</li>
+</ol>
+<h2>Git 工作流</h2>
+<p><strong>提交格式：</strong> <code>&lt;type&gt;: &lt;description&gt;</code> — 类型：feat, fix, refactor, docs, test, chore, perf, ci</p>
+<p><strong>PR 工作流：</strong> 分析完整的提交历史 → 起草全面的摘要 → 包含测试计划 → 使用 <code>-u</code> 标志推送。</p>
+<h2>架构模式</h2>
+<p><strong>API 响应格式：</strong> 具有成功指示器、数据负载、错误消息和分页元数据的一致信封。</p>
+<p><strong>仓储模式：</strong> 将数据访问封装在标准接口（findAll, findById, create, update, delete）后面。业务逻辑依赖于抽象接口，而不是存储机制。</p>
+<p><strong>骨架项目：</strong> 搜索经过实战检验的模板，使用并行智能体（安全性、可扩展性、相关性）进行评估，克隆最佳匹配，在已验证的结构内迭代。</p>
+<h2>性能</h2>
+<p><strong>上下文管理：</strong> 对于大型重构和多文件功能，避免使用上下文窗口的最后 20%。敏感性较低的任务（单次编辑、文档、简单修复）可以容忍较高的利用率。</p>
+<p><strong>构建故障排除：</strong> 使用 build-error-resolver 智能体 → 分析错误 → 增量修复 → 每次修复后验证。</p>
+<h2>项目结构</h2>
+<pre><code>agents/          — 13 specialized subagents
+skills/          — 50+ workflow skills and domain knowledge
+commands/        — 33 slash commands
+hooks/           — Trigger-based automations
+rules/           — Always-follow guidelines (common + per-language)
+scripts/         — Cross-platform Node.js utilities
+mcp-configs/     — 14 MCP server configurations
+tests/           — Test suite
+</code></pre>
+<h2>成功指标</h2>
+<ul>
+<li>所有测试通过且覆盖率 80%+</li>
+<li>没有安全漏洞</li>
+<li>代码可读且可维护</li>
+<li>性能可接受</li>
+<li>满足用户需求</li>
+</ul>
+
+</body>
+</html>

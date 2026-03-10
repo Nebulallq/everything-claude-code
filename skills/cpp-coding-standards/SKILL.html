@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: cpp-coding-standards<br>description: C++ coding standards based on the C++ Core Guidelines (isocpp.github.io). Use when writing, reviewing, or refactoring C++ code to enforce modern, safe, and idiomatic practices.<br>origin: ECC</h2>
+<h1>C++ Coding Standards (C++ Core Guidelines)</h1>
+<p>Comprehensive coding standards for modern C++ (C++17/20/23) derived from the <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines">C++ Core Guidelines</a>. Enforces type safety, resource safety, immutability, and clarity.</p>
+<h2>When to Use</h2>
+<ul>
+<li>Writing new C++ code (classes, functions, templates)</li>
+<li>Reviewing or refactoring existing C++ code</li>
+<li>Making architectural decisions in C++ projects</li>
+<li>Enforcing consistent style across a C++ codebase</li>
+<li>Choosing between language features (e.g., <code>enum</code> vs <code>enum class</code>, raw pointer vs smart pointer)</li>
+</ul>
+<h3>When NOT to Use</h3>
+<ul>
+<li>Non-C++ projects</li>
+<li>Legacy C codebases that cannot adopt modern C++ features</li>
+<li>Embedded/bare-metal contexts where specific guidelines conflict with hardware constraints (adapt selectively)</li>
+</ul>
+<h2>Cross-Cutting Principles</h2>
+<p>These themes recur across the entire guidelines and form the foundation:</p>
+<ol>
+<li><strong>RAII everywhere</strong> (P.8, R.1, E.6, CP.20): Bind resource lifetime to object lifetime</li>
+<li><strong>Immutability by default</strong> (P.10, Con.1-5, ES.25): Start with <code>const</code>/<code>constexpr</code>; mutability is the exception</li>
+<li><strong>Type safety</strong> (P.4, I.4, ES.46-49, Enum.3): Use the type system to prevent errors at compile time</li>
+<li><strong>Express intent</strong> (P.3, F.1, NL.1-2, T.10): Names, types, and concepts should communicate purpose</li>
+<li><strong>Minimize complexity</strong> (F.2-3, ES.5, Per.4-5): Simple code is correct code</li>
+<li><strong>Value semantics over pointer semantics</strong> (C.10, R.3-5, F.20, CP.31): Prefer returning by value and scoped objects</li>
+</ol>
+<h2>Philosophy &amp; Interfaces (P.<em>, I.</em>)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P.1</strong></td>
+<td>Express ideas directly in code</td>
+</tr>
+<tr>
+<td><strong>P.3</strong></td>
+<td>Express intent</td>
+</tr>
+<tr>
+<td><strong>P.4</strong></td>
+<td>Ideally, a program should be statically type safe</td>
+</tr>
+<tr>
+<td><strong>P.5</strong></td>
+<td>Prefer compile-time checking to run-time checking</td>
+</tr>
+<tr>
+<td><strong>P.8</strong></td>
+<td>Don&#39;t leak any resources</td>
+</tr>
+<tr>
+<td><strong>P.10</strong></td>
+<td>Prefer immutable data to mutable data</td>
+</tr>
+<tr>
+<td><strong>I.1</strong></td>
+<td>Make interfaces explicit</td>
+</tr>
+<tr>
+<td><strong>I.2</strong></td>
+<td>Avoid non-const global variables</td>
+</tr>
+<tr>
+<td><strong>I.4</strong></td>
+<td>Make interfaces precisely and strongly typed</td>
+</tr>
+<tr>
+<td><strong>I.11</strong></td>
+<td>Never transfer ownership by a raw pointer or reference</td>
+</tr>
+<tr>
+<td><strong>I.23</strong></td>
+<td>Keep the number of function arguments low</td>
+</tr>
+</tbody></table>
+<h3>DO</h3>
+<pre><code class="language-cpp">// P.10 + I.4: Immutable, strongly typed interface
+struct Temperature {
+    double kelvin;
+};
+
+Temperature boil(const Temperature&amp; water);
+</code></pre>
+<h3>DON&#39;T</h3>
+<pre><code class="language-cpp">// Weak interface: unclear ownership, unclear units
+double boil(double* temp);
+
+// Non-const global variable
+int g_counter = 0;  // I.2 violation
+</code></pre>
+<h2>Functions (F.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>F.1</strong></td>
+<td>Package meaningful operations as carefully named functions</td>
+</tr>
+<tr>
+<td><strong>F.2</strong></td>
+<td>A function should perform a single logical operation</td>
+</tr>
+<tr>
+<td><strong>F.3</strong></td>
+<td>Keep functions short and simple</td>
+</tr>
+<tr>
+<td><strong>F.4</strong></td>
+<td>If a function might be evaluated at compile time, declare it <code>constexpr</code></td>
+</tr>
+<tr>
+<td><strong>F.6</strong></td>
+<td>If your function must not throw, declare it <code>noexcept</code></td>
+</tr>
+<tr>
+<td><strong>F.8</strong></td>
+<td>Prefer pure functions</td>
+</tr>
+<tr>
+<td><strong>F.16</strong></td>
+<td>For &quot;in&quot; parameters, pass cheaply-copied types by value and others by <code>const&amp;</code></td>
+</tr>
+<tr>
+<td><strong>F.20</strong></td>
+<td>For &quot;out&quot; values, prefer return values to output parameters</td>
+</tr>
+<tr>
+<td><strong>F.21</strong></td>
+<td>To return multiple &quot;out&quot; values, prefer returning a struct</td>
+</tr>
+<tr>
+<td><strong>F.43</strong></td>
+<td>Never return a pointer or reference to a local object</td>
+</tr>
+</tbody></table>
+<h3>Parameter Passing</h3>
+<pre><code class="language-cpp">// F.16: Cheap types by value, others by const&amp;
+void print(int x);                           // cheap: by value
+void analyze(const std::string&amp; data);       // expensive: by const&amp;
+void transform(std::string s);               // sink: by value (will move)
+
+// F.20 + F.21: Return values, not output parameters
+struct ParseResult {
+    std::string token;
+    int position;
+};
+
+ParseResult parse(std::string_view input);   // GOOD: return struct
+
+// BAD: output parameters
+void parse(std::string_view input,
+           std::string&amp; token, int&amp; pos);    // avoid this
+</code></pre>
+<h3>Pure Functions and constexpr</h3>
+<pre><code class="language-cpp">// F.4 + F.8: Pure, constexpr where possible
+constexpr int factorial(int n) noexcept {
+    return (n &lt;= 1) ? 1 : n * factorial(n - 1);
+}
+
+static_assert(factorial(5) == 120);
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li>Returning <code>T&amp;&amp;</code> from functions (F.45)</li>
+<li>Using <code>va_arg</code> / C-style variadics (F.55)</li>
+<li>Capturing by reference in lambdas passed to other threads (F.53)</li>
+<li>Returning <code>const T</code> which inhibits move semantics (F.49)</li>
+</ul>
+<h2>Classes &amp; Class Hierarchies (C.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>C.2</strong></td>
+<td>Use <code>class</code> if invariant exists; <code>struct</code> if data members vary independently</td>
+</tr>
+<tr>
+<td><strong>C.9</strong></td>
+<td>Minimize exposure of members</td>
+</tr>
+<tr>
+<td><strong>C.20</strong></td>
+<td>If you can avoid defining default operations, do (Rule of Zero)</td>
+</tr>
+<tr>
+<td><strong>C.21</strong></td>
+<td>If you define or <code>=delete</code> any copy/move/destructor, handle them all (Rule of Five)</td>
+</tr>
+<tr>
+<td><strong>C.35</strong></td>
+<td>Base class destructor: public virtual or protected non-virtual</td>
+</tr>
+<tr>
+<td><strong>C.41</strong></td>
+<td>A constructor should create a fully initialized object</td>
+</tr>
+<tr>
+<td><strong>C.46</strong></td>
+<td>Declare single-argument constructors <code>explicit</code></td>
+</tr>
+<tr>
+<td><strong>C.67</strong></td>
+<td>A polymorphic class should suppress public copy/move</td>
+</tr>
+<tr>
+<td><strong>C.128</strong></td>
+<td>Virtual functions: specify exactly one of <code>virtual</code>, <code>override</code>, or <code>final</code></td>
+</tr>
+</tbody></table>
+<h3>Rule of Zero</h3>
+<pre><code class="language-cpp">// C.20: Let the compiler generate special members
+struct Employee {
+    std::string name;
+    std::string department;
+    int id;
+    // No destructor, copy/move constructors, or assignment operators needed
+};
+</code></pre>
+<h3>Rule of Five</h3>
+<pre><code class="language-cpp">// C.21: If you must manage a resource, define all five
+class Buffer {
+public:
+    explicit Buffer(std::size_t size)
+        : data_(std::make_unique&lt;char[]&gt;(size)), size_(size) {}
+
+    ~Buffer() = default;
+
+    Buffer(const Buffer&amp; other)
+        : data_(std::make_unique&lt;char[]&gt;(other.size_)), size_(other.size_) {
+        std::copy_n(other.data_.get(), size_, data_.get());
+    }
+
+    Buffer&amp; operator=(const Buffer&amp; other) {
+        if (this != &amp;other) {
+            auto new_data = std::make_unique&lt;char[]&gt;(other.size_);
+            std::copy_n(other.data_.get(), other.size_, new_data.get());
+            data_ = std::move(new_data);
+            size_ = other.size_;
+        }
+        return *this;
+    }
+
+    Buffer(Buffer&amp;&amp;) noexcept = default;
+    Buffer&amp; operator=(Buffer&amp;&amp;) noexcept = default;
+
+private:
+    std::unique_ptr&lt;char[]&gt; data_;
+    std::size_t size_;
+};
+</code></pre>
+<h3>Class Hierarchy</h3>
+<pre><code class="language-cpp">// C.35 + C.128: Virtual destructor, use override
+class Shape {
+public:
+    virtual ~Shape() = default;
+    virtual double area() const = 0;  // C.121: pure interface
+};
+
+class Circle : public Shape {
+public:
+    explicit Circle(double r) : radius_(r) {}
+    double area() const override { return 3.14159 * radius_ * radius_; }
+
+private:
+    double radius_;
+};
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li>Calling virtual functions in constructors/destructors (C.82)</li>
+<li>Using <code>memset</code>/<code>memcpy</code> on non-trivial types (C.90)</li>
+<li>Providing different default arguments for virtual function and overrider (C.140)</li>
+<li>Making data members <code>const</code> or references, which suppresses move/copy (C.12)</li>
+</ul>
+<h2>Resource Management (R.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>R.1</strong></td>
+<td>Manage resources automatically using RAII</td>
+</tr>
+<tr>
+<td><strong>R.3</strong></td>
+<td>A raw pointer (<code>T*</code>) is non-owning</td>
+</tr>
+<tr>
+<td><strong>R.5</strong></td>
+<td>Prefer scoped objects; don&#39;t heap-allocate unnecessarily</td>
+</tr>
+<tr>
+<td><strong>R.10</strong></td>
+<td>Avoid <code>malloc()</code>/<code>free()</code></td>
+</tr>
+<tr>
+<td><strong>R.11</strong></td>
+<td>Avoid calling <code>new</code> and <code>delete</code> explicitly</td>
+</tr>
+<tr>
+<td><strong>R.20</strong></td>
+<td>Use <code>unique_ptr</code> or <code>shared_ptr</code> to represent ownership</td>
+</tr>
+<tr>
+<td><strong>R.21</strong></td>
+<td>Prefer <code>unique_ptr</code> over <code>shared_ptr</code> unless sharing ownership</td>
+</tr>
+<tr>
+<td><strong>R.22</strong></td>
+<td>Use <code>make_shared()</code> to make <code>shared_ptr</code>s</td>
+</tr>
+</tbody></table>
+<h3>Smart Pointer Usage</h3>
+<pre><code class="language-cpp">// R.11 + R.20 + R.21: RAII with smart pointers
+auto widget = std::make_unique&lt;Widget&gt;(&quot;config&quot;);  // unique ownership
+auto cache  = std::make_shared&lt;Cache&gt;(1024);        // shared ownership
+
+// R.3: Raw pointer = non-owning observer
+void render(const Widget* w) {  // does NOT own w
+    if (w) w-&gt;draw();
+}
+
+render(widget.get());
+</code></pre>
+<h3>RAII Pattern</h3>
+<pre><code class="language-cpp">// R.1: Resource acquisition is initialization
+class FileHandle {
+public:
+    explicit FileHandle(const std::string&amp; path)
+        : handle_(std::fopen(path.c_str(), &quot;r&quot;)) {
+        if (!handle_) throw std::runtime_error(&quot;Failed to open: &quot; + path);
+    }
+
+    ~FileHandle() {
+        if (handle_) std::fclose(handle_);
+    }
+
+    FileHandle(const FileHandle&amp;) = delete;
+    FileHandle&amp; operator=(const FileHandle&amp;) = delete;
+    FileHandle(FileHandle&amp;&amp; other) noexcept
+        : handle_(std::exchange(other.handle_, nullptr)) {}
+    FileHandle&amp; operator=(FileHandle&amp;&amp; other) noexcept {
+        if (this != &amp;other) {
+            if (handle_) std::fclose(handle_);
+            handle_ = std::exchange(other.handle_, nullptr);
+        }
+        return *this;
+    }
+
+private:
+    std::FILE* handle_;
+};
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li>Naked <code>new</code>/<code>delete</code> (R.11)</li>
+<li><code>malloc()</code>/<code>free()</code> in C++ code (R.10)</li>
+<li>Multiple resource allocations in a single expression (R.13 -- exception safety hazard)</li>
+<li><code>shared_ptr</code> where <code>unique_ptr</code> suffices (R.21)</li>
+</ul>
+<h2>Expressions &amp; Statements (ES.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>ES.5</strong></td>
+<td>Keep scopes small</td>
+</tr>
+<tr>
+<td><strong>ES.20</strong></td>
+<td>Always initialize an object</td>
+</tr>
+<tr>
+<td><strong>ES.23</strong></td>
+<td>Prefer <code>{}</code> initializer syntax</td>
+</tr>
+<tr>
+<td><strong>ES.25</strong></td>
+<td>Declare objects <code>const</code> or <code>constexpr</code> unless modification is intended</td>
+</tr>
+<tr>
+<td><strong>ES.28</strong></td>
+<td>Use lambdas for complex initialization of <code>const</code> variables</td>
+</tr>
+<tr>
+<td><strong>ES.45</strong></td>
+<td>Avoid magic constants; use symbolic constants</td>
+</tr>
+<tr>
+<td><strong>ES.46</strong></td>
+<td>Avoid narrowing/lossy arithmetic conversions</td>
+</tr>
+<tr>
+<td><strong>ES.47</strong></td>
+<td>Use <code>nullptr</code> rather than <code>0</code> or <code>NULL</code></td>
+</tr>
+<tr>
+<td><strong>ES.48</strong></td>
+<td>Avoid casts</td>
+</tr>
+<tr>
+<td><strong>ES.50</strong></td>
+<td>Don&#39;t cast away <code>const</code></td>
+</tr>
+</tbody></table>
+<h3>Initialization</h3>
+<pre><code class="language-cpp">// ES.20 + ES.23 + ES.25: Always initialize, prefer {}, default to const
+const int max_retries{3};
+const std::string name{&quot;widget&quot;};
+const std::vector&lt;int&gt; primes{2, 3, 5, 7, 11};
+
+// ES.28: Lambda for complex const initialization
+const auto config = [&amp;] {
+    Config c;
+    c.timeout = std::chrono::seconds{30};
+    c.retries = max_retries;
+    c.verbose = debug_mode;
+    return c;
+}();
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li>Uninitialized variables (ES.20)</li>
+<li>Using <code>0</code> or <code>NULL</code> as pointer (ES.47 -- use <code>nullptr</code>)</li>
+<li>C-style casts (ES.48 -- use <code>static_cast</code>, <code>const_cast</code>, etc.)</li>
+<li>Casting away <code>const</code> (ES.50)</li>
+<li>Magic numbers without named constants (ES.45)</li>
+<li>Mixing signed and unsigned arithmetic (ES.100)</li>
+<li>Reusing names in nested scopes (ES.12)</li>
+</ul>
+<h2>Error Handling (E.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>E.1</strong></td>
+<td>Develop an error-handling strategy early in a design</td>
+</tr>
+<tr>
+<td><strong>E.2</strong></td>
+<td>Throw an exception to signal that a function can&#39;t perform its assigned task</td>
+</tr>
+<tr>
+<td><strong>E.6</strong></td>
+<td>Use RAII to prevent leaks</td>
+</tr>
+<tr>
+<td><strong>E.12</strong></td>
+<td>Use <code>noexcept</code> when throwing is impossible or unacceptable</td>
+</tr>
+<tr>
+<td><strong>E.14</strong></td>
+<td>Use purpose-designed user-defined types as exceptions</td>
+</tr>
+<tr>
+<td><strong>E.15</strong></td>
+<td>Throw by value, catch by reference</td>
+</tr>
+<tr>
+<td><strong>E.16</strong></td>
+<td>Destructors, deallocation, and swap must never fail</td>
+</tr>
+<tr>
+<td><strong>E.17</strong></td>
+<td>Don&#39;t try to catch every exception in every function</td>
+</tr>
+</tbody></table>
+<h3>Exception Hierarchy</h3>
+<pre><code class="language-cpp">// E.14 + E.15: Custom exception types, throw by value, catch by reference
+class AppError : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
+class NetworkError : public AppError {
+public:
+    NetworkError(const std::string&amp; msg, int code)
+        : AppError(msg), status_code(code) {}
+    int status_code;
+};
+
+void fetch_data(const std::string&amp; url) {
+    // E.2: Throw to signal failure
+    throw NetworkError(&quot;connection refused&quot;, 503);
+}
+
+void run() {
+    try {
+        fetch_data(&quot;https://api.example.com&quot;);
+    } catch (const NetworkError&amp; e) {
+        log_error(e.what(), e.status_code);
+    } catch (const AppError&amp; e) {
+        log_error(e.what());
+    }
+    // E.17: Don&#39;t catch everything here -- let unexpected errors propagate
+}
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li>Throwing built-in types like <code>int</code> or string literals (E.14)</li>
+<li>Catching by value (slicing risk) (E.15)</li>
+<li>Empty catch blocks that silently swallow errors</li>
+<li>Using exceptions for flow control (E.3)</li>
+<li>Error handling based on global state like <code>errno</code> (E.28)</li>
+</ul>
+<h2>Constants &amp; Immutability (Con.*)</h2>
+<h3>All Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Con.1</strong></td>
+<td>By default, make objects immutable</td>
+</tr>
+<tr>
+<td><strong>Con.2</strong></td>
+<td>By default, make member functions <code>const</code></td>
+</tr>
+<tr>
+<td><strong>Con.3</strong></td>
+<td>By default, pass pointers and references to <code>const</code></td>
+</tr>
+<tr>
+<td><strong>Con.4</strong></td>
+<td>Use <code>const</code> for values that don&#39;t change after construction</td>
+</tr>
+<tr>
+<td><strong>Con.5</strong></td>
+<td>Use <code>constexpr</code> for values computable at compile time</td>
+</tr>
+</tbody></table>
+<pre><code class="language-cpp">// Con.1 through Con.5: Immutability by default
+class Sensor {
+public:
+    explicit Sensor(std::string id) : id_(std::move(id)) {}
+
+    // Con.2: const member functions by default
+    const std::string&amp; id() const { return id_; }
+    double last_reading() const { return reading_; }
+
+    // Only non-const when mutation is required
+    void record(double value) { reading_ = value; }
+
+private:
+    const std::string id_;  // Con.4: never changes after construction
+    double reading_{0.0};
+};
+
+// Con.3: Pass by const reference
+void display(const Sensor&amp; s) {
+    std::cout &lt;&lt; s.id() &lt;&lt; &quot;: &quot; &lt;&lt; s.last_reading() &lt;&lt; &#39;\n&#39;;
+}
+
+// Con.5: Compile-time constants
+constexpr double PI = 3.14159265358979;
+constexpr int MAX_SENSORS = 256;
+</code></pre>
+<h2>Concurrency &amp; Parallelism (CP.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>CP.2</strong></td>
+<td>Avoid data races</td>
+</tr>
+<tr>
+<td><strong>CP.3</strong></td>
+<td>Minimize explicit sharing of writable data</td>
+</tr>
+<tr>
+<td><strong>CP.4</strong></td>
+<td>Think in terms of tasks, rather than threads</td>
+</tr>
+<tr>
+<td><strong>CP.8</strong></td>
+<td>Don&#39;t use <code>volatile</code> for synchronization</td>
+</tr>
+<tr>
+<td><strong>CP.20</strong></td>
+<td>Use RAII, never plain <code>lock()</code>/<code>unlock()</code></td>
+</tr>
+<tr>
+<td><strong>CP.21</strong></td>
+<td>Use <code>std::scoped_lock</code> to acquire multiple mutexes</td>
+</tr>
+<tr>
+<td><strong>CP.22</strong></td>
+<td>Never call unknown code while holding a lock</td>
+</tr>
+<tr>
+<td><strong>CP.42</strong></td>
+<td>Don&#39;t wait without a condition</td>
+</tr>
+<tr>
+<td><strong>CP.44</strong></td>
+<td>Remember to name your <code>lock_guard</code>s and <code>unique_lock</code>s</td>
+</tr>
+<tr>
+<td><strong>CP.100</strong></td>
+<td>Don&#39;t use lock-free programming unless you absolutely have to</td>
+</tr>
+</tbody></table>
+<h3>Safe Locking</h3>
+<pre><code class="language-cpp">// CP.20 + CP.44: RAII locks, always named
+class ThreadSafeQueue {
+public:
+    void push(int value) {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex_);  // CP.44: named!
+        queue_.push(value);
+        cv_.notify_one();
+    }
+
+    int pop() {
+        std::unique_lock&lt;std::mutex&gt; lock(mutex_);
+        // CP.42: Always wait with a condition
+        cv_.wait(lock, [this] { return !queue_.empty(); });
+        const int value = queue_.front();
+        queue_.pop();
+        return value;
+    }
+
+private:
+    std::mutex mutex_;             // CP.50: mutex with its data
+    std::condition_variable cv_;
+    std::queue&lt;int&gt; queue_;
+};
+</code></pre>
+<h3>Multiple Mutexes</h3>
+<pre><code class="language-cpp">// CP.21: std::scoped_lock for multiple mutexes (deadlock-free)
+void transfer(Account&amp; from, Account&amp; to, double amount) {
+    std::scoped_lock lock(from.mutex_, to.mutex_);
+    from.balance_ -= amount;
+    to.balance_ += amount;
+}
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li><code>volatile</code> for synchronization (CP.8 -- it&#39;s for hardware I/O only)</li>
+<li>Detaching threads (CP.26 -- lifetime management becomes nearly impossible)</li>
+<li>Unnamed lock guards: <code>std::lock_guard&lt;std::mutex&gt;(m);</code> destroys immediately (CP.44)</li>
+<li>Holding locks while calling callbacks (CP.22 -- deadlock risk)</li>
+<li>Lock-free programming without deep expertise (CP.100)</li>
+</ul>
+<h2>Templates &amp; Generic Programming (T.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>T.1</strong></td>
+<td>Use templates to raise the level of abstraction</td>
+</tr>
+<tr>
+<td><strong>T.2</strong></td>
+<td>Use templates to express algorithms for many argument types</td>
+</tr>
+<tr>
+<td><strong>T.10</strong></td>
+<td>Specify concepts for all template arguments</td>
+</tr>
+<tr>
+<td><strong>T.11</strong></td>
+<td>Use standard concepts whenever possible</td>
+</tr>
+<tr>
+<td><strong>T.13</strong></td>
+<td>Prefer shorthand notation for simple concepts</td>
+</tr>
+<tr>
+<td><strong>T.43</strong></td>
+<td>Prefer <code>using</code> over <code>typedef</code></td>
+</tr>
+<tr>
+<td><strong>T.120</strong></td>
+<td>Use template metaprogramming only when you really need to</td>
+</tr>
+<tr>
+<td><strong>T.144</strong></td>
+<td>Don&#39;t specialize function templates (overload instead)</td>
+</tr>
+</tbody></table>
+<h3>Concepts (C++20)</h3>
+<pre><code class="language-cpp">#include &lt;concepts&gt;
+
+// T.10 + T.11: Constrain templates with standard concepts
+template&lt;std::integral T&gt;
+T gcd(T a, T b) {
+    while (b != 0) {
+        a = std::exchange(b, a % b);
+    }
+    return a;
+}
+
+// T.13: Shorthand concept syntax
+void sort(std::ranges::random_access_range auto&amp; range) {
+    std::ranges::sort(range);
+}
+
+// Custom concept for domain-specific constraints
+template&lt;typename T&gt;
+concept Serializable = requires(const T&amp; t) {
+    { t.serialize() } -&gt; std::convertible_to&lt;std::string&gt;;
+};
+
+template&lt;Serializable T&gt;
+void save(const T&amp; obj, const std::string&amp; path);
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li>Unconstrained templates in visible namespaces (T.47)</li>
+<li>Specializing function templates instead of overloading (T.144)</li>
+<li>Template metaprogramming where <code>constexpr</code> suffices (T.120)</li>
+<li><code>typedef</code> instead of <code>using</code> (T.43)</li>
+</ul>
+<h2>Standard Library (SL.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SL.1</strong></td>
+<td>Use libraries wherever possible</td>
+</tr>
+<tr>
+<td><strong>SL.2</strong></td>
+<td>Prefer the standard library to other libraries</td>
+</tr>
+<tr>
+<td><strong>SL.con.1</strong></td>
+<td>Prefer <code>std::array</code> or <code>std::vector</code> over C arrays</td>
+</tr>
+<tr>
+<td><strong>SL.con.2</strong></td>
+<td>Prefer <code>std::vector</code> by default</td>
+</tr>
+<tr>
+<td><strong>SL.str.1</strong></td>
+<td>Use <code>std::string</code> to own character sequences</td>
+</tr>
+<tr>
+<td><strong>SL.str.2</strong></td>
+<td>Use <code>std::string_view</code> to refer to character sequences</td>
+</tr>
+<tr>
+<td><strong>SL.io.50</strong></td>
+<td>Avoid <code>endl</code> (use <code>&#39;\n&#39;</code> -- <code>endl</code> forces a flush)</td>
+</tr>
+</tbody></table>
+<pre><code class="language-cpp">// SL.con.1 + SL.con.2: Prefer vector/array over C arrays
+const std::array&lt;int, 4&gt; fixed_data{1, 2, 3, 4};
+std::vector&lt;std::string&gt; dynamic_data;
+
+// SL.str.1 + SL.str.2: string owns, string_view observes
+std::string build_greeting(std::string_view name) {
+    return &quot;Hello, &quot; + std::string(name) + &quot;!&quot;;
+}
+
+// SL.io.50: Use &#39;\n&#39; not endl
+std::cout &lt;&lt; &quot;result: &quot; &lt;&lt; value &lt;&lt; &#39;\n&#39;;
+</code></pre>
+<h2>Enumerations (Enum.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Enum.1</strong></td>
+<td>Prefer enumerations over macros</td>
+</tr>
+<tr>
+<td><strong>Enum.3</strong></td>
+<td>Prefer <code>enum class</code> over plain <code>enum</code></td>
+</tr>
+<tr>
+<td><strong>Enum.5</strong></td>
+<td>Don&#39;t use ALL_CAPS for enumerators</td>
+</tr>
+<tr>
+<td><strong>Enum.6</strong></td>
+<td>Avoid unnamed enumerations</td>
+</tr>
+</tbody></table>
+<pre><code class="language-cpp">// Enum.3 + Enum.5: Scoped enum, no ALL_CAPS
+enum class Color { red, green, blue };
+enum class LogLevel { debug, info, warning, error };
+
+// BAD: plain enum leaks names, ALL_CAPS clashes with macros
+enum { RED, GREEN, BLUE };           // Enum.3 + Enum.5 + Enum.6 violation
+#define MAX_SIZE 100                  // Enum.1 violation -- use constexpr
+</code></pre>
+<h2>Source Files &amp; Naming (SF.<em>, NL.</em>)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SF.1</strong></td>
+<td>Use <code>.cpp</code> for code files and <code>.h</code> for interface files</td>
+</tr>
+<tr>
+<td><strong>SF.7</strong></td>
+<td>Don&#39;t write <code>using namespace</code> at global scope in a header</td>
+</tr>
+<tr>
+<td><strong>SF.8</strong></td>
+<td>Use <code>#include</code> guards for all <code>.h</code> files</td>
+</tr>
+<tr>
+<td><strong>SF.11</strong></td>
+<td>Header files should be self-contained</td>
+</tr>
+<tr>
+<td><strong>NL.5</strong></td>
+<td>Avoid encoding type information in names (no Hungarian notation)</td>
+</tr>
+<tr>
+<td><strong>NL.8</strong></td>
+<td>Use a consistent naming style</td>
+</tr>
+<tr>
+<td><strong>NL.9</strong></td>
+<td>Use ALL_CAPS for macro names only</td>
+</tr>
+<tr>
+<td><strong>NL.10</strong></td>
+<td>Prefer <code>underscore_style</code> names</td>
+</tr>
+</tbody></table>
+<h3>Header Guard</h3>
+<pre><code class="language-cpp">// SF.8: Include guard (or #pragma once)
+#ifndef PROJECT_MODULE_WIDGET_H
+#define PROJECT_MODULE_WIDGET_H
+
+// SF.11: Self-contained -- include everything this header needs
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+namespace project::module {
+
+class Widget {
+public:
+    explicit Widget(std::string name);
+    const std::string&amp; name() const;
+
+private:
+    std::string name_;
+};
+
+}  // namespace project::module
+
+#endif  // PROJECT_MODULE_WIDGET_H
+</code></pre>
+<h3>Naming Conventions</h3>
+<pre><code class="language-cpp">// NL.8 + NL.10: Consistent underscore_style
+namespace my_project {
+
+constexpr int max_buffer_size = 4096;  // NL.9: not ALL_CAPS (it&#39;s not a macro)
+
+class tcp_connection {                 // underscore_style class
+public:
+    void send_message(std::string_view msg);
+    bool is_connected() const;
+
+private:
+    std::string host_;                 // trailing underscore for members
+    int port_;
+};
+
+}  // namespace my_project
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li><code>using namespace std;</code> in a header at global scope (SF.7)</li>
+<li>Headers that depend on inclusion order (SF.10, SF.11)</li>
+<li>Hungarian notation like <code>strName</code>, <code>iCount</code> (NL.5)</li>
+<li>ALL_CAPS for anything other than macros (NL.9)</li>
+</ul>
+<h2>Performance (Per.*)</h2>
+<h3>Key Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Per.1</strong></td>
+<td>Don&#39;t optimize without reason</td>
+</tr>
+<tr>
+<td><strong>Per.2</strong></td>
+<td>Don&#39;t optimize prematurely</td>
+</tr>
+<tr>
+<td><strong>Per.6</strong></td>
+<td>Don&#39;t make claims about performance without measurements</td>
+</tr>
+<tr>
+<td><strong>Per.7</strong></td>
+<td>Design to enable optimization</td>
+</tr>
+<tr>
+<td><strong>Per.10</strong></td>
+<td>Rely on the static type system</td>
+</tr>
+<tr>
+<td><strong>Per.11</strong></td>
+<td>Move computation from run time to compile time</td>
+</tr>
+<tr>
+<td><strong>Per.19</strong></td>
+<td>Access memory predictably</td>
+</tr>
+</tbody></table>
+<h3>Guidelines</h3>
+<pre><code class="language-cpp">// Per.11: Compile-time computation where possible
+constexpr auto lookup_table = [] {
+    std::array&lt;int, 256&gt; table{};
+    for (int i = 0; i &lt; 256; ++i) {
+        table[i] = i * i;
+    }
+    return table;
+}();
+
+// Per.19: Prefer contiguous data for cache-friendliness
+std::vector&lt;Point&gt; points;           // GOOD: contiguous
+std::vector&lt;std::unique_ptr&lt;Point&gt;&gt; indirect_points; // BAD: pointer chasing
+</code></pre>
+<h3>Anti-Patterns</h3>
+<ul>
+<li>Optimizing without profiling data (Per.1, Per.6)</li>
+<li>Choosing &quot;clever&quot; low-level code over clear abstractions (Per.4, Per.5)</li>
+<li>Ignoring data layout and cache behavior (Per.19)</li>
+</ul>
+<h2>Quick Reference Checklist</h2>
+<p>Before marking C++ work complete:</p>
+<ul>
+<li><input disabled="" type="checkbox"> No raw <code>new</code>/<code>delete</code> -- use smart pointers or RAII (R.11)</li>
+<li><input disabled="" type="checkbox"> Objects initialized at declaration (ES.20)</li>
+<li><input disabled="" type="checkbox"> Variables are <code>const</code>/<code>constexpr</code> by default (Con.1, ES.25)</li>
+<li><input disabled="" type="checkbox"> Member functions are <code>const</code> where possible (Con.2)</li>
+<li><input disabled="" type="checkbox"> <code>enum class</code> instead of plain <code>enum</code> (Enum.3)</li>
+<li><input disabled="" type="checkbox"> <code>nullptr</code> instead of <code>0</code>/<code>NULL</code> (ES.47)</li>
+<li><input disabled="" type="checkbox"> No narrowing conversions (ES.46)</li>
+<li><input disabled="" type="checkbox"> No C-style casts (ES.48)</li>
+<li><input disabled="" type="checkbox"> Single-argument constructors are <code>explicit</code> (C.46)</li>
+<li><input disabled="" type="checkbox"> Rule of Zero or Rule of Five applied (C.20, C.21)</li>
+<li><input disabled="" type="checkbox"> Base class destructors are public virtual or protected non-virtual (C.35)</li>
+<li><input disabled="" type="checkbox"> Templates are constrained with concepts (T.10)</li>
+<li><input disabled="" type="checkbox"> No <code>using namespace</code> in headers at global scope (SF.7)</li>
+<li><input disabled="" type="checkbox"> Headers have include guards and are self-contained (SF.8, SF.11)</li>
+<li><input disabled="" type="checkbox"> Locks use RAII (<code>scoped_lock</code>/<code>lock_guard</code>) (CP.20)</li>
+<li><input disabled="" type="checkbox"> Exceptions are custom types, thrown by value, caught by reference (E.14, E.15)</li>
+<li><input disabled="" type="checkbox"> <code>&#39;\n&#39;</code> instead of <code>std::endl</code> (SL.io.50)</li>
+<li><input disabled="" type="checkbox"> No magic numbers (ES.45)</li>
+</ul>
+
+</body>
+</html>

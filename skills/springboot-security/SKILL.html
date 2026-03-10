@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: springboot-security<br>description: Spring Security best practices for authn/authz, validation, CSRF, secrets, headers, rate limiting, and dependency security in Java Spring Boot services.<br>origin: ECC</h2>
+<h1>Spring Boot Security Review</h1>
+<p>Use when adding auth, handling input, creating endpoints, or dealing with secrets.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Adding authentication (JWT, OAuth2, session-based)</li>
+<li>Implementing authorization (@PreAuthorize, role-based access)</li>
+<li>Validating user input (Bean Validation, custom validators)</li>
+<li>Configuring CORS, CSRF, or security headers</li>
+<li>Managing secrets (Vault, environment variables)</li>
+<li>Adding rate limiting or brute-force protection</li>
+<li>Scanning dependencies for CVEs</li>
+</ul>
+<h2>Authentication</h2>
+<ul>
+<li>Prefer stateless JWT or opaque tokens with revocation list</li>
+<li>Use <code>httpOnly</code>, <code>Secure</code>, <code>SameSite=Strict</code> cookies for sessions</li>
+<li>Validate tokens with <code>OncePerRequestFilter</code> or resource server</li>
+</ul>
+<pre><code class="language-java">@Component
+public class JwtAuthFilter extends OncePerRequestFilter {
+  private final JwtService jwtService;
+
+  public JwtAuthFilter(JwtService jwtService) {
+    this.jwtService = jwtService;
+  }
+
+  @Override
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+      FilterChain chain) throws ServletException, IOException {
+    String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+    if (header != null &amp;&amp; header.startsWith(&quot;Bearer &quot;)) {
+      String token = header.substring(7);
+      Authentication auth = jwtService.authenticate(token);
+      SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+    chain.doFilter(request, response);
+  }
+}
+</code></pre>
+<h2>Authorization</h2>
+<ul>
+<li>Enable method security: <code>@EnableMethodSecurity</code></li>
+<li>Use <code>@PreAuthorize(&quot;hasRole(&#39;ADMIN&#39;)&quot;)</code> or <code>@PreAuthorize(&quot;@authz.canEdit(#id)&quot;)</code></li>
+<li>Deny by default; expose only required scopes</li>
+</ul>
+<pre><code class="language-java">@RestController
+@RequestMapping(&quot;/api/admin&quot;)
+public class AdminController {
+
+  @PreAuthorize(&quot;hasRole(&#39;ADMIN&#39;)&quot;)
+  @GetMapping(&quot;/users&quot;)
+  public List&lt;UserDto&gt; listUsers() {
+    return userService.findAll();
+  }
+
+  @PreAuthorize(&quot;@authz.isOwner(#id, authentication)&quot;)
+  @DeleteMapping(&quot;/users/{id}&quot;)
+  public ResponseEntity&lt;Void&gt; deleteUser(@PathVariable Long id) {
+    userService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
+}
+</code></pre>
+<h2>Input Validation</h2>
+<ul>
+<li>Use Bean Validation with <code>@Valid</code> on controllers</li>
+<li>Apply constraints on DTOs: <code>@NotBlank</code>, <code>@Email</code>, <code>@Size</code>, custom validators</li>
+<li>Sanitize any HTML with a whitelist before rendering</li>
+</ul>
+<pre><code class="language-java">// BAD: No validation
+@PostMapping(&quot;/users&quot;)
+public User createUser(@RequestBody UserDto dto) {
+  return userService.create(dto);
+}
+
+// GOOD: Validated DTO
+public record CreateUserDto(
+    @NotBlank @Size(max = 100) String name,
+    @NotBlank @Email String email,
+    @NotNull @Min(0) @Max(150) Integer age
+) {}
+
+@PostMapping(&quot;/users&quot;)
+public ResponseEntity&lt;UserDto&gt; createUser(@Valid @RequestBody CreateUserDto dto) {
+  return ResponseEntity.status(HttpStatus.CREATED)
+      .body(userService.create(dto));
+}
+</code></pre>
+<h2>SQL Injection Prevention</h2>
+<ul>
+<li>Use Spring Data repositories or parameterized queries</li>
+<li>For native queries, use <code>:param</code> bindings; never concatenate strings</li>
+</ul>
+<pre><code class="language-java">// BAD: String concatenation in native query
+@Query(value = &quot;SELECT * FROM users WHERE name = &#39;&quot; + name + &quot;&#39;&quot;, nativeQuery = true)
+
+// GOOD: Parameterized native query
+@Query(value = &quot;SELECT * FROM users WHERE name = :name&quot;, nativeQuery = true)
+List&lt;User&gt; findByName(@Param(&quot;name&quot;) String name);
+
+// GOOD: Spring Data derived query (auto-parameterized)
+List&lt;User&gt; findByEmailAndActiveTrue(String email);
+</code></pre>
+<h2>Password Encoding</h2>
+<ul>
+<li>Always hash passwords with BCrypt or Argon2 — never store plaintext</li>
+<li>Use <code>PasswordEncoder</code> bean, not manual hashing</li>
+</ul>
+<pre><code class="language-java">@Bean
+public PasswordEncoder passwordEncoder() {
+  return new BCryptPasswordEncoder(12); // cost factor 12
+}
+
+// In service
+public User register(CreateUserDto dto) {
+  String hashedPassword = passwordEncoder.encode(dto.password());
+  return userRepository.save(new User(dto.email(), hashedPassword));
+}
+</code></pre>
+<h2>CSRF Protection</h2>
+<ul>
+<li>For browser session apps, keep CSRF enabled; include token in forms/headers</li>
+<li>For pure APIs with Bearer tokens, disable CSRF and rely on stateless auth</li>
+</ul>
+<pre><code class="language-java">http
+  .csrf(csrf -&gt; csrf.disable())
+  .sessionManagement(sm -&gt; sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+</code></pre>
+<h2>Secrets Management</h2>
+<ul>
+<li>No secrets in source; load from env or vault</li>
+<li>Keep <code>application.yml</code> free of credentials; use placeholders</li>
+<li>Rotate tokens and DB credentials regularly</li>
+</ul>
+<pre><code class="language-yaml"># BAD: Hardcoded in application.yml
+spring:
+  datasource:
+    password: mySecretPassword123
+
+# GOOD: Environment variable placeholder
+spring:
+  datasource:
+    password: ${DB_PASSWORD}
+
+# GOOD: Spring Cloud Vault integration
+spring:
+  cloud:
+    vault:
+      uri: https://vault.example.com
+      token: ${VAULT_TOKEN}
+</code></pre>
+<h2>Security Headers</h2>
+<pre><code class="language-java">http
+  .headers(headers -&gt; headers
+    .contentSecurityPolicy(csp -&gt; csp
+      .policyDirectives(&quot;default-src &#39;self&#39;&quot;))
+    .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+    .xssProtection(Customizer.withDefaults())
+    .referrerPolicy(rp -&gt; rp.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER)));
+</code></pre>
+<h2>CORS Configuration</h2>
+<ul>
+<li>Configure CORS at the security filter level, not per-controller</li>
+<li>Restrict allowed origins — never use <code>*</code> in production</li>
+</ul>
+<pre><code class="language-java">@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+  CorsConfiguration config = new CorsConfiguration();
+  config.setAllowedOrigins(List.of(&quot;https://app.example.com&quot;));
+  config.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;));
+  config.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Content-Type&quot;));
+  config.setAllowCredentials(true);
+  config.setMaxAge(3600L);
+
+  UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+  source.registerCorsConfiguration(&quot;/api/**&quot;, config);
+  return source;
+}
+
+// In SecurityFilterChain:
+http.cors(cors -&gt; cors.configurationSource(corsConfigurationSource()));
+</code></pre>
+<h2>Rate Limiting</h2>
+<ul>
+<li>Apply Bucket4j or gateway-level limits on expensive endpoints</li>
+<li>Log and alert on bursts; return 429 with retry hints</li>
+</ul>
+<pre><code class="language-java">// Using Bucket4j for per-endpoint rate limiting
+@Component
+public class RateLimitFilter extends OncePerRequestFilter {
+  private final Map&lt;String, Bucket&gt; buckets = new ConcurrentHashMap&lt;&gt;();
+
+  private Bucket createBucket() {
+    return Bucket.builder()
+        .addLimit(Bandwidth.classic(100, Refill.intervally(100, Duration.ofMinutes(1))))
+        .build();
+  }
+
+  @Override
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+      FilterChain chain) throws ServletException, IOException {
+    String clientIp = request.getRemoteAddr();
+    Bucket bucket = buckets.computeIfAbsent(clientIp, k -&gt; createBucket());
+
+    if (bucket.tryConsume(1)) {
+      chain.doFilter(request, response);
+    } else {
+      response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+      response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;Rate limit exceeded\&quot;}&quot;);
+    }
+  }
+}
+</code></pre>
+<h2>Dependency Security</h2>
+<ul>
+<li>Run OWASP Dependency Check / Snyk in CI</li>
+<li>Keep Spring Boot and Spring Security on supported versions</li>
+<li>Fail builds on known CVEs</li>
+</ul>
+<h2>Logging and PII</h2>
+<ul>
+<li>Never log secrets, tokens, passwords, or full PAN data</li>
+<li>Redact sensitive fields; use structured JSON logging</li>
+</ul>
+<h2>File Uploads</h2>
+<ul>
+<li>Validate size, content type, and extension</li>
+<li>Store outside web root; scan if required</li>
+</ul>
+<h2>Checklist Before Release</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Auth tokens validated and expired correctly</li>
+<li><input disabled="" type="checkbox"> Authorization guards on every sensitive path</li>
+<li><input disabled="" type="checkbox"> All inputs validated and sanitized</li>
+<li><input disabled="" type="checkbox"> No string-concatenated SQL</li>
+<li><input disabled="" type="checkbox"> CSRF posture correct for app type</li>
+<li><input disabled="" type="checkbox"> Secrets externalized; none committed</li>
+<li><input disabled="" type="checkbox"> Security headers configured</li>
+<li><input disabled="" type="checkbox"> Rate limiting on APIs</li>
+<li><input disabled="" type="checkbox"> Dependencies scanned and up to date</li>
+<li><input disabled="" type="checkbox"> Logs free of sensitive data</li>
+</ul>
+<p><strong>Remember</strong>: Deny by default, validate inputs, least privilege, and secure-by-configuration first.</p>
+
+</body>
+</html>

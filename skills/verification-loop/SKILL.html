@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: verification-loop<br>description: &quot;A comprehensive verification system for Claude Code sessions.&quot;<br>origin: ECC</h2>
+<h1>Verification Loop Skill</h1>
+<p>A comprehensive verification system for Claude Code sessions.</p>
+<h2>When to Use</h2>
+<p>Invoke this skill:</p>
+<ul>
+<li>After completing a feature or significant code change</li>
+<li>Before creating a PR</li>
+<li>When you want to ensure quality gates pass</li>
+<li>After refactoring</li>
+</ul>
+<h2>Verification Phases</h2>
+<h3>Phase 1: Build Verification</h3>
+<pre><code class="language-bash"># Check if project builds
+npm run build 2&gt;&amp;1 | tail -20
+# OR
+pnpm build 2&gt;&amp;1 | tail -20
+</code></pre>
+<p>If build fails, STOP and fix before continuing.</p>
+<h3>Phase 2: Type Check</h3>
+<pre><code class="language-bash"># TypeScript projects
+npx tsc --noEmit 2&gt;&amp;1 | head -30
+
+# Python projects
+pyright . 2&gt;&amp;1 | head -30
+</code></pre>
+<p>Report all type errors. Fix critical ones before continuing.</p>
+<h3>Phase 3: Lint Check</h3>
+<pre><code class="language-bash"># JavaScript/TypeScript
+npm run lint 2&gt;&amp;1 | head -30
+
+# Python
+ruff check . 2&gt;&amp;1 | head -30
+</code></pre>
+<h3>Phase 4: Test Suite</h3>
+<pre><code class="language-bash"># Run tests with coverage
+npm run test -- --coverage 2&gt;&amp;1 | tail -50
+
+# Check coverage threshold
+# Target: 80% minimum
+</code></pre>
+<p>Report:</p>
+<ul>
+<li>Total tests: X</li>
+<li>Passed: X</li>
+<li>Failed: X</li>
+<li>Coverage: X%</li>
+</ul>
+<h3>Phase 5: Security Scan</h3>
+<pre><code class="language-bash"># Check for secrets
+grep -rn &quot;sk-&quot; --include=&quot;*.ts&quot; --include=&quot;*.js&quot; . 2&gt;/dev/null | head -10
+grep -rn &quot;api_key&quot; --include=&quot;*.ts&quot; --include=&quot;*.js&quot; . 2&gt;/dev/null | head -10
+
+# Check for console.log
+grep -rn &quot;console.log&quot; --include=&quot;*.ts&quot; --include=&quot;*.tsx&quot; src/ 2&gt;/dev/null | head -10
+</code></pre>
+<h3>Phase 6: Diff Review</h3>
+<pre><code class="language-bash"># Show what changed
+git diff --stat
+git diff HEAD~1 --name-only
+</code></pre>
+<p>Review each changed file for:</p>
+<ul>
+<li>Unintended changes</li>
+<li>Missing error handling</li>
+<li>Potential edge cases</li>
+</ul>
+<h2>Output Format</h2>
+<p>After running all phases, produce a verification report:</p>
+<pre><code>VERIFICATION REPORT
+==================
+
+Build:     [PASS/FAIL]
+Types:     [PASS/FAIL] (X errors)
+Lint:      [PASS/FAIL] (X warnings)
+Tests:     [PASS/FAIL] (X/Y passed, Z% coverage)
+Security:  [PASS/FAIL] (X issues)
+Diff:      [X files changed]
+
+Overall:   [READY/NOT READY] for PR
+
+Issues to Fix:
+1. ...
+2. ...
+</code></pre>
+<h2>Continuous Mode</h2>
+<p>For long sessions, run verification every 15 minutes or after major changes:</p>
+<pre><code class="language-markdown">Set a mental checkpoint:
+- After completing each function
+- After finishing a component
+- Before moving to next task
+
+Run: /verify
+</code></pre>
+<h2>Integration with Hooks</h2>
+<p>This skill complements PostToolUse hooks but provides deeper verification.<br>Hooks catch issues immediately; this skill provides comprehensive review.</p>
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>checkpoint</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Checkpoint Command</h1>
+<p>Create or verify a checkpoint in your workflow.</p>
+<h2>Usage</h2>
+<p><code>/checkpoint [create|verify|list] [name]</code></p>
+<h2>Create Checkpoint</h2>
+<p>When creating a checkpoint:</p>
+<ol>
+<li>Run <code>/verify quick</code> to ensure current state is clean</li>
+<li>Create a git stash or commit with checkpoint name</li>
+<li>Log checkpoint to <code>.claude/checkpoints.log</code>:</li>
+</ol>
+<pre><code class="language-bash">echo &quot;$(date +%Y-%m-%d-%H:%M) | $CHECKPOINT_NAME | $(git rev-parse --short HEAD)&quot; &gt;&gt; .claude/checkpoints.log
+</code></pre>
+<ol start="4">
+<li>Report checkpoint created</li>
+</ol>
+<h2>Verify Checkpoint</h2>
+<p>When verifying against a checkpoint:</p>
+<ol>
+<li><p>Read checkpoint from log</p>
+</li>
+<li><p>Compare current state to checkpoint:</p>
+<ul>
+<li>Files added since checkpoint</li>
+<li>Files modified since checkpoint</li>
+<li>Test pass rate now vs then</li>
+<li>Coverage now vs then</li>
+</ul>
+</li>
+<li><p>Report:</p>
+</li>
+</ol>
+<pre><code>CHECKPOINT COMPARISON: $NAME
+============================
+Files changed: X
+Tests: +Y passed / -Z failed
+Coverage: +X% / -Y%
+Build: [PASS/FAIL]
+</code></pre>
+<h2>List Checkpoints</h2>
+<p>Show all checkpoints with:</p>
+<ul>
+<li>Name</li>
+<li>Timestamp</li>
+<li>Git SHA</li>
+<li>Status (current, behind, ahead)</li>
+</ul>
+<h2>Workflow</h2>
+<p>Typical checkpoint flow:</p>
+<pre><code>[Start] --&gt; /checkpoint create &quot;feature-start&quot;
+   |
+[Implement] --&gt; /checkpoint create &quot;core-done&quot;
+   |
+[Test] --&gt; /checkpoint verify &quot;core-done&quot;
+   |
+[Refactor] --&gt; /checkpoint create &quot;refactor-done&quot;
+   |
+[PR] --&gt; /checkpoint verify &quot;feature-start&quot;
+</code></pre>
+<h2>Arguments</h2>
+<p>$ARGUMENTS:</p>
+<ul>
+<li><code>create &lt;name&gt;</code> - Create named checkpoint</li>
+<li><code>verify &lt;name&gt;</code> - Verify against named checkpoint</li>
+<li><code>list</code> - Show all checkpoints</li>
+<li><code>clear</code> - Remove old checkpoints (keeps last 5)</li>
+</ul>
+
+</body>
+</html>

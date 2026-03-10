@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: swiftui-patterns<br>description: SwiftUI architecture patterns, state management with @Observable, view composition, navigation, performance optimization, and modern iOS/macOS UI best practices.</h2>
+<h1>SwiftUI Patterns</h1>
+<p>Modern SwiftUI patterns for building declarative, performant user interfaces on Apple platforms. Covers the Observation framework, view composition, type-safe navigation, and performance optimization.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Building SwiftUI views and managing state (<code>@State</code>, <code>@Observable</code>, <code>@Binding</code>)</li>
+<li>Designing navigation flows with <code>NavigationStack</code></li>
+<li>Structuring view models and data flow</li>
+<li>Optimizing rendering performance for lists and complex layouts</li>
+<li>Working with environment values and dependency injection in SwiftUI</li>
+</ul>
+<h2>State Management</h2>
+<h3>Property Wrapper Selection</h3>
+<p>Choose the simplest wrapper that fits:</p>
+<table>
+<thead>
+<tr>
+<th>Wrapper</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@State</code></td>
+<td>View-local value types (toggles, form fields, sheet presentation)</td>
+</tr>
+<tr>
+<td><code>@Binding</code></td>
+<td>Two-way reference to parent&#39;s <code>@State</code></td>
+</tr>
+<tr>
+<td><code>@Observable</code> class + <code>@State</code></td>
+<td>Owned model with multiple properties</td>
+</tr>
+<tr>
+<td><code>@Observable</code> class (no wrapper)</td>
+<td>Read-only reference passed from parent</td>
+</tr>
+<tr>
+<td><code>@Bindable</code></td>
+<td>Two-way binding to an <code>@Observable</code> property</td>
+</tr>
+<tr>
+<td><code>@Environment</code></td>
+<td>Shared dependencies injected via <code>.environment()</code></td>
+</tr>
+</tbody></table>
+<h3>@Observable ViewModel</h3>
+<p>Use <code>@Observable</code> (not <code>ObservableObject</code>) — it tracks property-level changes so SwiftUI only re-renders views that read the changed property:</p>
+<pre><code class="language-swift">@Observable
+final class ItemListViewModel {
+    private(set) var items: [Item] = []
+    private(set) var isLoading = false
+    var searchText = &quot;&quot;
+
+    private let repository: any ItemRepository
+
+    init(repository: any ItemRepository = DefaultItemRepository()) {
+        self.repository = repository
+    }
+
+    func load() async {
+        isLoading = true
+        defer { isLoading = false }
+        items = (try? await repository.fetchAll()) ?? []
+    }
+}
+</code></pre>
+<h3>View Consuming the ViewModel</h3>
+<pre><code class="language-swift">struct ItemListView: View {
+    @State private var viewModel: ItemListViewModel
+
+    init(viewModel: ItemListViewModel = ItemListViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
+
+    var body: some View {
+        List(viewModel.items) { item in
+            ItemRow(item: item)
+        }
+        .searchable(text: $viewModel.searchText)
+        .overlay { if viewModel.isLoading { ProgressView() } }
+        .task { await viewModel.load() }
+    }
+}
+</code></pre>
+<h3>Environment Injection</h3>
+<p>Replace <code>@EnvironmentObject</code> with <code>@Environment</code>:</p>
+<pre><code class="language-swift">// Inject
+ContentView()
+    .environment(authManager)
+
+// Consume
+struct ProfileView: View {
+    @Environment(AuthManager.self) private var auth
+
+    var body: some View {
+        Text(auth.currentUser?.name ?? &quot;Guest&quot;)
+    }
+}
+</code></pre>
+<h2>View Composition</h2>
+<h3>Extract Subviews to Limit Invalidation</h3>
+<p>Break views into small, focused structs. When state changes, only the subview reading that state re-renders:</p>
+<pre><code class="language-swift">struct OrderView: View {
+    @State private var viewModel = OrderViewModel()
+
+    var body: some View {
+        VStack {
+            OrderHeader(title: viewModel.title)
+            OrderItemList(items: viewModel.items)
+            OrderTotal(total: viewModel.total)
+        }
+    }
+}
+</code></pre>
+<h3>ViewModifier for Reusable Styling</h3>
+<pre><code class="language-swift">struct CardModifier: ViewModifier {
+    func body(content: Content) -&gt; some View {
+        content
+            .padding()
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+extension View {
+    func cardStyle() -&gt; some View {
+        modifier(CardModifier())
+    }
+}
+</code></pre>
+<h2>Navigation</h2>
+<h3>Type-Safe NavigationStack</h3>
+<p>Use <code>NavigationStack</code> with <code>NavigationPath</code> for programmatic, type-safe routing:</p>
+<pre><code class="language-swift">@Observable
+final class Router {
+    var path = NavigationPath()
+
+    func navigate(to destination: Destination) {
+        path.append(destination)
+    }
+
+    func popToRoot() {
+        path = NavigationPath()
+    }
+}
+
+enum Destination: Hashable {
+    case detail(Item.ID)
+    case settings
+    case profile(User.ID)
+}
+
+struct RootView: View {
+    @State private var router = Router()
+
+    var body: some View {
+        NavigationStack(path: $router.path) {
+            HomeView()
+                .navigationDestination(for: Destination.self) { dest in
+                    switch dest {
+                    case .detail(let id): ItemDetailView(itemID: id)
+                    case .settings: SettingsView()
+                    case .profile(let id): ProfileView(userID: id)
+                    }
+                }
+        }
+        .environment(router)
+    }
+}
+</code></pre>
+<h2>Performance</h2>
+<h3>Use Lazy Containers for Large Collections</h3>
+<p><code>LazyVStack</code> and <code>LazyHStack</code> create views only when visible:</p>
+<pre><code class="language-swift">ScrollView {
+    LazyVStack(spacing: 8) {
+        ForEach(items) { item in
+            ItemRow(item: item)
+        }
+    }
+}
+</code></pre>
+<h3>Stable Identifiers</h3>
+<p>Always use stable, unique IDs in <code>ForEach</code> — avoid using array indices:</p>
+<pre><code class="language-swift">// Use Identifiable conformance or explicit id
+ForEach(items, id: \.stableID) { item in
+    ItemRow(item: item)
+}
+</code></pre>
+<h3>Avoid Expensive Work in body</h3>
+<ul>
+<li>Never perform I/O, network calls, or heavy computation inside <code>body</code></li>
+<li>Use <code>.task {}</code> for async work — it cancels automatically when the view disappears</li>
+<li>Use <code>.sensoryFeedback()</code> and <code>.geometryGroup()</code> sparingly in scroll views</li>
+<li>Minimize <code>.shadow()</code>, <code>.blur()</code>, and <code>.mask()</code> in lists — they trigger offscreen rendering</li>
+</ul>
+<h3>Equatable Conformance</h3>
+<p>For views with expensive bodies, conform to <code>Equatable</code> to skip unnecessary re-renders:</p>
+<pre><code class="language-swift">struct ExpensiveChartView: View, Equatable {
+    let dataPoints: [DataPoint] // DataPoint must conform to Equatable
+
+    static func == (lhs: Self, rhs: Self) -&gt; Bool {
+        lhs.dataPoints == rhs.dataPoints
+    }
+
+    var body: some View {
+        // Complex chart rendering
+    }
+}
+</code></pre>
+<h2>Previews</h2>
+<p>Use <code>#Preview</code> macro with inline mock data for fast iteration:</p>
+<pre><code class="language-swift">#Preview(&quot;Empty state&quot;) {
+    ItemListView(viewModel: ItemListViewModel(repository: EmptyMockRepository()))
+}
+
+#Preview(&quot;Loaded&quot;) {
+    ItemListView(viewModel: ItemListViewModel(repository: PopulatedMockRepository()))
+}
+</code></pre>
+<h2>Anti-Patterns to Avoid</h2>
+<ul>
+<li>Using <code>ObservableObject</code> / <code>@Published</code> / <code>@StateObject</code> / <code>@EnvironmentObject</code> in new code — migrate to <code>@Observable</code></li>
+<li>Putting async work directly in <code>body</code> or <code>init</code> — use <code>.task {}</code> or explicit load methods</li>
+<li>Creating view models as <code>@State</code> inside child views that don&#39;t own the data — pass from parent instead</li>
+<li>Using <code>AnyView</code> type erasure — prefer <code>@ViewBuilder</code> or <code>Group</code> for conditional views</li>
+<li>Ignoring <code>Sendable</code> requirements when passing data to/from actors</li>
+</ul>
+<h2>References</h2>
+<p>See skill: <code>swift-actor-persistence</code> for actor-based persistence patterns.<br>See skill: <code>swift-protocol-di-testing</code> for protocol-based DI and testing with Swift Testing.</p>
+
+</body>
+</html>

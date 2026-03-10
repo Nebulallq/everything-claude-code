@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: regex-vs-llm-structured-text<br>description: Decision framework for choosing between regex and LLM when parsing structured text — start with regex, add LLM only for low-confidence edge cases.<br>origin: ECC</h2>
+<h1>Regex vs LLM for Structured Text Parsing</h1>
+<p>A practical decision framework for parsing structured text (quizzes, forms, invoices, documents). The key insight: regex handles 95-98% of cases cheaply and deterministically. Reserve expensive LLM calls for the remaining edge cases.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Parsing structured text with repeating patterns (questions, forms, tables)</li>
+<li>Deciding between regex and LLM for text extraction</li>
+<li>Building hybrid pipelines that combine both approaches</li>
+<li>Optimizing cost/accuracy tradeoffs in text processing</li>
+</ul>
+<h2>Decision Framework</h2>
+<pre><code>Is the text format consistent and repeating?
+├── Yes (&gt;90% follows a pattern) → Start with Regex
+│   ├── Regex handles 95%+ → Done, no LLM needed
+│   └── Regex handles &lt;95% → Add LLM for edge cases only
+└── No (free-form, highly variable) → Use LLM directly
+</code></pre>
+<h2>Architecture Pattern</h2>
+<pre><code>Source Text
+    │
+    ▼
+[Regex Parser] ─── Extracts structure (95-98% accuracy)
+    │
+    ▼
+[Text Cleaner] ─── Removes noise (markers, page numbers, artifacts)
+    │
+    ▼
+[Confidence Scorer] ─── Flags low-confidence extractions
+    │
+    ├── High confidence (≥0.95) → Direct output
+    │
+    └── Low confidence (&lt;0.95) → [LLM Validator] → Output
+</code></pre>
+<h2>Implementation</h2>
+<h3>1. Regex Parser (Handles the Majority)</h3>
+<pre><code class="language-python">import re
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ParsedItem:
+    id: str
+    text: str
+    choices: tuple[str, ...]
+    answer: str
+    confidence: float = 1.0
+
+def parse_structured_text(content: str) -&gt; list[ParsedItem]:
+    &quot;&quot;&quot;Parse structured text using regex patterns.&quot;&quot;&quot;
+    pattern = re.compile(
+        r&quot;(?P&lt;id&gt;\d+)\.\s*(?P&lt;text&gt;.+?)\n&quot;
+        r&quot;(?P&lt;choices&gt;(?:[A-D]\..+?\n)+)&quot;
+        r&quot;Answer:\s*(?P&lt;answer&gt;[A-D])&quot;,
+        re.MULTILINE | re.DOTALL,
+    )
+    items = []
+    for match in pattern.finditer(content):
+        choices = tuple(
+            c.strip() for c in re.findall(r&quot;[A-D]\.\s*(.+)&quot;, match.group(&quot;choices&quot;))
+        )
+        items.append(ParsedItem(
+            id=match.group(&quot;id&quot;),
+            text=match.group(&quot;text&quot;).strip(),
+            choices=choices,
+            answer=match.group(&quot;answer&quot;),
+        ))
+    return items
+</code></pre>
+<h3>2. Confidence Scoring</h3>
+<p>Flag items that may need LLM review:</p>
+<pre><code class="language-python">@dataclass(frozen=True)
+class ConfidenceFlag:
+    item_id: str
+    score: float
+    reasons: tuple[str, ...]
+
+def score_confidence(item: ParsedItem) -&gt; ConfidenceFlag:
+    &quot;&quot;&quot;Score extraction confidence and flag issues.&quot;&quot;&quot;
+    reasons = []
+    score = 1.0
+
+    if len(item.choices) &lt; 3:
+        reasons.append(&quot;few_choices&quot;)
+        score -= 0.3
+
+    if not item.answer:
+        reasons.append(&quot;missing_answer&quot;)
+        score -= 0.5
+
+    if len(item.text) &lt; 10:
+        reasons.append(&quot;short_text&quot;)
+        score -= 0.2
+
+    return ConfidenceFlag(
+        item_id=item.id,
+        score=max(0.0, score),
+        reasons=tuple(reasons),
+    )
+
+def identify_low_confidence(
+    items: list[ParsedItem],
+    threshold: float = 0.95,
+) -&gt; list[ConfidenceFlag]:
+    &quot;&quot;&quot;Return items below confidence threshold.&quot;&quot;&quot;
+    flags = [score_confidence(item) for item in items]
+    return [f for f in flags if f.score &lt; threshold]
+</code></pre>
+<h3>3. LLM Validator (Edge Cases Only)</h3>
+<pre><code class="language-python">def validate_with_llm(
+    item: ParsedItem,
+    original_text: str,
+    client,
+) -&gt; ParsedItem:
+    &quot;&quot;&quot;Use LLM to fix low-confidence extractions.&quot;&quot;&quot;
+    response = client.messages.create(
+        model=&quot;claude-haiku-4-5-20251001&quot;,  # Cheapest model for validation
+        max_tokens=500,
+        messages=[{
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: (
+                f&quot;Extract the question, choices, and answer from this text.\n\n&quot;
+                f&quot;Text: {original_text}\n\n&quot;
+                f&quot;Current extraction: {item}\n\n&quot;
+                f&quot;Return corrected JSON if needed, or &#39;CORRECT&#39; if accurate.&quot;
+            ),
+        }],
+    )
+    # Parse LLM response and return corrected item...
+    return corrected_item
+</code></pre>
+<h3>4. Hybrid Pipeline</h3>
+<pre><code class="language-python">def process_document(
+    content: str,
+    *,
+    llm_client=None,
+    confidence_threshold: float = 0.95,
+) -&gt; list[ParsedItem]:
+    &quot;&quot;&quot;Full pipeline: regex -&gt; confidence check -&gt; LLM for edge cases.&quot;&quot;&quot;
+    # Step 1: Regex extraction (handles 95-98%)
+    items = parse_structured_text(content)
+
+    # Step 2: Confidence scoring
+    low_confidence = identify_low_confidence(items, confidence_threshold)
+
+    if not low_confidence or llm_client is None:
+        return items
+
+    # Step 3: LLM validation (only for flagged items)
+    low_conf_ids = {f.item_id for f in low_confidence}
+    result = []
+    for item in items:
+        if item.id in low_conf_ids:
+            result.append(validate_with_llm(item, content, llm_client))
+        else:
+            result.append(item)
+
+    return result
+</code></pre>
+<h2>Real-World Metrics</h2>
+<p>From a production quiz parsing pipeline (410 items):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Regex success rate</td>
+<td>98.0%</td>
+</tr>
+<tr>
+<td>Low confidence items</td>
+<td>8 (2.0%)</td>
+</tr>
+<tr>
+<td>LLM calls needed</td>
+<td>~5</td>
+</tr>
+<tr>
+<td>Cost savings vs all-LLM</td>
+<td>~95%</td>
+</tr>
+<tr>
+<td>Test coverage</td>
+<td>93%</td>
+</tr>
+</tbody></table>
+<h2>Best Practices</h2>
+<ul>
+<li><strong>Start with regex</strong> — even imperfect regex gives you a baseline to improve</li>
+<li><strong>Use confidence scoring</strong> to programmatically identify what needs LLM help</li>
+<li><strong>Use the cheapest LLM</strong> for validation (Haiku-class models are sufficient)</li>
+<li><strong>Never mutate</strong> parsed items — return new instances from cleaning/validation steps</li>
+<li><strong>TDD works well</strong> for parsers — write tests for known patterns first, then edge cases</li>
+<li><strong>Log metrics</strong> (regex success rate, LLM call count) to track pipeline health</li>
+</ul>
+<h2>Anti-Patterns to Avoid</h2>
+<ul>
+<li>Sending all text to an LLM when regex handles 95%+ of cases (expensive and slow)</li>
+<li>Using regex for free-form, highly variable text (LLM is better here)</li>
+<li>Skipping confidence scoring and hoping regex &quot;just works&quot;</li>
+<li>Mutating parsed objects during cleaning/validation steps</li>
+<li>Not testing edge cases (malformed input, missing fields, encoding issues)</li>
+</ul>
+<h2>When to Use</h2>
+<ul>
+<li>Quiz/exam question parsing</li>
+<li>Form data extraction</li>
+<li>Invoice/receipt processing</li>
+<li>Document structure parsing (headers, sections, tables)</li>
+<li>Any structured text with repeating patterns where cost matters</li>
+</ul>
+
+</body>
+</html>

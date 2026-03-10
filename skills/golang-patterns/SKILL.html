@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: golang-patterns<br>description: Idiomatic Go patterns, best practices, and conventions for building robust, efficient, and maintainable Go applications.<br>origin: ECC</h2>
+<h1>Go Development Patterns</h1>
+<p>Idiomatic Go patterns and best practices for building robust, efficient, and maintainable applications.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Writing new Go code</li>
+<li>Reviewing Go code</li>
+<li>Refactoring existing Go code</li>
+<li>Designing Go packages/modules</li>
+</ul>
+<h2>Core Principles</h2>
+<h3>1. Simplicity and Clarity</h3>
+<p>Go favors simplicity over cleverness. Code should be obvious and easy to read.</p>
+<pre><code class="language-go">// Good: Clear and direct
+func GetUser(id string) (*User, error) {
+    user, err := db.FindUser(id)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;get user %s: %w&quot;, id, err)
+    }
+    return user, nil
+}
+
+// Bad: Overly clever
+func GetUser(id string) (*User, error) {
+    return func() (*User, error) {
+        if u, e := db.FindUser(id); e == nil {
+            return u, nil
+        } else {
+            return nil, e
+        }
+    }()
+}
+</code></pre>
+<h3>2. Make the Zero Value Useful</h3>
+<p>Design types so their zero value is immediately usable without initialization.</p>
+<pre><code class="language-go">// Good: Zero value is useful
+type Counter struct {
+    mu    sync.Mutex
+    count int // zero value is 0, ready to use
+}
+
+func (c *Counter) Inc() {
+    c.mu.Lock()
+    c.count++
+    c.mu.Unlock()
+}
+
+// Good: bytes.Buffer works with zero value
+var buf bytes.Buffer
+buf.WriteString(&quot;hello&quot;)
+
+// Bad: Requires initialization
+type BadCounter struct {
+    counts map[string]int // nil map will panic
+}
+</code></pre>
+<h3>3. Accept Interfaces, Return Structs</h3>
+<p>Functions should accept interface parameters and return concrete types.</p>
+<pre><code class="language-go">// Good: Accepts interface, returns concrete type
+func ProcessData(r io.Reader) (*Result, error) {
+    data, err := io.ReadAll(r)
+    if err != nil {
+        return nil, err
+    }
+    return &amp;Result{Data: data}, nil
+}
+
+// Bad: Returns interface (hides implementation details unnecessarily)
+func ProcessData(r io.Reader) (io.Reader, error) {
+    // ...
+}
+</code></pre>
+<h2>Error Handling Patterns</h2>
+<h3>Error Wrapping with Context</h3>
+<pre><code class="language-go">// Good: Wrap errors with context
+func LoadConfig(path string) (*Config, error) {
+    data, err := os.ReadFile(path)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;load config %s: %w&quot;, path, err)
+    }
+
+    var cfg Config
+    if err := json.Unmarshal(data, &amp;cfg); err != nil {
+        return nil, fmt.Errorf(&quot;parse config %s: %w&quot;, path, err)
+    }
+
+    return &amp;cfg, nil
+}
+</code></pre>
+<h3>Custom Error Types</h3>
+<pre><code class="language-go">// Define domain-specific errors
+type ValidationError struct {
+    Field   string
+    Message string
+}
+
+func (e *ValidationError) Error() string {
+    return fmt.Sprintf(&quot;validation failed on %s: %s&quot;, e.Field, e.Message)
+}
+
+// Sentinel errors for common cases
+var (
+    ErrNotFound     = errors.New(&quot;resource not found&quot;)
+    ErrUnauthorized = errors.New(&quot;unauthorized&quot;)
+    ErrInvalidInput = errors.New(&quot;invalid input&quot;)
+)
+</code></pre>
+<h3>Error Checking with errors.Is and errors.As</h3>
+<pre><code class="language-go">func HandleError(err error) {
+    // Check for specific error
+    if errors.Is(err, sql.ErrNoRows) {
+        log.Println(&quot;No records found&quot;)
+        return
+    }
+
+    // Check for error type
+    var validationErr *ValidationError
+    if errors.As(err, &amp;validationErr) {
+        log.Printf(&quot;Validation error on field %s: %s&quot;,
+            validationErr.Field, validationErr.Message)
+        return
+    }
+
+    // Unknown error
+    log.Printf(&quot;Unexpected error: %v&quot;, err)
+}
+</code></pre>
+<h3>Never Ignore Errors</h3>
+<pre><code class="language-go">// Bad: Ignoring error with blank identifier
+result, _ := doSomething()
+
+// Good: Handle or explicitly document why it&#39;s safe to ignore
+result, err := doSomething()
+if err != nil {
+    return err
+}
+
+// Acceptable: When error truly doesn&#39;t matter (rare)
+_ = writer.Close() // Best-effort cleanup, error logged elsewhere
+</code></pre>
+<h2>Concurrency Patterns</h2>
+<h3>Worker Pool</h3>
+<pre><code class="language-go">func WorkerPool(jobs &lt;-chan Job, results chan&lt;- Result, numWorkers int) {
+    var wg sync.WaitGroup
+
+    for i := 0; i &lt; numWorkers; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for job := range jobs {
+                results &lt;- process(job)
+            }
+        }()
+    }
+
+    wg.Wait()
+    close(results)
+}
+</code></pre>
+<h3>Context for Cancellation and Timeouts</h3>
+<pre><code class="language-go">func FetchWithTimeout(ctx context.Context, url string) ([]byte, error) {
+    ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+
+    req, err := http.NewRequestWithContext(ctx, &quot;GET&quot;, url, nil)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;create request: %w&quot;, err)
+    }
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;fetch %s: %w&quot;, url, err)
+    }
+    defer resp.Body.Close()
+
+    return io.ReadAll(resp.Body)
+}
+</code></pre>
+<h3>Graceful Shutdown</h3>
+<pre><code class="language-go">func GracefulShutdown(server *http.Server) {
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+    &lt;-quit
+    log.Println(&quot;Shutting down server...&quot;)
+
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    if err := server.Shutdown(ctx); err != nil {
+        log.Fatalf(&quot;Server forced to shutdown: %v&quot;, err)
+    }
+
+    log.Println(&quot;Server exited&quot;)
+}
+</code></pre>
+<h3>errgroup for Coordinated Goroutines</h3>
+<pre><code class="language-go">import &quot;golang.org/x/sync/errgroup&quot;
+
+func FetchAll(ctx context.Context, urls []string) ([][]byte, error) {
+    g, ctx := errgroup.WithContext(ctx)
+    results := make([][]byte, len(urls))
+
+    for i, url := range urls {
+        i, url := i, url // Capture loop variables
+        g.Go(func() error {
+            data, err := FetchWithTimeout(ctx, url)
+            if err != nil {
+                return err
+            }
+            results[i] = data
+            return nil
+        })
+    }
+
+    if err := g.Wait(); err != nil {
+        return nil, err
+    }
+    return results, nil
+}
+</code></pre>
+<h3>Avoiding Goroutine Leaks</h3>
+<pre><code class="language-go">// Bad: Goroutine leak if context is cancelled
+func leakyFetch(ctx context.Context, url string) &lt;-chan []byte {
+    ch := make(chan []byte)
+    go func() {
+        data, _ := fetch(url)
+        ch &lt;- data // Blocks forever if no receiver
+    }()
+    return ch
+}
+
+// Good: Properly handles cancellation
+func safeFetch(ctx context.Context, url string) &lt;-chan []byte {
+    ch := make(chan []byte, 1) // Buffered channel
+    go func() {
+        data, err := fetch(url)
+        if err != nil {
+            return
+        }
+        select {
+        case ch &lt;- data:
+        case &lt;-ctx.Done():
+        }
+    }()
+    return ch
+}
+</code></pre>
+<h2>Interface Design</h2>
+<h3>Small, Focused Interfaces</h3>
+<pre><code class="language-go">// Good: Single-method interfaces
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+
+type Closer interface {
+    Close() error
+}
+
+// Compose interfaces as needed
+type ReadWriteCloser interface {
+    Reader
+    Writer
+    Closer
+}
+</code></pre>
+<h3>Define Interfaces Where They&#39;re Used</h3>
+<pre><code class="language-go">// In the consumer package, not the provider
+package service
+
+// UserStore defines what this service needs
+type UserStore interface {
+    GetUser(id string) (*User, error)
+    SaveUser(user *User) error
+}
+
+type Service struct {
+    store UserStore
+}
+
+// Concrete implementation can be in another package
+// It doesn&#39;t need to know about this interface
+</code></pre>
+<h3>Optional Behavior with Type Assertions</h3>
+<pre><code class="language-go">type Flusher interface {
+    Flush() error
+}
+
+func WriteAndFlush(w io.Writer, data []byte) error {
+    if _, err := w.Write(data); err != nil {
+        return err
+    }
+
+    // Flush if supported
+    if f, ok := w.(Flusher); ok {
+        return f.Flush()
+    }
+    return nil
+}
+</code></pre>
+<h2>Package Organization</h2>
+<h3>Standard Project Layout</h3>
+<pre><code class="language-text">myproject/
+├── cmd/
+│   └── myapp/
+│       └── main.go           # Entry point
+├── internal/
+│   ├── handler/              # HTTP handlers
+│   ├── service/              # Business logic
+│   ├── repository/           # Data access
+│   └── config/               # Configuration
+├── pkg/
+│   └── client/               # Public API client
+├── api/
+│   └── v1/                   # API definitions (proto, OpenAPI)
+├── testdata/                 # Test fixtures
+├── go.mod
+├── go.sum
+└── Makefile
+</code></pre>
+<h3>Package Naming</h3>
+<pre><code class="language-go">// Good: Short, lowercase, no underscores
+package http
+package json
+package user
+
+// Bad: Verbose, mixed case, or redundant
+package httpHandler
+package json_parser
+package userService // Redundant &#39;Service&#39; suffix
+</code></pre>
+<h3>Avoid Package-Level State</h3>
+<pre><code class="language-go">// Bad: Global mutable state
+var db *sql.DB
+
+func init() {
+    db, _ = sql.Open(&quot;postgres&quot;, os.Getenv(&quot;DATABASE_URL&quot;))
+}
+
+// Good: Dependency injection
+type Server struct {
+    db *sql.DB
+}
+
+func NewServer(db *sql.DB) *Server {
+    return &amp;Server{db: db}
+}
+</code></pre>
+<h2>Struct Design</h2>
+<h3>Functional Options Pattern</h3>
+<pre><code class="language-go">type Server struct {
+    addr    string
+    timeout time.Duration
+    logger  *log.Logger
+}
+
+type Option func(*Server)
+
+func WithTimeout(d time.Duration) Option {
+    return func(s *Server) {
+        s.timeout = d
+    }
+}
+
+func WithLogger(l *log.Logger) Option {
+    return func(s *Server) {
+        s.logger = l
+    }
+}
+
+func NewServer(addr string, opts ...Option) *Server {
+    s := &amp;Server{
+        addr:    addr,
+        timeout: 30 * time.Second, // default
+        logger:  log.Default(),    // default
+    }
+    for _, opt := range opts {
+        opt(s)
+    }
+    return s
+}
+
+// Usage
+server := NewServer(&quot;:8080&quot;,
+    WithTimeout(60*time.Second),
+    WithLogger(customLogger),
+)
+</code></pre>
+<h3>Embedding for Composition</h3>
+<pre><code class="language-go">type Logger struct {
+    prefix string
+}
+
+func (l *Logger) Log(msg string) {
+    fmt.Printf(&quot;[%s] %s\n&quot;, l.prefix, msg)
+}
+
+type Server struct {
+    *Logger // Embedding - Server gets Log method
+    addr    string
+}
+
+func NewServer(addr string) *Server {
+    return &amp;Server{
+        Logger: &amp;Logger{prefix: &quot;SERVER&quot;},
+        addr:   addr,
+    }
+}
+
+// Usage
+s := NewServer(&quot;:8080&quot;)
+s.Log(&quot;Starting...&quot;) // Calls embedded Logger.Log
+</code></pre>
+<h2>Memory and Performance</h2>
+<h3>Preallocate Slices When Size is Known</h3>
+<pre><code class="language-go">// Bad: Grows slice multiple times
+func processItems(items []Item) []Result {
+    var results []Result
+    for _, item := range items {
+        results = append(results, process(item))
+    }
+    return results
+}
+
+// Good: Single allocation
+func processItems(items []Item) []Result {
+    results := make([]Result, 0, len(items))
+    for _, item := range items {
+        results = append(results, process(item))
+    }
+    return results
+}
+</code></pre>
+<h3>Use sync.Pool for Frequent Allocations</h3>
+<pre><code class="language-go">var bufferPool = sync.Pool{
+    New: func() interface{} {
+        return new(bytes.Buffer)
+    },
+}
+
+func ProcessRequest(data []byte) []byte {
+    buf := bufferPool.Get().(*bytes.Buffer)
+    defer func() {
+        buf.Reset()
+        bufferPool.Put(buf)
+    }()
+
+    buf.Write(data)
+    // Process...
+    return buf.Bytes()
+}
+</code></pre>
+<h3>Avoid String Concatenation in Loops</h3>
+<pre><code class="language-go">// Bad: Creates many string allocations
+func join(parts []string) string {
+    var result string
+    for _, p := range parts {
+        result += p + &quot;,&quot;
+    }
+    return result
+}
+
+// Good: Single allocation with strings.Builder
+func join(parts []string) string {
+    var sb strings.Builder
+    for i, p := range parts {
+        if i &gt; 0 {
+            sb.WriteString(&quot;,&quot;)
+        }
+        sb.WriteString(p)
+    }
+    return sb.String()
+}
+
+// Best: Use standard library
+func join(parts []string) string {
+    return strings.Join(parts, &quot;,&quot;)
+}
+</code></pre>
+<h2>Go Tooling Integration</h2>
+<h3>Essential Commands</h3>
+<pre><code class="language-bash"># Build and run
+go build ./...
+go run ./cmd/myapp
+
+# Testing
+go test ./...
+go test -race ./...
+go test -cover ./...
+
+# Static analysis
+go vet ./...
+staticcheck ./...
+golangci-lint run
+
+# Module management
+go mod tidy
+go mod verify
+
+# Formatting
+gofmt -w .
+goimports -w .
+</code></pre>
+<h3>Recommended Linter Configuration (.golangci.yml)</h3>
+<pre><code class="language-yaml">linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gofmt
+    - goimports
+    - misspell
+    - unconvert
+    - unparam
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  govet:
+    check-shadowing: true
+
+issues:
+  exclude-use-default: false
+</code></pre>
+<h2>Quick Reference: Go Idioms</h2>
+<table>
+<thead>
+<tr>
+<th>Idiom</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Accept interfaces, return structs</td>
+<td>Functions accept interface params, return concrete types</td>
+</tr>
+<tr>
+<td>Errors are values</td>
+<td>Treat errors as first-class values, not exceptions</td>
+</tr>
+<tr>
+<td>Don&#39;t communicate by sharing memory</td>
+<td>Use channels for coordination between goroutines</td>
+</tr>
+<tr>
+<td>Make the zero value useful</td>
+<td>Types should work without explicit initialization</td>
+</tr>
+<tr>
+<td>A little copying is better than a little dependency</td>
+<td>Avoid unnecessary external dependencies</td>
+</tr>
+<tr>
+<td>Clear is better than clever</td>
+<td>Prioritize readability over cleverness</td>
+</tr>
+<tr>
+<td>gofmt is no one&#39;s favorite but everyone&#39;s friend</td>
+<td>Always format with gofmt/goimports</td>
+</tr>
+<tr>
+<td>Return early</td>
+<td>Handle errors first, keep happy path unindented</td>
+</tr>
+</tbody></table>
+<h2>Anti-Patterns to Avoid</h2>
+<pre><code class="language-go">// Bad: Naked returns in long functions
+func process() (result int, err error) {
+    // ... 50 lines ...
+    return // What is being returned?
+}
+
+// Bad: Using panic for control flow
+func GetUser(id string) *User {
+    user, err := db.Find(id)
+    if err != nil {
+        panic(err) // Don&#39;t do this
+    }
+    return user
+}
+
+// Bad: Passing context in struct
+type Request struct {
+    ctx context.Context // Context should be first param
+    ID  string
+}
+
+// Good: Context as first parameter
+func ProcessRequest(ctx context.Context, id string) error {
+    // ...
+}
+
+// Bad: Mixing value and pointer receivers
+type Counter struct{ n int }
+func (c Counter) Value() int { return c.n }    // Value receiver
+func (c *Counter) Increment() { c.n++ }        // Pointer receiver
+// Pick one style and be consistent
+</code></pre>
+<p><strong>Remember</strong>: Go code should be boring in the best way - predictable, consistent, and easy to understand. When in doubt, keep it simple.</p>
+
+</body>
+</html>

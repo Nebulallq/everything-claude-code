@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: springboot-tdd<br>description: Test-driven development for Spring Boot using JUnit 5, Mockito, MockMvc, Testcontainers, and JaCoCo. Use when adding features, fixing bugs, or refactoring.<br>origin: ECC</h2>
+<h1>Spring Boot TDD Workflow</h1>
+<p>TDD guidance for Spring Boot services with 80%+ coverage (unit + integration).</p>
+<h2>When to Use</h2>
+<ul>
+<li>New features or endpoints</li>
+<li>Bug fixes or refactors</li>
+<li>Adding data access logic or security rules</li>
+</ul>
+<h2>Workflow</h2>
+<ol>
+<li>Write tests first (they should fail)</li>
+<li>Implement minimal code to pass</li>
+<li>Refactor with tests green</li>
+<li>Enforce coverage (JaCoCo)</li>
+</ol>
+<h2>Unit Tests (JUnit 5 + Mockito)</h2>
+<pre><code class="language-java">@ExtendWith(MockitoExtension.class)
+class MarketServiceTest {
+  @Mock MarketRepository repo;
+  @InjectMocks MarketService service;
+
+  @Test
+  void createsMarket() {
+    CreateMarketRequest req = new CreateMarketRequest(&quot;name&quot;, &quot;desc&quot;, Instant.now(), List.of(&quot;cat&quot;));
+    when(repo.save(any())).thenAnswer(inv -&gt; inv.getArgument(0));
+
+    Market result = service.create(req);
+
+    assertThat(result.name()).isEqualTo(&quot;name&quot;);
+    verify(repo).save(any());
+  }
+}
+</code></pre>
+<p>Patterns:</p>
+<ul>
+<li>Arrange-Act-Assert</li>
+<li>Avoid partial mocks; prefer explicit stubbing</li>
+<li>Use <code>@ParameterizedTest</code> for variants</li>
+</ul>
+<h2>Web Layer Tests (MockMvc)</h2>
+<pre><code class="language-java">@WebMvcTest(MarketController.class)
+class MarketControllerTest {
+  @Autowired MockMvc mockMvc;
+  @MockBean MarketService marketService;
+
+  @Test
+  void returnsMarkets() throws Exception {
+    when(marketService.list(any())).thenReturn(Page.empty());
+
+    mockMvc.perform(get(&quot;/api/markets&quot;))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath(&quot;$.content&quot;).isArray());
+  }
+}
+</code></pre>
+<h2>Integration Tests (SpringBootTest)</h2>
+<pre><code class="language-java">@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles(&quot;test&quot;)
+class MarketIntegrationTest {
+  @Autowired MockMvc mockMvc;
+
+  @Test
+  void createsMarket() throws Exception {
+    mockMvc.perform(post(&quot;/api/markets&quot;)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(&quot;&quot;&quot;
+          {&quot;name&quot;:&quot;Test&quot;,&quot;description&quot;:&quot;Desc&quot;,&quot;endDate&quot;:&quot;2030-01-01T00:00:00Z&quot;,&quot;categories&quot;:[&quot;general&quot;]}
+        &quot;&quot;&quot;))
+      .andExpect(status().isCreated());
+  }
+}
+</code></pre>
+<h2>Persistence Tests (DataJpaTest)</h2>
+<pre><code class="language-java">@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(TestContainersConfig.class)
+class MarketRepositoryTest {
+  @Autowired MarketRepository repo;
+
+  @Test
+  void savesAndFinds() {
+    MarketEntity entity = new MarketEntity();
+    entity.setName(&quot;Test&quot;);
+    repo.save(entity);
+
+    Optional&lt;MarketEntity&gt; found = repo.findByName(&quot;Test&quot;);
+    assertThat(found).isPresent();
+  }
+}
+</code></pre>
+<h2>Testcontainers</h2>
+<ul>
+<li>Use reusable containers for Postgres/Redis to mirror production</li>
+<li>Wire via <code>@DynamicPropertySource</code> to inject JDBC URLs into Spring context</li>
+</ul>
+<h2>Coverage (JaCoCo)</h2>
+<p>Maven snippet:</p>
+<pre><code class="language-xml">&lt;plugin&gt;
+  &lt;groupId&gt;org.jacoco&lt;/groupId&gt;
+  &lt;artifactId&gt;jacoco-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;0.8.14&lt;/version&gt;
+  &lt;executions&gt;
+    &lt;execution&gt;
+      &lt;goals&gt;&lt;goal&gt;prepare-agent&lt;/goal&gt;&lt;/goals&gt;
+    &lt;/execution&gt;
+    &lt;execution&gt;
+      &lt;id&gt;report&lt;/id&gt;
+      &lt;phase&gt;verify&lt;/phase&gt;
+      &lt;goals&gt;&lt;goal&gt;report&lt;/goal&gt;&lt;/goals&gt;
+    &lt;/execution&gt;
+  &lt;/executions&gt;
+&lt;/plugin&gt;
+</code></pre>
+<h2>Assertions</h2>
+<ul>
+<li>Prefer AssertJ (<code>assertThat</code>) for readability</li>
+<li>For JSON responses, use <code>jsonPath</code></li>
+<li>For exceptions: <code>assertThatThrownBy(...)</code></li>
+</ul>
+<h2>Test Data Builders</h2>
+<pre><code class="language-java">class MarketBuilder {
+  private String name = &quot;Test&quot;;
+  MarketBuilder withName(String name) { this.name = name; return this; }
+  Market build() { return new Market(null, name, MarketStatus.ACTIVE); }
+}
+</code></pre>
+<h2>CI Commands</h2>
+<ul>
+<li>Maven: <code>mvn -T 4 test</code> or <code>mvn verify</code></li>
+<li>Gradle: <code>./gradlew test jacocoTestReport</code></li>
+</ul>
+<p><strong>Remember</strong>: Keep tests fast, isolated, and deterministic. Test behavior, not implementation details.</p>
+
+</body>
+</html>

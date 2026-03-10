@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: nanoclaw-repl<br>description: Operate and extend NanoClaw v2, ECC&#39;s zero-dependency session-aware REPL built on claude -p.<br>origin: ECC</h2>
+<h1>NanoClaw REPL</h1>
+<p>Use this skill when running or extending <code>scripts/claw.js</code>.</p>
+<h2>Capabilities</h2>
+<ul>
+<li>persistent markdown-backed sessions</li>
+<li>model switching with <code>/model</code></li>
+<li>dynamic skill loading with <code>/load</code></li>
+<li>session branching with <code>/branch</code></li>
+<li>cross-session search with <code>/search</code></li>
+<li>history compaction with <code>/compact</code></li>
+<li>export to md/json/txt with <code>/export</code></li>
+<li>session metrics with <code>/metrics</code></li>
+</ul>
+<h2>Operating Guidance</h2>
+<ol>
+<li>Keep sessions task-focused.</li>
+<li>Branch before high-risk changes.</li>
+<li>Compact after major milestones.</li>
+<li>Export before sharing or archival.</li>
+</ol>
+<h2>Extension Rules</h2>
+<ul>
+<li>keep zero external runtime dependencies</li>
+<li>preserve markdown-as-database compatibility</li>
+<li>keep command handlers deterministic and local</li>
+</ul>
+
+</body>
+</html>

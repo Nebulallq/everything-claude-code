@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>django-api-CLAUDE</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Django REST API — Project CLAUDE.md</h1>
+<blockquote>
+<p>Real-world example for a Django REST Framework API with PostgreSQL and Celery.<br>Copy this to your project root and customize for your service.</p>
+</blockquote>
+<h2>Project Overview</h2>
+<p><strong>Stack:</strong> Python 3.12+, Django 5.x, Django REST Framework, PostgreSQL, Celery + Redis, pytest, Docker Compose</p>
+<p><strong>Architecture:</strong> Domain-driven design with apps per business domain. DRF for API layer, Celery for async tasks, pytest for testing. All endpoints return JSON — no template rendering.</p>
+<h2>Critical Rules</h2>
+<h3>Python Conventions</h3>
+<ul>
+<li>Type hints on all function signatures — use <code>from __future__ import annotations</code></li>
+<li>No <code>print()</code> statements — use <code>logging.getLogger(__name__)</code></li>
+<li>f-strings for string formatting, never <code>%</code> or <code>.format()</code></li>
+<li>Use <code>pathlib.Path</code> not <code>os.path</code> for file operations</li>
+<li>Imports sorted with isort: stdlib, third-party, local (enforced by ruff)</li>
+</ul>
+<h3>Database</h3>
+<ul>
+<li>All queries use Django ORM — raw SQL only with <code>.raw()</code> and parameterized queries</li>
+<li>Migrations committed to git — never use <code>--fake</code> in production</li>
+<li>Use <code>select_related()</code> and <code>prefetch_related()</code> to prevent N+1 queries</li>
+<li>All models must have <code>created_at</code> and <code>updated_at</code> auto-fields</li>
+<li>Indexes on any field used in <code>filter()</code>, <code>order_by()</code>, or <code>WHERE</code> clauses</li>
+</ul>
+<pre><code class="language-python"># BAD: N+1 query
+orders = Order.objects.all()
+for order in orders:
+    print(order.customer.name)  # hits DB for each order
+
+# GOOD: Single query with join
+orders = Order.objects.select_related(&quot;customer&quot;).all()
+</code></pre>
+<h3>Authentication</h3>
+<ul>
+<li>JWT via <code>djangorestframework-simplejwt</code> — access token (15 min) + refresh token (7 days)</li>
+<li>Permission classes on every view — never rely on default</li>
+<li>Use <code>IsAuthenticated</code> as base, add custom permissions for object-level access</li>
+<li>Token blacklisting enabled for logout</li>
+</ul>
+<h3>Serializers</h3>
+<ul>
+<li>Use <code>ModelSerializer</code> for simple CRUD, <code>Serializer</code> for complex validation</li>
+<li>Separate read and write serializers when input/output shapes differ</li>
+<li>Validate at serializer level, not in views — views should be thin</li>
+</ul>
+<pre><code class="language-python">class CreateOrderSerializer(serializers.Serializer):
+    product_id = serializers.UUIDField()
+    quantity = serializers.IntegerField(min_value=1, max_value=100)
+
+    def validate_product_id(self, value):
+        if not Product.objects.filter(id=value, active=True).exists():
+            raise serializers.ValidationError(&quot;Product not found or inactive&quot;)
+        return value
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    customer = CustomerSerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [&quot;id&quot;, &quot;customer&quot;, &quot;product&quot;, &quot;quantity&quot;, &quot;total&quot;, &quot;status&quot;, &quot;created_at&quot;]
+</code></pre>
+<h3>Error Handling</h3>
+<ul>
+<li>Use DRF exception handler for consistent error responses</li>
+<li>Custom exceptions for business logic in <code>core/exceptions.py</code></li>
+<li>Never expose internal error details to clients</li>
+</ul>
+<pre><code class="language-python"># core/exceptions.py
+from rest_framework.exceptions import APIException
+
+class InsufficientStockError(APIException):
+    status_code = 409
+    default_detail = &quot;Insufficient stock for this order&quot;
+    default_code = &quot;insufficient_stock&quot;
+</code></pre>
+<h3>Code Style</h3>
+<ul>
+<li>No emojis in code or comments</li>
+<li>Max line length: 120 characters (enforced by ruff)</li>
+<li>Classes: PascalCase, functions/variables: snake_case, constants: UPPER_SNAKE_CASE</li>
+<li>Views are thin — business logic lives in service functions or model methods</li>
+</ul>
+<h2>File Structure</h2>
+<pre><code>config/
+  settings/
+    base.py              # Shared settings
+    local.py             # Dev overrides (DEBUG=True)
+    production.py        # Production settings
+  urls.py                # Root URL config
+  celery.py              # Celery app configuration
+apps/
+  accounts/              # User auth, registration, profile
+    models.py
+    serializers.py
+    views.py
+    services.py          # Business logic
+    tests/
+      test_views.py
+      test_services.py
+      factories.py       # Factory Boy factories
+  orders/                # Order management
+    models.py
+    serializers.py
+    views.py
+    services.py
+    tasks.py             # Celery tasks
+    tests/
+  products/              # Product catalog
+    models.py
+    serializers.py
+    views.py
+    tests/
+core/
+  exceptions.py          # Custom API exceptions
+  permissions.py         # Shared permission classes
+  pagination.py          # Custom pagination
+  middleware.py          # Request logging, timing
+  tests/
+</code></pre>
+<h2>Key Patterns</h2>
+<h3>Service Layer</h3>
+<pre><code class="language-python"># apps/orders/services.py
+from django.db import transaction
+
+def create_order(*, customer, product_id: uuid.UUID, quantity: int) -&gt; Order:
+    &quot;&quot;&quot;Create an order with stock validation and payment hold.&quot;&quot;&quot;
+    product = Product.objects.select_for_update().get(id=product_id)
+
+    if product.stock &lt; quantity:
+        raise InsufficientStockError()
+
+    with transaction.atomic():
+        order = Order.objects.create(
+            customer=customer,
+            product=product,
+            quantity=quantity,
+            total=product.price * quantity,
+        )
+        product.stock -= quantity
+        product.save(update_fields=[&quot;stock&quot;, &quot;updated_at&quot;])
+
+    # Async: send confirmation email
+    send_order_confirmation.delay(order.id)
+    return order
+</code></pre>
+<h3>View Pattern</h3>
+<pre><code class="language-python"># apps/orders/views.py
+class OrderViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+
+    def get_serializer_class(self):
+        if self.action == &quot;create&quot;:
+            return CreateOrderSerializer
+        return OrderDetailSerializer
+
+    def get_queryset(self):
+        return (
+            Order.objects
+            .filter(customer=self.request.user)
+            .select_related(&quot;product&quot;, &quot;customer&quot;)
+            .order_by(&quot;-created_at&quot;)
+        )
+
+    def perform_create(self, serializer):
+        order = create_order(
+            customer=self.request.user,
+            product_id=serializer.validated_data[&quot;product_id&quot;],
+            quantity=serializer.validated_data[&quot;quantity&quot;],
+        )
+        serializer.instance = order
+</code></pre>
+<h3>Test Pattern (pytest + Factory Boy)</h3>
+<pre><code class="language-python"># apps/orders/tests/factories.py
+import factory
+from apps.accounts.tests.factories import UserFactory
+from apps.products.tests.factories import ProductFactory
+
+class OrderFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = &quot;orders.Order&quot;
+
+    customer = factory.SubFactory(UserFactory)
+    product = factory.SubFactory(ProductFactory, stock=100)
+    quantity = 1
+    total = factory.LazyAttribute(lambda o: o.product.price * o.quantity)
+
+# apps/orders/tests/test_views.py
+import pytest
+from rest_framework.test import APIClient
+
+@pytest.mark.django_db
+class TestCreateOrder:
+    def setup_method(self):
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.client.force_authenticate(self.user)
+
+    def test_create_order_success(self):
+        product = ProductFactory(price=29_99, stock=10)
+        response = self.client.post(&quot;/api/orders/&quot;, {
+            &quot;product_id&quot;: str(product.id),
+            &quot;quantity&quot;: 2,
+        })
+        assert response.status_code == 201
+        assert response.data[&quot;total&quot;] == 59_98
+
+    def test_create_order_insufficient_stock(self):
+        product = ProductFactory(stock=0)
+        response = self.client.post(&quot;/api/orders/&quot;, {
+            &quot;product_id&quot;: str(product.id),
+            &quot;quantity&quot;: 1,
+        })
+        assert response.status_code == 409
+
+    def test_create_order_unauthenticated(self):
+        self.client.force_authenticate(None)
+        response = self.client.post(&quot;/api/orders/&quot;, {})
+        assert response.status_code == 401
+</code></pre>
+<h2>Environment Variables</h2>
+<pre><code class="language-bash"># Django
+SECRET_KEY=
+DEBUG=False
+ALLOWED_HOSTS=api.example.com
+
+# Database
+DATABASE_URL=postgres://user:pass@localhost:5432/myapp
+
+# Redis (Celery broker + cache)
+REDIS_URL=redis://localhost:6379/0
+
+# JWT
+JWT_ACCESS_TOKEN_LIFETIME=15       # minutes
+JWT_REFRESH_TOKEN_LIFETIME=10080   # minutes (7 days)
+
+# Email
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.example.com
+</code></pre>
+<h2>Testing Strategy</h2>
+<pre><code class="language-bash"># Run all tests
+pytest --cov=apps --cov-report=term-missing
+
+# Run specific app tests
+pytest apps/orders/tests/ -v
+
+# Run with parallel execution
+pytest -n auto
+
+# Only failing tests from last run
+pytest --lf
+</code></pre>
+<h2>ECC Workflow</h2>
+<pre><code class="language-bash"># Planning
+/plan &quot;Add order refund system with Stripe integration&quot;
+
+# Development with TDD
+/tdd                    # pytest-based TDD workflow
+
+# Review
+/python-review          # Python-specific code review
+/security-scan          # Django security audit
+/code-review            # General quality check
+
+# Verification
+/verify                 # Build, lint, test, security scan
+</code></pre>
+<h2>Git Workflow</h2>
+<ul>
+<li><code>feat:</code> new features, <code>fix:</code> bug fixes, <code>refactor:</code> code changes</li>
+<li>Feature branches from <code>main</code>, PRs required</li>
+<li>CI: ruff (lint + format), mypy (types), pytest (tests), safety (dep check)</li>
+<li>Deploy: Docker image, managed via Kubernetes or Railway</li>
+</ul>
+
+</body>
+</html>

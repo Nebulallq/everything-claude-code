@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>test-coverage</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Test Coverage</h1>
+<p>Analyze test coverage, identify gaps, and generate missing tests to reach 80%+ coverage.</p>
+<h2>Step 1: Detect Test Framework</h2>
+<table>
+<thead>
+<tr>
+<th>Indicator</th>
+<th>Coverage Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>jest.config.*</code> or <code>package.json</code> jest</td>
+<td><code>npx jest --coverage --coverageReporters=json-summary</code></td>
+</tr>
+<tr>
+<td><code>vitest.config.*</code></td>
+<td><code>npx vitest run --coverage</code></td>
+</tr>
+<tr>
+<td><code>pytest.ini</code> / <code>pyproject.toml</code> pytest</td>
+<td><code>pytest --cov=src --cov-report=json</code></td>
+</tr>
+<tr>
+<td><code>Cargo.toml</code></td>
+<td><code>cargo llvm-cov --json</code></td>
+</tr>
+<tr>
+<td><code>pom.xml</code> with JaCoCo</td>
+<td><code>mvn test jacoco:report</code></td>
+</tr>
+<tr>
+<td><code>go.mod</code></td>
+<td><code>go test -coverprofile=coverage.out ./...</code></td>
+</tr>
+</tbody></table>
+<h2>Step 2: Analyze Coverage Report</h2>
+<ol>
+<li>Run the coverage command</li>
+<li>Parse the output (JSON summary or terminal output)</li>
+<li>List files <strong>below 80% coverage</strong>, sorted worst-first</li>
+<li>For each under-covered file, identify:<ul>
+<li>Untested functions or methods</li>
+<li>Missing branch coverage (if/else, switch, error paths)</li>
+<li>Dead code that inflates the denominator</li>
+</ul>
+</li>
+</ol>
+<h2>Step 3: Generate Missing Tests</h2>
+<p>For each under-covered file, generate tests following this priority:</p>
+<ol>
+<li><strong>Happy path</strong> — Core functionality with valid inputs</li>
+<li><strong>Error handling</strong> — Invalid inputs, missing data, network failures</li>
+<li><strong>Edge cases</strong> — Empty arrays, null/undefined, boundary values (0, -1, MAX_INT)</li>
+<li><strong>Branch coverage</strong> — Each if/else, switch case, ternary</li>
+</ol>
+<h3>Test Generation Rules</h3>
+<ul>
+<li>Place tests adjacent to source: <code>foo.ts</code> → <code>foo.test.ts</code> (or project convention)</li>
+<li>Use existing test patterns from the project (import style, assertion library, mocking approach)</li>
+<li>Mock external dependencies (database, APIs, file system)</li>
+<li>Each test should be independent — no shared mutable state between tests</li>
+<li>Name tests descriptively: <code>test_create_user_with_duplicate_email_returns_409</code></li>
+</ul>
+<h2>Step 4: Verify</h2>
+<ol>
+<li>Run the full test suite — all tests must pass</li>
+<li>Re-run coverage — verify improvement</li>
+<li>If still below 80%, repeat Step 3 for remaining gaps</li>
+</ol>
+<h2>Step 5: Report</h2>
+<p>Show before/after comparison:</p>
+<pre><code>Coverage Report
+──────────────────────────────
+File                   Before  After
+src/services/auth.ts   45%     88%
+src/utils/validation.ts 32%    82%
+──────────────────────────────
+Overall:               67%     84%  ✅
+</code></pre>
+<h2>Focus Areas</h2>
+<ul>
+<li>Functions with complex branching (high cyclomatic complexity)</li>
+<li>Error handlers and catch blocks</li>
+<li>Utility functions used across the codebase</li>
+<li>API endpoint handlers (request → response flow)</li>
+<li>Edge cases: null, undefined, empty string, empty array, zero, negative numbers</li>
+</ul>
+
+</body>
+</html>

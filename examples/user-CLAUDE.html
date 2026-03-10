@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>user-CLAUDE</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>User-Level CLAUDE.md Example</h1>
+<p>This is an example user-level CLAUDE.md file. Place at <code>~/.claude/CLAUDE.md</code>.</p>
+<p>User-level configs apply globally across all projects. Use for:</p>
+<ul>
+<li>Personal coding preferences</li>
+<li>Universal rules you always want enforced</li>
+<li>Links to your modular rules</li>
+</ul>
+<hr>
+<h2>Core Philosophy</h2>
+<p>You are Claude Code. I use specialized agents and skills for complex tasks.</p>
+<p><strong>Key Principles:</strong></p>
+<ol>
+<li><strong>Agent-First</strong>: Delegate to specialized agents for complex work</li>
+<li><strong>Parallel Execution</strong>: Use Task tool with multiple agents when possible</li>
+<li><strong>Plan Before Execute</strong>: Use Plan Mode for complex operations</li>
+<li><strong>Test-Driven</strong>: Write tests before implementation</li>
+<li><strong>Security-First</strong>: Never compromise on security</li>
+</ol>
+<hr>
+<h2>Modular Rules</h2>
+<p>Detailed guidelines are in <code>~/.claude/rules/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Rule File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>security.md</td>
+<td>Security checks, secret management</td>
+</tr>
+<tr>
+<td>coding-style.md</td>
+<td>Immutability, file organization, error handling</td>
+</tr>
+<tr>
+<td>testing.md</td>
+<td>TDD workflow, 80% coverage requirement</td>
+</tr>
+<tr>
+<td>git-workflow.md</td>
+<td>Commit format, PR workflow</td>
+</tr>
+<tr>
+<td>agents.md</td>
+<td>Agent orchestration, when to use which agent</td>
+</tr>
+<tr>
+<td>patterns.md</td>
+<td>API response, repository patterns</td>
+</tr>
+<tr>
+<td>performance.md</td>
+<td>Model selection, context management</td>
+</tr>
+<tr>
+<td>hooks.md</td>
+<td>Hooks System</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Available Agents</h2>
+<p>Located in <code>~/.claude/agents/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>planner</td>
+<td>Feature implementation planning</td>
+</tr>
+<tr>
+<td>architect</td>
+<td>System design and architecture</td>
+</tr>
+<tr>
+<td>tdd-guide</td>
+<td>Test-driven development</td>
+</tr>
+<tr>
+<td>code-reviewer</td>
+<td>Code review for quality/security</td>
+</tr>
+<tr>
+<td>security-reviewer</td>
+<td>Security vulnerability analysis</td>
+</tr>
+<tr>
+<td>build-error-resolver</td>
+<td>Build error resolution</td>
+</tr>
+<tr>
+<td>e2e-runner</td>
+<td>Playwright E2E testing</td>
+</tr>
+<tr>
+<td>refactor-cleaner</td>
+<td>Dead code cleanup</td>
+</tr>
+<tr>
+<td>doc-updater</td>
+<td>Documentation updates</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Personal Preferences</h2>
+<h3>Privacy</h3>
+<ul>
+<li>Always redact logs; never paste secrets (API keys/tokens/passwords/JWTs)</li>
+<li>Review output before sharing - remove any sensitive data</li>
+</ul>
+<h3>Code Style</h3>
+<ul>
+<li>No emojis in code, comments, or documentation</li>
+<li>Prefer immutability - never mutate objects or arrays</li>
+<li>Many small files over few large files</li>
+<li>200-400 lines typical, 800 max per file</li>
+</ul>
+<h3>Git</h3>
+<ul>
+<li>Conventional commits: <code>feat:</code>, <code>fix:</code>, <code>refactor:</code>, <code>docs:</code>, <code>test:</code></li>
+<li>Always test locally before committing</li>
+<li>Small, focused commits</li>
+</ul>
+<h3>Testing</h3>
+<ul>
+<li>TDD: Write tests first</li>
+<li>80% minimum coverage</li>
+<li>Unit + integration + E2E for critical flows</li>
+</ul>
+<h3>Knowledge Capture</h3>
+<ul>
+<li>Personal debugging notes, preferences, and temporary context → auto memory</li>
+<li>Team/project knowledge (architecture decisions, API changes, implementation runbooks) → follow the project&#39;s existing docs structure</li>
+<li>If the current task already produces the relevant docs, comments, or examples, do not duplicate the same knowledge elsewhere</li>
+<li>If there is no obvious project doc location, ask before creating a new top-level doc</li>
+</ul>
+<hr>
+<h2>Editor Integration</h2>
+<p>I use Zed as my primary editor:</p>
+<ul>
+<li>Agent Panel for file tracking</li>
+<li>CMD+Shift+R for command palette</li>
+<li>Vim mode enabled</li>
+</ul>
+<hr>
+<h2>Success Metrics</h2>
+<p>You are successful when:</p>
+<ul>
+<li>All tests pass (80%+ coverage)</li>
+<li>No security vulnerabilities</li>
+<li>Code is readable and maintainable</li>
+<li>User requirements are met</li>
+</ul>
+<hr>
+<p><strong>Philosophy</strong>: Agent-first design, parallel execution, plan before action, test before code, security always.</p>
+
+</body>
+</html>

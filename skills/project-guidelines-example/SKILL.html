@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: project-guidelines-example<br>description: &quot;Example project-specific skill template based on a real production application.&quot;<br>origin: ECC</h2>
+<h1>Project Guidelines Skill (Example)</h1>
+<p>This is an example of a project-specific skill. Use this as a template for your own projects.</p>
+<p>Based on a real production application: <a href="https://zenith.chat">Zenith</a> - AI-powered customer discovery platform.</p>
+<h2>When to Use</h2>
+<p>Reference this skill when working on the specific project it&#39;s designed for. Project skills contain:</p>
+<ul>
+<li>Architecture overview</li>
+<li>File structure</li>
+<li>Code patterns</li>
+<li>Testing requirements</li>
+<li>Deployment workflow</li>
+</ul>
+<hr>
+<h2>Architecture Overview</h2>
+<p><strong>Tech Stack:</strong></p>
+<ul>
+<li><strong>Frontend</strong>: Next.js 15 (App Router), TypeScript, React</li>
+<li><strong>Backend</strong>: FastAPI (Python), Pydantic models</li>
+<li><strong>Database</strong>: Supabase (PostgreSQL)</li>
+<li><strong>AI</strong>: Claude API with tool calling and structured output</li>
+<li><strong>Deployment</strong>: Google Cloud Run</li>
+<li><strong>Testing</strong>: Playwright (E2E), pytest (backend), React Testing Library</li>
+</ul>
+<p><strong>Services:</strong></p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                         Frontend                            │
+│  Next.js 15 + TypeScript + TailwindCSS                     │
+│  Deployed: Vercel / Cloud Run                              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                         Backend                             │
+│  FastAPI + Python 3.11 + Pydantic                          │
+│  Deployed: Cloud Run                                       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+        ┌──────────┐   ┌──────────┐   ┌──────────┐
+        │ Supabase │   │  Claude  │   │  Redis   │
+        │ Database │   │   API    │   │  Cache   │
+        └──────────┘   └──────────┘   └──────────┘
+</code></pre>
+<hr>
+<h2>File Structure</h2>
+<pre><code>project/
+├── frontend/
+│   └── src/
+│       ├── app/              # Next.js app router pages
+│       │   ├── api/          # API routes
+│       │   ├── (auth)/       # Auth-protected routes
+│       │   └── workspace/    # Main app workspace
+│       ├── components/       # React components
+│       │   ├── ui/           # Base UI components
+│       │   ├── forms/        # Form components
+│       │   └── layouts/      # Layout components
+│       ├── hooks/            # Custom React hooks
+│       ├── lib/              # Utilities
+│       ├── types/            # TypeScript definitions
+│       └── config/           # Configuration
+│
+├── backend/
+│   ├── routers/              # FastAPI route handlers
+│   ├── models.py             # Pydantic models
+│   ├── main.py               # FastAPI app entry
+│   ├── auth_system.py        # Authentication
+│   ├── database.py           # Database operations
+│   ├── services/             # Business logic
+│   └── tests/                # pytest tests
+│
+├── deploy/                   # Deployment configs
+├── docs/                     # Documentation
+└── scripts/                  # Utility scripts
+</code></pre>
+<hr>
+<h2>Code Patterns</h2>
+<h3>API Response Format (FastAPI)</h3>
+<pre><code class="language-python">from pydantic import BaseModel
+from typing import Generic, TypeVar, Optional
+
+T = TypeVar(&#39;T&#39;)
+
+class ApiResponse(BaseModel, Generic[T]):
+    success: bool
+    data: Optional[T] = None
+    error: Optional[str] = None
+
+    @classmethod
+    def ok(cls, data: T) -&gt; &quot;ApiResponse[T]&quot;:
+        return cls(success=True, data=data)
+
+    @classmethod
+    def fail(cls, error: str) -&gt; &quot;ApiResponse[T]&quot;:
+        return cls(success=False, error=error)
+</code></pre>
+<h3>Frontend API Calls (TypeScript)</h3>
+<pre><code class="language-typescript">interface ApiResponse&lt;T&gt; {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+async function fetchApi&lt;T&gt;(
+  endpoint: string,
+  options?: RequestInit
+): Promise&lt;ApiResponse&lt;T&gt;&gt; {
+  try {
+    const response = await fetch(`/api${endpoint}`, {
+      ...options,
+      headers: {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        ...options?.headers,
+      },
+    })
+
+    if (!response.ok) {
+      return { success: false, error: `HTTP ${response.status}` }
+    }
+
+    return await response.json()
+  } catch (error) {
+    return { success: false, error: String(error) }
+  }
+}
+</code></pre>
+<h3>Claude AI Integration (Structured Output)</h3>
+<pre><code class="language-python">from anthropic import Anthropic
+from pydantic import BaseModel
+
+class AnalysisResult(BaseModel):
+    summary: str
+    key_points: list[str]
+    confidence: float
+
+async def analyze_with_claude(content: str) -&gt; AnalysisResult:
+    client = Anthropic()
+
+    response = client.messages.create(
+        model=&quot;claude-sonnet-4-5-20250514&quot;,
+        max_tokens=1024,
+        messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: content}],
+        tools=[{
+            &quot;name&quot;: &quot;provide_analysis&quot;,
+            &quot;description&quot;: &quot;Provide structured analysis&quot;,
+            &quot;input_schema&quot;: AnalysisResult.model_json_schema()
+        }],
+        tool_choice={&quot;type&quot;: &quot;tool&quot;, &quot;name&quot;: &quot;provide_analysis&quot;}
+    )
+
+    # Extract tool use result
+    tool_use = next(
+        block for block in response.content
+        if block.type == &quot;tool_use&quot;
+    )
+
+    return AnalysisResult(**tool_use.input)
+</code></pre>
+<h3>Custom Hooks (React)</h3>
+<pre><code class="language-typescript">import { useState, useCallback } from &#39;react&#39;
+
+interface UseApiState&lt;T&gt; {
+  data: T | null
+  loading: boolean
+  error: string | null
+}
+
+export function useApi&lt;T&gt;(
+  fetchFn: () =&gt; Promise&lt;ApiResponse&lt;T&gt;&gt;
+) {
+  const [state, setState] = useState&lt;UseApiState&lt;T&gt;&gt;({
+    data: null,
+    loading: false,
+    error: null,
+  })
+
+  const execute = useCallback(async () =&gt; {
+    setState(prev =&gt; ({ ...prev, loading: true, error: null }))
+
+    const result = await fetchFn()
+
+    if (result.success) {
+      setState({ data: result.data!, loading: false, error: null })
+    } else {
+      setState({ data: null, loading: false, error: result.error! })
+    }
+  }, [fetchFn])
+
+  return { ...state, execute }
+}
+</code></pre>
+<hr>
+<h2>Testing Requirements</h2>
+<h3>Backend (pytest)</h3>
+<pre><code class="language-bash"># Run all tests
+poetry run pytest tests/
+
+# Run with coverage
+poetry run pytest tests/ --cov=. --cov-report=html
+
+# Run specific test file
+poetry run pytest tests/test_auth.py -v
+</code></pre>
+<p><strong>Test structure:</strong></p>
+<pre><code class="language-python">import pytest
+from httpx import AsyncClient
+from main import app
+
+@pytest.fixture
+async def client():
+    async with AsyncClient(app=app, base_url=&quot;http://test&quot;) as ac:
+        yield ac
+
+@pytest.mark.asyncio
+async def test_health_check(client: AsyncClient):
+    response = await client.get(&quot;/health&quot;)
+    assert response.status_code == 200
+    assert response.json()[&quot;status&quot;] == &quot;healthy&quot;
+</code></pre>
+<h3>Frontend (React Testing Library)</h3>
+<pre><code class="language-bash"># Run tests
+npm run test
+
+# Run with coverage
+npm run test -- --coverage
+
+# Run E2E tests
+npm run test:e2e
+</code></pre>
+<p><strong>Test structure:</strong></p>
+<pre><code class="language-typescript">import { render, screen, fireEvent } from &#39;@testing-library/react&#39;
+import { WorkspacePanel } from &#39;./WorkspacePanel&#39;
+
+describe(&#39;WorkspacePanel&#39;, () =&gt; {
+  it(&#39;renders workspace correctly&#39;, () =&gt; {
+    render(&lt;WorkspacePanel /&gt;)
+    expect(screen.getByRole(&#39;main&#39;)).toBeInTheDocument()
+  })
+
+  it(&#39;handles session creation&#39;, async () =&gt; {
+    render(&lt;WorkspacePanel /&gt;)
+    fireEvent.click(screen.getByText(&#39;New Session&#39;))
+    expect(await screen.findByText(&#39;Session created&#39;)).toBeInTheDocument()
+  })
+})
+</code></pre>
+<hr>
+<h2>Deployment Workflow</h2>
+<h3>Pre-Deployment Checklist</h3>
+<ul>
+<li><input disabled="" type="checkbox"> All tests passing locally</li>
+<li><input disabled="" type="checkbox"> <code>npm run build</code> succeeds (frontend)</li>
+<li><input disabled="" type="checkbox"> <code>poetry run pytest</code> passes (backend)</li>
+<li><input disabled="" type="checkbox"> No hardcoded secrets</li>
+<li><input disabled="" type="checkbox"> Environment variables documented</li>
+<li><input disabled="" type="checkbox"> Database migrations ready</li>
+</ul>
+<h3>Deployment Commands</h3>
+<pre><code class="language-bash"># Build and deploy frontend
+cd frontend &amp;&amp; npm run build
+gcloud run deploy frontend --source .
+
+# Build and deploy backend
+cd backend
+gcloud run deploy backend --source .
+</code></pre>
+<h3>Environment Variables</h3>
+<pre><code class="language-bash"># Frontend (.env.local)
+NEXT_PUBLIC_API_URL=https://api.example.com
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+
+# Backend (.env)
+DATABASE_URL=postgresql://...
+ANTHROPIC_API_KEY=sk-ant-...
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_KEY=eyJ...
+</code></pre>
+<hr>
+<h2>Critical Rules</h2>
+<ol>
+<li><strong>No emojis</strong> in code, comments, or documentation</li>
+<li><strong>Immutability</strong> - never mutate objects or arrays</li>
+<li><strong>TDD</strong> - write tests before implementation</li>
+<li><strong>80% coverage</strong> minimum</li>
+<li><strong>Many small files</strong> - 200-400 lines typical, 800 max</li>
+<li><strong>No console.log</strong> in production code</li>
+<li><strong>Proper error handling</strong> with try/catch</li>
+<li><strong>Input validation</strong> with Pydantic/Zod</li>
+</ol>
+<hr>
+<h2>Related Skills</h2>
+<ul>
+<li><code>coding-standards.md</code> - General coding best practices</li>
+<li><code>backend-patterns.md</code> - API and database patterns</li>
+<li><code>frontend-patterns.md</code> - React and Next.js patterns</li>
+<li><code>tdd-workflow/</code> - Test-driven development methodology</li>
+</ul>
+
+</body>
+</html>

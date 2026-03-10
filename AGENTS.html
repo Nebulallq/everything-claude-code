@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENTS</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Everything Claude Code (ECC) — Agent Instructions</h1>
+<p>This is a <strong>production-ready AI coding plugin</strong> providing 13 specialized agents, 50+ skills, 33 commands, and automated hook workflows for software development.</p>
+<h2>Core Principles</h2>
+<ol>
+<li><strong>Agent-First</strong> — Delegate to specialized agents for domain tasks</li>
+<li><strong>Test-Driven</strong> — Write tests before implementation, 80%+ coverage required</li>
+<li><strong>Security-First</strong> — Never compromise on security; validate all inputs</li>
+<li><strong>Immutability</strong> — Always create new objects, never mutate existing ones</li>
+<li><strong>Plan Before Execute</strong> — Plan complex features before writing code</li>
+</ol>
+<h2>Available Agents</h2>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Purpose</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>planner</td>
+<td>Implementation planning</td>
+<td>Complex features, refactoring</td>
+</tr>
+<tr>
+<td>architect</td>
+<td>System design and scalability</td>
+<td>Architectural decisions</td>
+</tr>
+<tr>
+<td>tdd-guide</td>
+<td>Test-driven development</td>
+<td>New features, bug fixes</td>
+</tr>
+<tr>
+<td>code-reviewer</td>
+<td>Code quality and maintainability</td>
+<td>After writing/modifying code</td>
+</tr>
+<tr>
+<td>security-reviewer</td>
+<td>Vulnerability detection</td>
+<td>Before commits, sensitive code</td>
+</tr>
+<tr>
+<td>build-error-resolver</td>
+<td>Fix build/type errors</td>
+<td>When build fails</td>
+</tr>
+<tr>
+<td>e2e-runner</td>
+<td>End-to-end Playwright testing</td>
+<td>Critical user flows</td>
+</tr>
+<tr>
+<td>refactor-cleaner</td>
+<td>Dead code cleanup</td>
+<td>Code maintenance</td>
+</tr>
+<tr>
+<td>doc-updater</td>
+<td>Documentation and codemaps</td>
+<td>Updating docs</td>
+</tr>
+<tr>
+<td>go-reviewer</td>
+<td>Go code review</td>
+<td>Go projects</td>
+</tr>
+<tr>
+<td>go-build-resolver</td>
+<td>Go build errors</td>
+<td>Go build failures</td>
+</tr>
+<tr>
+<td>database-reviewer</td>
+<td>PostgreSQL/Supabase specialist</td>
+<td>Schema design, query optimization</td>
+</tr>
+<tr>
+<td>python-reviewer</td>
+<td>Python code review</td>
+<td>Python projects</td>
+</tr>
+</tbody></table>
+<h2>Agent Orchestration</h2>
+<p>Use agents proactively without user prompt:</p>
+<ul>
+<li>Complex feature requests → <strong>planner</strong></li>
+<li>Code just written/modified → <strong>code-reviewer</strong></li>
+<li>Bug fix or new feature → <strong>tdd-guide</strong></li>
+<li>Architectural decision → <strong>architect</strong></li>
+<li>Security-sensitive code → <strong>security-reviewer</strong></li>
+</ul>
+<p>Use parallel execution for independent operations — launch multiple agents simultaneously.</p>
+<h2>Security Guidelines</h2>
+<p><strong>Before ANY commit:</strong></p>
+<ul>
+<li>No hardcoded secrets (API keys, passwords, tokens)</li>
+<li>All user inputs validated</li>
+<li>SQL injection prevention (parameterized queries)</li>
+<li>XSS prevention (sanitized HTML)</li>
+<li>CSRF protection enabled</li>
+<li>Authentication/authorization verified</li>
+<li>Rate limiting on all endpoints</li>
+<li>Error messages don&#39;t leak sensitive data</li>
+</ul>
+<p><strong>Secret management:</strong> NEVER hardcode secrets. Use environment variables or a secret manager. Validate required secrets at startup. Rotate any exposed secrets immediately.</p>
+<p><strong>If security issue found:</strong> STOP → use security-reviewer agent → fix CRITICAL issues → rotate exposed secrets → review codebase for similar issues.</p>
+<h2>Coding Style</h2>
+<p><strong>Immutability (CRITICAL):</strong> Always create new objects, never mutate. Return new copies with changes applied.</p>
+<p><strong>File organization:</strong> Many small files over few large ones. 200-400 lines typical, 800 max. Organize by feature/domain, not by type. High cohesion, low coupling.</p>
+<p><strong>Error handling:</strong> Handle errors at every level. Provide user-friendly messages in UI code. Log detailed context server-side. Never silently swallow errors.</p>
+<p><strong>Input validation:</strong> Validate all user input at system boundaries. Use schema-based validation. Fail fast with clear messages. Never trust external data.</p>
+<p><strong>Code quality checklist:</strong></p>
+<ul>
+<li>Functions small (&lt;50 lines), files focused (&lt;800 lines)</li>
+<li>No deep nesting (&gt;4 levels)</li>
+<li>Proper error handling, no hardcoded values</li>
+<li>Readable, well-named identifiers</li>
+</ul>
+<h2>Testing Requirements</h2>
+<p><strong>Minimum coverage: 80%</strong></p>
+<p>Test types (all required):</p>
+<ol>
+<li><strong>Unit tests</strong> — Individual functions, utilities, components</li>
+<li><strong>Integration tests</strong> — API endpoints, database operations</li>
+<li><strong>E2E tests</strong> — Critical user flows</li>
+</ol>
+<p><strong>TDD workflow (mandatory):</strong></p>
+<ol>
+<li>Write test first (RED) — test should FAIL</li>
+<li>Write minimal implementation (GREEN) — test should PASS</li>
+<li>Refactor (IMPROVE) — verify coverage 80%+</li>
+</ol>
+<p>Troubleshoot failures: check test isolation → verify mocks → fix implementation (not tests, unless tests are wrong).</p>
+<h2>Development Workflow</h2>
+<ol>
+<li><strong>Plan</strong> — Use planner agent, identify dependencies and risks, break into phases</li>
+<li><strong>TDD</strong> — Use tdd-guide agent, write tests first, implement, refactor</li>
+<li><strong>Review</strong> — Use code-reviewer agent immediately, address CRITICAL/HIGH issues</li>
+<li><strong>Capture knowledge in the right place</strong><ul>
+<li>Personal debugging notes, preferences, and temporary context → auto memory</li>
+<li>Team/project knowledge (architecture decisions, API changes, runbooks) → the project&#39;s existing docs structure</li>
+<li>If the current task already produces the relevant docs or code comments, do not duplicate the same information elsewhere</li>
+<li>If there is no obvious project doc location, ask before creating a new top-level file</li>
+</ul>
+</li>
+<li><strong>Commit</strong> — Conventional commits format, comprehensive PR summaries</li>
+</ol>
+<h2>Git Workflow</h2>
+<p><strong>Commit format:</strong> <code>&lt;type&gt;: &lt;description&gt;</code> — Types: feat, fix, refactor, docs, test, chore, perf, ci</p>
+<p><strong>PR workflow:</strong> Analyze full commit history → draft comprehensive summary → include test plan → push with <code>-u</code> flag.</p>
+<h2>Architecture Patterns</h2>
+<p><strong>API response format:</strong> Consistent envelope with success indicator, data payload, error message, and pagination metadata.</p>
+<p><strong>Repository pattern:</strong> Encapsulate data access behind standard interface (findAll, findById, create, update, delete). Business logic depends on abstract interface, not storage mechanism.</p>
+<p><strong>Skeleton projects:</strong> Search for battle-tested templates, evaluate with parallel agents (security, extensibility, relevance), clone best match, iterate within proven structure.</p>
+<h2>Performance</h2>
+<p><strong>Context management:</strong> Avoid last 20% of context window for large refactoring and multi-file features. Lower-sensitivity tasks (single edits, docs, simple fixes) tolerate higher utilization.</p>
+<p><strong>Build troubleshooting:</strong> Use build-error-resolver agent → analyze errors → fix incrementally → verify after each fix.</p>
+<h2>Project Structure</h2>
+<pre><code>agents/          — 13 specialized subagents
+skills/          — 50+ workflow skills and domain knowledge
+commands/        — 33 slash commands
+hooks/           — Trigger-based automations
+rules/           — Always-follow guidelines (common + per-language)
+scripts/         — Cross-platform Node.js utilities
+mcp-configs/     — 14 MCP server configurations
+tests/           — Test suite
+</code></pre>
+<h2>Success Metrics</h2>
+<ul>
+<li>All tests pass with 80%+ coverage</li>
+<li>No security vulnerabilities</li>
+<li>Code is readable and maintainable</li>
+<li>Performance is acceptable</li>
+<li>User requirements are met</li>
+</ul>
+
+</body>
+</html>

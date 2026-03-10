@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>claw</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Start NanoClaw v2 — ECC&#39;s persistent, zero-dependency REPL with model routing, skill hot-load, branching, compaction, export, and metrics.</h2>
+<h1>Claw Command</h1>
+<p>Start an interactive AI agent session with persistent markdown history and operational controls.</p>
+<h2>Usage</h2>
+<pre><code class="language-bash">node scripts/claw.js
+</code></pre>
+<p>Or via npm:</p>
+<pre><code class="language-bash">npm run claw
+</code></pre>
+<h2>Environment Variables</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLAW_SESSION</code></td>
+<td><code>default</code></td>
+<td>Session name (alphanumeric + hyphens)</td>
+</tr>
+<tr>
+<td><code>CLAW_SKILLS</code></td>
+<td><em>(empty)</em></td>
+<td>Comma-separated skills loaded at startup</td>
+</tr>
+<tr>
+<td><code>CLAW_MODEL</code></td>
+<td><code>sonnet</code></td>
+<td>Default model for the session</td>
+</tr>
+</tbody></table>
+<h2>REPL Commands</h2>
+<pre><code class="language-text">/help                          Show help
+/clear                         Clear current session history
+/history                       Print full conversation history
+/sessions                      List saved sessions
+/model [name]                  Show/set model
+/load &lt;skill-name&gt;             Hot-load a skill into context
+/branch &lt;session-name&gt;         Branch current session
+/search &lt;query&gt;                Search query across sessions
+/compact                       Compact old turns, keep recent context
+/export &lt;md|json|txt&gt; [path]   Export session
+/metrics                       Show session metrics
+exit                           Quit
+</code></pre>
+<h2>Notes</h2>
+<ul>
+<li>NanoClaw remains zero-dependency.</li>
+<li>Sessions are stored at <code>~/.claude/claw/&lt;session&gt;.md</code>.</li>
+<li>Compaction keeps the most recent turns and writes a compaction header.</li>
+<li>Export supports markdown, JSON turns, and plain text.</li>
+</ul>
+
+</body>
+</html>

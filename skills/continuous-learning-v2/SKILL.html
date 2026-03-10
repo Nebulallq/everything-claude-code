@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: continuous-learning-v2<br>description: Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents. v2.1 adds project-scoped instincts to prevent cross-project contamination.<br>origin: ECC<br>version: 2.1.0</h2>
+<h1>Continuous Learning v2.1 - Instinct</h1>
+<p>-Based Architecture</p>
+<p>An advanced learning system that turns your Claude Code sessions into reusable knowledge through atomic &quot;instincts&quot; - small learned behaviors with confidence scoring.</p>
+<p><strong>v2.1</strong> adds <strong>project-scoped instincts</strong> — React patterns stay in your React project, Python conventions stay in your Python project, and universal patterns (like &quot;always validate input&quot;) are shared globally.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Setting up automatic learning from Claude Code sessions</li>
+<li>Configuring instinct-based behavior extraction via hooks</li>
+<li>Tuning confidence thresholds for learned behaviors</li>
+<li>Reviewing, exporting, or importing instinct libraries</li>
+<li>Evolving instincts into full skills, commands, or agents</li>
+<li>Managing project-scoped vs global instincts</li>
+<li>Promoting instincts from project to global scope</li>
+</ul>
+<h2>What&#39;s New in v2.1</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>v2.0</th>
+<th>v2.1</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Storage</td>
+<td>Global (~/.claude/homunculus/)</td>
+<td>Project-scoped (projects/<hash>/)</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>All instincts apply everywhere</td>
+<td>Project-scoped + global</td>
+</tr>
+<tr>
+<td>Detection</td>
+<td>None</td>
+<td>git remote URL / repo path</td>
+</tr>
+<tr>
+<td>Promotion</td>
+<td>N/A</td>
+<td>Project → global when seen in 2+ projects</td>
+</tr>
+<tr>
+<td>Commands</td>
+<td>4 (status/evolve/export/import)</td>
+<td>6 (+promote/projects)</td>
+</tr>
+<tr>
+<td>Cross-project</td>
+<td>Contamination risk</td>
+<td>Isolated by default</td>
+</tr>
+</tbody></table>
+<h2>What&#39;s New in v2 (vs v1)</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>v1</th>
+<th>v2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Observation</td>
+<td>Stop hook (session end)</td>
+<td>PreToolUse/PostToolUse (100% reliable)</td>
+</tr>
+<tr>
+<td>Analysis</td>
+<td>Main context</td>
+<td>Background agent (Haiku)</td>
+</tr>
+<tr>
+<td>Granularity</td>
+<td>Full skills</td>
+<td>Atomic &quot;instincts&quot;</td>
+</tr>
+<tr>
+<td>Confidence</td>
+<td>None</td>
+<td>0.3-0.9 weighted</td>
+</tr>
+<tr>
+<td>Evolution</td>
+<td>Direct to skill</td>
+<td>Instincts -&gt; cluster -&gt; skill/command/agent</td>
+</tr>
+<tr>
+<td>Sharing</td>
+<td>None</td>
+<td>Export/import instincts</td>
+</tr>
+</tbody></table>
+<h2>The Instinct Model</h2>
+<p>An instinct is a small learned behavior:</p>
+<pre><code class="language-yaml">---
+id: prefer-functional-style
+trigger: &quot;when writing new functions&quot;
+confidence: 0.7
+domain: &quot;code-style&quot;
+source: &quot;session-observation&quot;
+scope: project
+project_id: &quot;a1b2c3d4e5f6&quot;
+project_name: &quot;my-react-app&quot;
+---
+
+# Prefer Functional Style
+
+## Action
+Use functional patterns over classes when appropriate.
+
+## Evidence
+- Observed 5 instances of functional pattern preference
+- User corrected class-based approach to functional on 2025-01-15
+</code></pre>
+<p><strong>Properties:</strong></p>
+<ul>
+<li><strong>Atomic</strong> -- one trigger, one action</li>
+<li><strong>Confidence-weighted</strong> -- 0.3 = tentative, 0.9 = near certain</li>
+<li><strong>Domain-tagged</strong> -- code-style, testing, git, debugging, workflow, etc.</li>
+<li><strong>Evidence-backed</strong> -- tracks what observations created it</li>
+<li><strong>Scope-aware</strong> -- <code>project</code> (default) or <code>global</code></li>
+</ul>
+<h2>How It Works</h2>
+<pre><code>Session Activity (in a git repo)
+      |
+      | Hooks capture prompts + tool use (100% reliable)
+      | + detect project context (git remote / repo path)
+      v
++---------------------------------------------+
+|  projects/&lt;project-hash&gt;/observations.jsonl  |
+|   (prompts, tool calls, outcomes, project)   |
++---------------------------------------------+
+      |
+      | Observer agent reads (background, Haiku)
+      v
++---------------------------------------------+
+|          PATTERN DETECTION                   |
+|   * User corrections -&gt; instinct             |
+|   * Error resolutions -&gt; instinct            |
+|   * Repeated workflows -&gt; instinct           |
+|   * Scope decision: project or global?       |
++---------------------------------------------+
+      |
+      | Creates/updates
+      v
++---------------------------------------------+
+|  projects/&lt;project-hash&gt;/instincts/personal/ |
+|   * prefer-functional.yaml (0.7) [project]   |
+|   * use-react-hooks.yaml (0.9) [project]     |
++---------------------------------------------+
+|  instincts/personal/  (GLOBAL)               |
+|   * always-validate-input.yaml (0.85) [global]|
+|   * grep-before-edit.yaml (0.6) [global]     |
++---------------------------------------------+
+      |
+      | /evolve clusters + /promote
+      v
++---------------------------------------------+
+|  projects/&lt;hash&gt;/evolved/ (project-scoped)   |
+|  evolved/ (global)                           |
+|   * commands/new-feature.md                  |
+|   * skills/testing-workflow.md               |
+|   * agents/refactor-specialist.md            |
++---------------------------------------------+
+</code></pre>
+<h2>Project Detection</h2>
+<p>The system automatically detects your current project:</p>
+<ol>
+<li><strong><code>CLAUDE_PROJECT_DIR</code> env var</strong> (highest priority)</li>
+<li><strong><code>git remote get-url origin</code></strong> -- hashed to create a portable project ID (same repo on different machines gets the same ID)</li>
+<li><strong><code>git rev-parse --show-toplevel</code></strong> -- fallback using repo path (machine-specific)</li>
+<li><strong>Global fallback</strong> -- if no project is detected, instincts go to global scope</li>
+</ol>
+<p>Each project gets a 12-character hash ID (e.g., <code>a1b2c3d4e5f6</code>). A registry file at <code>~/.claude/homunculus/projects.json</code> maps IDs to human-readable names.</p>
+<h2>Quick Start</h2>
+<h3>1. Enable Observation Hooks</h3>
+<p>Add to your <code>~/.claude/settings.json</code>.</p>
+<p><strong>If installed as a plugin</strong> (recommended):</p>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [{
+      &quot;matcher&quot;: &quot;*&quot;,
+      &quot;hooks&quot;: [{
+        &quot;type&quot;: &quot;command&quot;,
+        &quot;command&quot;: &quot;${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh&quot;
+      }]
+    }],
+    &quot;PostToolUse&quot;: [{
+      &quot;matcher&quot;: &quot;*&quot;,
+      &quot;hooks&quot;: [{
+        &quot;type&quot;: &quot;command&quot;,
+        &quot;command&quot;: &quot;${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh&quot;
+      }]
+    }]
+  }
+}
+</code></pre>
+<p><strong>If installed manually</strong> to <code>~/.claude/skills</code>:</p>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [{
+      &quot;matcher&quot;: &quot;*&quot;,
+      &quot;hooks&quot;: [{
+        &quot;type&quot;: &quot;command&quot;,
+        &quot;command&quot;: &quot;~/.claude/skills/continuous-learning-v2/hooks/observe.sh&quot;
+      }]
+    }],
+    &quot;PostToolUse&quot;: [{
+      &quot;matcher&quot;: &quot;*&quot;,
+      &quot;hooks&quot;: [{
+        &quot;type&quot;: &quot;command&quot;,
+        &quot;command&quot;: &quot;~/.claude/skills/continuous-learning-v2/hooks/observe.sh&quot;
+      }]
+    }]
+  }
+}
+</code></pre>
+<h3>2. Initialize Directory Structure</h3>
+<p>The system creates directories automatically on first use, but you can also create them manually:</p>
+<pre><code class="language-bash"># Global directories
+mkdir -p ~/.claude/homunculus/{instincts/{personal,inherited},evolved/{agents,skills,commands},projects}
+
+# Project directories are auto-created when the hook first runs in a git repo
+</code></pre>
+<h3>3. Use the Instinct Commands</h3>
+<pre><code class="language-bash">/instinct-status     # Show learned instincts (project + global)
+/evolve              # Cluster related instincts into skills/commands
+/instinct-export     # Export instincts to file
+/instinct-import     # Import instincts from others
+/promote             # Promote project instincts to global scope
+/projects            # List all known projects and their instinct counts
+</code></pre>
+<h2>Commands</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/instinct-status</code></td>
+<td>Show all instincts (project-scoped + global) with confidence</td>
+</tr>
+<tr>
+<td><code>/evolve</code></td>
+<td>Cluster related instincts into skills/commands, suggest promotions</td>
+</tr>
+<tr>
+<td><code>/instinct-export</code></td>
+<td>Export instincts (filterable by scope/domain)</td>
+</tr>
+<tr>
+<td><code>/instinct-import &lt;file&gt;</code></td>
+<td>Import instincts with scope control</td>
+</tr>
+<tr>
+<td><code>/promote [id]</code></td>
+<td>Promote project instincts to global scope</td>
+</tr>
+<tr>
+<td><code>/projects</code></td>
+<td>List all known projects and their instinct counts</td>
+</tr>
+</tbody></table>
+<h2>Configuration</h2>
+<p>Edit <code>config.json</code> to control the background observer:</p>
+<pre><code class="language-json">{
+  &quot;version&quot;: &quot;2.1&quot;,
+  &quot;observer&quot;: {
+    &quot;enabled&quot;: false,
+    &quot;run_interval_minutes&quot;: 5,
+    &quot;min_observations_to_analyze&quot;: 20
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>observer.enabled</code></td>
+<td><code>false</code></td>
+<td>Enable the background observer agent</td>
+</tr>
+<tr>
+<td><code>observer.run_interval_minutes</code></td>
+<td><code>5</code></td>
+<td>How often the observer analyzes observations</td>
+</tr>
+<tr>
+<td><code>observer.min_observations_to_analyze</code></td>
+<td><code>20</code></td>
+<td>Minimum observations before analysis runs</td>
+</tr>
+</tbody></table>
+<p>Other behavior (observation capture, instinct thresholds, project scoping, promotion criteria) is configured via code defaults in <code>instinct-cli.py</code> and <code>observe.sh</code>.</p>
+<h2>File Structure</h2>
+<pre><code>~/.claude/homunculus/
++-- identity.json           # Your profile, technical level
++-- projects.json           # Registry: project hash -&gt; name/path/remote
++-- observations.jsonl      # Global observations (fallback)
++-- instincts/
+|   +-- personal/           # Global auto-learned instincts
+|   +-- inherited/          # Global imported instincts
++-- evolved/
+|   +-- agents/             # Global generated agents
+|   +-- skills/             # Global generated skills
+|   +-- commands/           # Global generated commands
++-- projects/
+    +-- a1b2c3d4e5f6/       # Project hash (from git remote URL)
+    |   +-- observations.jsonl
+    |   +-- observations.archive/
+    |   +-- instincts/
+    |   |   +-- personal/   # Project-specific auto-learned
+    |   |   +-- inherited/  # Project-specific imported
+    |   +-- evolved/
+    |       +-- skills/
+    |       +-- commands/
+    |       +-- agents/
+    +-- f6e5d4c3b2a1/       # Another project
+        +-- ...
+</code></pre>
+<h2>Scope Decision Guide</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern Type</th>
+<th>Scope</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Language/framework conventions</td>
+<td><strong>project</strong></td>
+<td>&quot;Use React hooks&quot;, &quot;Follow Django REST patterns&quot;</td>
+</tr>
+<tr>
+<td>File structure preferences</td>
+<td><strong>project</strong></td>
+<td>&quot;Tests in <code>__tests__</code>/&quot;, &quot;Components in src/components/&quot;</td>
+</tr>
+<tr>
+<td>Code style</td>
+<td><strong>project</strong></td>
+<td>&quot;Use functional style&quot;, &quot;Prefer dataclasses&quot;</td>
+</tr>
+<tr>
+<td>Error handling strategies</td>
+<td><strong>project</strong></td>
+<td>&quot;Use Result type for errors&quot;</td>
+</tr>
+<tr>
+<td>Security practices</td>
+<td><strong>global</strong></td>
+<td>&quot;Validate user input&quot;, &quot;Sanitize SQL&quot;</td>
+</tr>
+<tr>
+<td>General best practices</td>
+<td><strong>global</strong></td>
+<td>&quot;Write tests first&quot;, &quot;Always handle errors&quot;</td>
+</tr>
+<tr>
+<td>Tool workflow preferences</td>
+<td><strong>global</strong></td>
+<td>&quot;Grep before Edit&quot;, &quot;Read before Write&quot;</td>
+</tr>
+<tr>
+<td>Git practices</td>
+<td><strong>global</strong></td>
+<td>&quot;Conventional commits&quot;, &quot;Small focused commits&quot;</td>
+</tr>
+</tbody></table>
+<h2>Instinct Promotion (Project -&gt; Global)</h2>
+<p>When the same instinct appears in multiple projects with high confidence, it&#39;s a candidate for promotion to global scope.</p>
+<p><strong>Auto-promotion criteria:</strong></p>
+<ul>
+<li>Same instinct ID in 2+ projects</li>
+<li>Average confidence &gt;= 0.8</li>
+</ul>
+<p><strong>How to promote:</strong></p>
+<pre><code class="language-bash"># Promote a specific instinct
+python3 instinct-cli.py promote prefer-explicit-errors
+
+# Auto-promote all qualifying instincts
+python3 instinct-cli.py promote
+
+# Preview without changes
+python3 instinct-cli.py promote --dry-run
+</code></pre>
+<p>The <code>/evolve</code> command also suggests promotion candidates.</p>
+<h2>Confidence Scoring</h2>
+<p>Confidence evolves over time:</p>
+<table>
+<thead>
+<tr>
+<th>Score</th>
+<th>Meaning</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0.3</td>
+<td>Tentative</td>
+<td>Suggested but not enforced</td>
+</tr>
+<tr>
+<td>0.5</td>
+<td>Moderate</td>
+<td>Applied when relevant</td>
+</tr>
+<tr>
+<td>0.7</td>
+<td>Strong</td>
+<td>Auto-approved for application</td>
+</tr>
+<tr>
+<td>0.9</td>
+<td>Near-certain</td>
+<td>Core behavior</td>
+</tr>
+</tbody></table>
+<p><strong>Confidence increases</strong> when:</p>
+<ul>
+<li>Pattern is repeatedly observed</li>
+<li>User doesn&#39;t correct the suggested behavior</li>
+<li>Similar instincts from other sources agree</li>
+</ul>
+<p><strong>Confidence decreases</strong> when:</p>
+<ul>
+<li>User explicitly corrects the behavior</li>
+<li>Pattern isn&#39;t observed for extended periods</li>
+<li>Contradicting evidence appears</li>
+</ul>
+<h2>Why Hooks vs Skills for Observation?</h2>
+<blockquote>
+<p>&quot;v1 relied on skills to observe. Skills are probabilistic -- they fire ~50-80% of the time based on Claude&#39;s judgment.&quot;</p>
+</blockquote>
+<p>Hooks fire <strong>100% of the time</strong>, deterministically. This means:</p>
+<ul>
+<li>Every tool call is observed</li>
+<li>No patterns are missed</li>
+<li>Learning is comprehensive</li>
+</ul>
+<h2>Backward Compatibility</h2>
+<p>v2.1 is fully compatible with v2.0 and v1:</p>
+<ul>
+<li>Existing global instincts in <code>~/.claude/homunculus/instincts/</code> still work as global instincts</li>
+<li>Existing <code>~/.claude/skills/learned/</code> skills from v1 still work</li>
+<li>Stop hook still runs (but now also feeds into v2)</li>
+<li>Gradual migration: run both in parallel</li>
+</ul>
+<h2>Privacy</h2>
+<ul>
+<li>Observations stay <strong>local</strong> on your machine</li>
+<li>Project-scoped instincts are isolated per project</li>
+<li>Only <strong>instincts</strong> (patterns) can be exported — not raw observations</li>
+<li>No actual code or conversation content is shared</li>
+<li>You control what gets exported and promoted</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a href="https://skill-creator.app">Skill Creator</a> - Generate instincts from repo history</li>
+<li>Homunculus - Community project that inspired the v2 instinct-based architecture (atomic observations, confidence scoring, instinct evolution pipeline)</li>
+<li><a href="https://x.com/affaanmustafa/status/2014040193557471352">The Longform Guide</a> - Continuous learning section</li>
+</ul>
+<hr>
+<p><em>Instinct-based learning: teaching Claude your patterns, one project at a time.</em></p>
+
+</body>
+</html>

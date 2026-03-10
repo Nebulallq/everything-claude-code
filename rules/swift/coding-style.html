@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>coding-style</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<p>paths:</p>
+<ul>
+<li>&quot;**/*.swift&quot;</li>
+<li>&quot;**/Package.swift&quot;</li>
+</ul>
+<hr>
+<h1>Swift Coding Style</h1>
+<blockquote>
+<p>This file extends <a href="../common/coding-style.md">common/coding-style.md</a> with Swift specific content.</p>
+</blockquote>
+<h2>Formatting</h2>
+<ul>
+<li><strong>SwiftFormat</strong> for auto-formatting, <strong>SwiftLint</strong> for style enforcement</li>
+<li><code>swift-format</code> is bundled with Xcode 16+ as an alternative</li>
+</ul>
+<h2>Immutability</h2>
+<ul>
+<li>Prefer <code>let</code> over <code>var</code> — define everything as <code>let</code> and only change to <code>var</code> if the compiler requires it</li>
+<li>Use <code>struct</code> with value semantics by default; use <code>class</code> only when identity or reference semantics are needed</li>
+</ul>
+<h2>Naming</h2>
+<p>Follow <a href="https://www.swift.org/documentation/api-design-guidelines/">Apple API Design Guidelines</a>:</p>
+<ul>
+<li>Clarity at the point of use — omit needless words</li>
+<li>Name methods and properties for their roles, not their types</li>
+<li>Use <code>static let</code> for constants over global constants</li>
+</ul>
+<h2>Error Handling</h2>
+<p>Use typed throws (Swift 6+) and pattern matching:</p>
+<pre><code class="language-swift">func load(id: String) throws(LoadError) -&gt; Item {
+    guard let data = try? read(from: path) else {
+        throw .fileNotFound(id)
+    }
+    return try decode(data)
+}
+</code></pre>
+<h2>Concurrency</h2>
+<p>Enable Swift 6 strict concurrency checking. Prefer:</p>
+<ul>
+<li><code>Sendable</code> value types for data crossing isolation boundaries</li>
+<li>Actors for shared mutable state</li>
+<li>Structured concurrency (<code>async let</code>, <code>TaskGroup</code>) over unstructured <code>Task {}</code></li>
+</ul>
+
+</body>
+</html>

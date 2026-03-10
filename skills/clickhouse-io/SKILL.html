@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: clickhouse-io<br>description: ClickHouse database patterns, query optimization, analytics, and data engineering best practices for high-performance analytical workloads.<br>origin: ECC</h2>
+<h1>ClickHouse Analytics Patterns</h1>
+<p>ClickHouse-specific patterns for high-performance analytics and data engineering.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Designing ClickHouse table schemas (MergeTree engine selection)</li>
+<li>Writing analytical queries (aggregations, window functions, joins)</li>
+<li>Optimizing query performance (partition pruning, projections, materialized views)</li>
+<li>Ingesting large volumes of data (batch inserts, Kafka integration)</li>
+<li>Migrating from PostgreSQL/MySQL to ClickHouse for analytics</li>
+<li>Implementing real-time dashboards or time-series analytics</li>
+</ul>
+<h2>Overview</h2>
+<p>ClickHouse is a column-oriented database management system (DBMS) for online analytical processing (OLAP). It&#39;s optimized for fast analytical queries on large datasets.</p>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li>Column-oriented storage</li>
+<li>Data compression</li>
+<li>Parallel query execution</li>
+<li>Distributed queries</li>
+<li>Real-time analytics</li>
+</ul>
+<h2>Table Design Patterns</h2>
+<h3>MergeTree Engine (Most Common)</h3>
+<pre><code class="language-sql">CREATE TABLE markets_analytics (
+    date Date,
+    market_id String,
+    market_name String,
+    volume UInt64,
+    trades UInt32,
+    unique_traders UInt32,
+    avg_trade_size Float64,
+    created_at DateTime
+) ENGINE = MergeTree()
+PARTITION BY toYYYYMM(date)
+ORDER BY (date, market_id)
+SETTINGS index_granularity = 8192;
+</code></pre>
+<h3>ReplacingMergeTree (Deduplication)</h3>
+<pre><code class="language-sql">-- For data that may have duplicates (e.g., from multiple sources)
+CREATE TABLE user_events (
+    event_id String,
+    user_id String,
+    event_type String,
+    timestamp DateTime,
+    properties String
+) ENGINE = ReplacingMergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (user_id, event_id, timestamp)
+PRIMARY KEY (user_id, event_id);
+</code></pre>
+<h3>AggregatingMergeTree (Pre-aggregation)</h3>
+<pre><code class="language-sql">-- For maintaining aggregated metrics
+CREATE TABLE market_stats_hourly (
+    hour DateTime,
+    market_id String,
+    total_volume AggregateFunction(sum, UInt64),
+    total_trades AggregateFunction(count, UInt32),
+    unique_users AggregateFunction(uniq, String)
+) ENGINE = AggregatingMergeTree()
+PARTITION BY toYYYYMM(hour)
+ORDER BY (hour, market_id);
+
+-- Query aggregated data
+SELECT
+    hour,
+    market_id,
+    sumMerge(total_volume) AS volume,
+    countMerge(total_trades) AS trades,
+    uniqMerge(unique_users) AS users
+FROM market_stats_hourly
+WHERE hour &gt;= toStartOfHour(now() - INTERVAL 24 HOUR)
+GROUP BY hour, market_id
+ORDER BY hour DESC;
+</code></pre>
+<h2>Query Optimization Patterns</h2>
+<h3>Efficient Filtering</h3>
+<pre><code class="language-sql">-- ✅ GOOD: Use indexed columns first
+SELECT *
+FROM markets_analytics
+WHERE date &gt;= &#39;2025-01-01&#39;
+  AND market_id = &#39;market-123&#39;
+  AND volume &gt; 1000
+ORDER BY date DESC
+LIMIT 100;
+
+-- ❌ BAD: Filter on non-indexed columns first
+SELECT *
+FROM markets_analytics
+WHERE volume &gt; 1000
+  AND market_name LIKE &#39;%election%&#39;
+  AND date &gt;= &#39;2025-01-01&#39;;
+</code></pre>
+<h3>Aggregations</h3>
+<pre><code class="language-sql">-- ✅ GOOD: Use ClickHouse-specific aggregation functions
+SELECT
+    toStartOfDay(created_at) AS day,
+    market_id,
+    sum(volume) AS total_volume,
+    count() AS total_trades,
+    uniq(trader_id) AS unique_traders,
+    avg(trade_size) AS avg_size
+FROM trades
+WHERE created_at &gt;= today() - INTERVAL 7 DAY
+GROUP BY day, market_id
+ORDER BY day DESC, total_volume DESC;
+
+-- ✅ Use quantile for percentiles (more efficient than percentile)
+SELECT
+    quantile(0.50)(trade_size) AS median,
+    quantile(0.95)(trade_size) AS p95,
+    quantile(0.99)(trade_size) AS p99
+FROM trades
+WHERE created_at &gt;= now() - INTERVAL 1 HOUR;
+</code></pre>
+<h3>Window Functions</h3>
+<pre><code class="language-sql">-- Calculate running totals
+SELECT
+    date,
+    market_id,
+    volume,
+    sum(volume) OVER (
+        PARTITION BY market_id
+        ORDER BY date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS cumulative_volume
+FROM markets_analytics
+WHERE date &gt;= today() - INTERVAL 30 DAY
+ORDER BY market_id, date;
+</code></pre>
+<h2>Data Insertion Patterns</h2>
+<h3>Bulk Insert (Recommended)</h3>
+<pre><code class="language-typescript">import { ClickHouse } from &#39;clickhouse&#39;
+
+const clickhouse = new ClickHouse({
+  url: process.env.CLICKHOUSE_URL,
+  port: 8123,
+  basicAuth: {
+    username: process.env.CLICKHOUSE_USER,
+    password: process.env.CLICKHOUSE_PASSWORD
+  }
+})
+
+// ✅ Batch insert (efficient)
+async function bulkInsertTrades(trades: Trade[]) {
+  const values = trades.map(trade =&gt; `(
+    &#39;${trade.id}&#39;,
+    &#39;${trade.market_id}&#39;,
+    &#39;${trade.user_id}&#39;,
+    ${trade.amount},
+    &#39;${trade.timestamp.toISOString()}&#39;
+  )`).join(&#39;,&#39;)
+
+  await clickhouse.query(`
+    INSERT INTO trades (id, market_id, user_id, amount, timestamp)
+    VALUES ${values}
+  `).toPromise()
+}
+
+// ❌ Individual inserts (slow)
+async function insertTrade(trade: Trade) {
+  // Don&#39;t do this in a loop!
+  await clickhouse.query(`
+    INSERT INTO trades VALUES (&#39;${trade.id}&#39;, ...)
+  `).toPromise()
+}
+</code></pre>
+<h3>Streaming Insert</h3>
+<pre><code class="language-typescript">// For continuous data ingestion
+import { createWriteStream } from &#39;fs&#39;
+import { pipeline } from &#39;stream/promises&#39;
+
+async function streamInserts() {
+  const stream = clickhouse.insert(&#39;trades&#39;).stream()
+
+  for await (const batch of dataSource) {
+    stream.write(batch)
+  }
+
+  await stream.end()
+}
+</code></pre>
+<h2>Materialized Views</h2>
+<h3>Real-time Aggregations</h3>
+<pre><code class="language-sql">-- Create materialized view for hourly stats
+CREATE MATERIALIZED VIEW market_stats_hourly_mv
+TO market_stats_hourly
+AS SELECT
+    toStartOfHour(timestamp) AS hour,
+    market_id,
+    sumState(amount) AS total_volume,
+    countState() AS total_trades,
+    uniqState(user_id) AS unique_users
+FROM trades
+GROUP BY hour, market_id;
+
+-- Query the materialized view
+SELECT
+    hour,
+    market_id,
+    sumMerge(total_volume) AS volume,
+    countMerge(total_trades) AS trades,
+    uniqMerge(unique_users) AS users
+FROM market_stats_hourly
+WHERE hour &gt;= now() - INTERVAL 24 HOUR
+GROUP BY hour, market_id;
+</code></pre>
+<h2>Performance Monitoring</h2>
+<h3>Query Performance</h3>
+<pre><code class="language-sql">-- Check slow queries
+SELECT
+    query_id,
+    user,
+    query,
+    query_duration_ms,
+    read_rows,
+    read_bytes,
+    memory_usage
+FROM system.query_log
+WHERE type = &#39;QueryFinish&#39;
+  AND query_duration_ms &gt; 1000
+  AND event_time &gt;= now() - INTERVAL 1 HOUR
+ORDER BY query_duration_ms DESC
+LIMIT 10;
+</code></pre>
+<h3>Table Statistics</h3>
+<pre><code class="language-sql">-- Check table sizes
+SELECT
+    database,
+    table,
+    formatReadableSize(sum(bytes)) AS size,
+    sum(rows) AS rows,
+    max(modification_time) AS latest_modification
+FROM system.parts
+WHERE active
+GROUP BY database, table
+ORDER BY sum(bytes) DESC;
+</code></pre>
+<h2>Common Analytics Queries</h2>
+<h3>Time Series Analysis</h3>
+<pre><code class="language-sql">-- Daily active users
+SELECT
+    toDate(timestamp) AS date,
+    uniq(user_id) AS daily_active_users
+FROM events
+WHERE timestamp &gt;= today() - INTERVAL 30 DAY
+GROUP BY date
+ORDER BY date;
+
+-- Retention analysis
+SELECT
+    signup_date,
+    countIf(days_since_signup = 0) AS day_0,
+    countIf(days_since_signup = 1) AS day_1,
+    countIf(days_since_signup = 7) AS day_7,
+    countIf(days_since_signup = 30) AS day_30
+FROM (
+    SELECT
+        user_id,
+        min(toDate(timestamp)) AS signup_date,
+        toDate(timestamp) AS activity_date,
+        dateDiff(&#39;day&#39;, signup_date, activity_date) AS days_since_signup
+    FROM events
+    GROUP BY user_id, activity_date
+)
+GROUP BY signup_date
+ORDER BY signup_date DESC;
+</code></pre>
+<h3>Funnel Analysis</h3>
+<pre><code class="language-sql">-- Conversion funnel
+SELECT
+    countIf(step = &#39;viewed_market&#39;) AS viewed,
+    countIf(step = &#39;clicked_trade&#39;) AS clicked,
+    countIf(step = &#39;completed_trade&#39;) AS completed,
+    round(clicked / viewed * 100, 2) AS view_to_click_rate,
+    round(completed / clicked * 100, 2) AS click_to_completion_rate
+FROM (
+    SELECT
+        user_id,
+        session_id,
+        event_type AS step
+    FROM events
+    WHERE event_date = today()
+)
+GROUP BY session_id;
+</code></pre>
+<h3>Cohort Analysis</h3>
+<pre><code class="language-sql">-- User cohorts by signup month
+SELECT
+    toStartOfMonth(signup_date) AS cohort,
+    toStartOfMonth(activity_date) AS month,
+    dateDiff(&#39;month&#39;, cohort, month) AS months_since_signup,
+    count(DISTINCT user_id) AS active_users
+FROM (
+    SELECT
+        user_id,
+        min(toDate(timestamp)) OVER (PARTITION BY user_id) AS signup_date,
+        toDate(timestamp) AS activity_date
+    FROM events
+)
+GROUP BY cohort, month, months_since_signup
+ORDER BY cohort, months_since_signup;
+</code></pre>
+<h2>Data Pipeline Patterns</h2>
+<h3>ETL Pattern</h3>
+<pre><code class="language-typescript">// Extract, Transform, Load
+async function etlPipeline() {
+  // 1. Extract from source
+  const rawData = await extractFromPostgres()
+
+  // 2. Transform
+  const transformed = rawData.map(row =&gt; ({
+    date: new Date(row.created_at).toISOString().split(&#39;T&#39;)[0],
+    market_id: row.market_slug,
+    volume: parseFloat(row.total_volume),
+    trades: parseInt(row.trade_count)
+  }))
+
+  // 3. Load to ClickHouse
+  await bulkInsertToClickHouse(transformed)
+}
+
+// Run periodically
+setInterval(etlPipeline, 60 * 60 * 1000)  // Every hour
+</code></pre>
+<h3>Change Data Capture (CDC)</h3>
+<pre><code class="language-typescript">// Listen to PostgreSQL changes and sync to ClickHouse
+import { Client } from &#39;pg&#39;
+
+const pgClient = new Client({ connectionString: process.env.DATABASE_URL })
+
+pgClient.query(&#39;LISTEN market_updates&#39;)
+
+pgClient.on(&#39;notification&#39;, async (msg) =&gt; {
+  const update = JSON.parse(msg.payload)
+
+  await clickhouse.insert(&#39;market_updates&#39;, [
+    {
+      market_id: update.id,
+      event_type: update.operation,  // INSERT, UPDATE, DELETE
+      timestamp: new Date(),
+      data: JSON.stringify(update.new_data)
+    }
+  ])
+})
+</code></pre>
+<h2>Best Practices</h2>
+<h3>1. Partitioning Strategy</h3>
+<ul>
+<li>Partition by time (usually month or day)</li>
+<li>Avoid too many partitions (performance impact)</li>
+<li>Use DATE type for partition key</li>
+</ul>
+<h3>2. Ordering Key</h3>
+<ul>
+<li>Put most frequently filtered columns first</li>
+<li>Consider cardinality (high cardinality first)</li>
+<li>Order impacts compression</li>
+</ul>
+<h3>3. Data Types</h3>
+<ul>
+<li>Use smallest appropriate type (UInt32 vs UInt64)</li>
+<li>Use LowCardinality for repeated strings</li>
+<li>Use Enum for categorical data</li>
+</ul>
+<h3>4. Avoid</h3>
+<ul>
+<li>SELECT * (specify columns)</li>
+<li>FINAL (merge data before query instead)</li>
+<li>Too many JOINs (denormalize for analytics)</li>
+<li>Small frequent inserts (batch instead)</li>
+</ul>
+<h3>5. Monitoring</h3>
+<ul>
+<li>Track query performance</li>
+<li>Monitor disk usage</li>
+<li>Check merge operations</li>
+<li>Review slow query log</li>
+</ul>
+<p><strong>Remember</strong>: ClickHouse excels at analytical workloads. Design tables for your query patterns, batch inserts, and leverage materialized views for real-time aggregations.</p>
+
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: database-migrations<br>description: Database migration best practices for schema changes, data migrations, rollbacks, and zero-downtime deployments across PostgreSQL, MySQL, and common ORMs (Prisma, Drizzle, Django, TypeORM, golang-migrate).<br>origin: ECC</h2>
+<h1>Database Migration Patterns</h1>
+<p>Safe, reversible database schema changes for production systems.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Creating or altering database tables</li>
+<li>Adding/removing columns or indexes</li>
+<li>Running data migrations (backfill, transform)</li>
+<li>Planning zero-downtime schema changes</li>
+<li>Setting up migration tooling for a new project</li>
+</ul>
+<h2>Core Principles</h2>
+<ol>
+<li><strong>Every change is a migration</strong> — never alter production databases manually</li>
+<li><strong>Migrations are forward-only in production</strong> — rollbacks use new forward migrations</li>
+<li><strong>Schema and data migrations are separate</strong> — never mix DDL and DML in one migration</li>
+<li><strong>Test migrations against production-sized data</strong> — a migration that works on 100 rows may lock on 10M</li>
+<li><strong>Migrations are immutable once deployed</strong> — never edit a migration that has run in production</li>
+</ol>
+<h2>Migration Safety Checklist</h2>
+<p>Before applying any migration:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Migration has both UP and DOWN (or is explicitly marked irreversible)</li>
+<li><input disabled="" type="checkbox"> No full table locks on large tables (use concurrent operations)</li>
+<li><input disabled="" type="checkbox"> New columns have defaults or are nullable (never add NOT NULL without default)</li>
+<li><input disabled="" type="checkbox"> Indexes created concurrently (not inline with CREATE TABLE for existing tables)</li>
+<li><input disabled="" type="checkbox"> Data backfill is a separate migration from schema change</li>
+<li><input disabled="" type="checkbox"> Tested against a copy of production data</li>
+<li><input disabled="" type="checkbox"> Rollback plan documented</li>
+</ul>
+<h2>PostgreSQL Patterns</h2>
+<h3>Adding a Column Safely</h3>
+<pre><code class="language-sql">-- GOOD: Nullable column, no lock
+ALTER TABLE users ADD COLUMN avatar_url TEXT;
+
+-- GOOD: Column with default (Postgres 11+ is instant, no rewrite)
+ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT true;
+
+-- BAD: NOT NULL without default on existing table (requires full rewrite)
+ALTER TABLE users ADD COLUMN role TEXT NOT NULL;
+-- This locks the table and rewrites every row
+</code></pre>
+<h3>Adding an Index Without Downtime</h3>
+<pre><code class="language-sql">-- BAD: Blocks writes on large tables
+CREATE INDEX idx_users_email ON users (email);
+
+-- GOOD: Non-blocking, allows concurrent writes
+CREATE INDEX CONCURRENTLY idx_users_email ON users (email);
+
+-- Note: CONCURRENTLY cannot run inside a transaction block
+-- Most migration tools need special handling for this
+</code></pre>
+<h3>Renaming a Column (Zero-Downtime)</h3>
+<p>Never rename directly in production. Use the expand-contract pattern:</p>
+<pre><code class="language-sql">-- Step 1: Add new column (migration 001)
+ALTER TABLE users ADD COLUMN display_name TEXT;
+
+-- Step 2: Backfill data (migration 002, data migration)
+UPDATE users SET display_name = username WHERE display_name IS NULL;
+
+-- Step 3: Update application code to read/write both columns
+-- Deploy application changes
+
+-- Step 4: Stop writing to old column, drop it (migration 003)
+ALTER TABLE users DROP COLUMN username;
+</code></pre>
+<h3>Removing a Column Safely</h3>
+<pre><code class="language-sql">-- Step 1: Remove all application references to the column
+-- Step 2: Deploy application without the column reference
+-- Step 3: Drop column in next migration
+ALTER TABLE orders DROP COLUMN legacy_status;
+
+-- For Django: use SeparateDatabaseAndState to remove from model
+-- without generating DROP COLUMN (then drop in next migration)
+</code></pre>
+<h3>Large Data Migrations</h3>
+<pre><code class="language-sql">-- BAD: Updates all rows in one transaction (locks table)
+UPDATE users SET normalized_email = LOWER(email);
+
+-- GOOD: Batch update with progress
+DO $$
+DECLARE
+  batch_size INT := 10000;
+  rows_updated INT;
+BEGIN
+  LOOP
+    UPDATE users
+    SET normalized_email = LOWER(email)
+    WHERE id IN (
+      SELECT id FROM users
+      WHERE normalized_email IS NULL
+      LIMIT batch_size
+      FOR UPDATE SKIP LOCKED
+    );
+    GET DIAGNOSTICS rows_updated = ROW_COUNT;
+    RAISE NOTICE &#39;Updated % rows&#39;, rows_updated;
+    EXIT WHEN rows_updated = 0;
+    COMMIT;
+  END LOOP;
+END $$;
+</code></pre>
+<h2>Prisma (TypeScript/Node.js)</h2>
+<h3>Workflow</h3>
+<pre><code class="language-bash"># Create migration from schema changes
+npx prisma migrate dev --name add_user_avatar
+
+# Apply pending migrations in production
+npx prisma migrate deploy
+
+# Reset database (dev only)
+npx prisma migrate reset
+
+# Generate client after schema changes
+npx prisma generate
+</code></pre>
+<h3>Schema Example</h3>
+<pre><code class="language-prisma">model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map(&quot;avatar_url&quot;)
+  createdAt DateTime @default(now()) @map(&quot;created_at&quot;)
+  updatedAt DateTime @updatedAt @map(&quot;updated_at&quot;)
+  orders    Order[]
+
+  @@map(&quot;users&quot;)
+  @@index([email])
+}
+</code></pre>
+<h3>Custom SQL Migration</h3>
+<p>For operations Prisma cannot express (concurrent indexes, data backfills):</p>
+<pre><code class="language-bash"># Create empty migration, then edit the SQL manually
+npx prisma migrate dev --create-only --name add_email_index
+</code></pre>
+<pre><code class="language-sql">-- migrations/20240115_add_email_index/migration.sql
+-- Prisma cannot generate CONCURRENTLY, so we write it manually
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email ON users (email);
+</code></pre>
+<h2>Drizzle (TypeScript/Node.js)</h2>
+<h3>Workflow</h3>
+<pre><code class="language-bash"># Generate migration from schema changes
+npx drizzle-kit generate
+
+# Apply migrations
+npx drizzle-kit migrate
+
+# Push schema directly (dev only, no migration file)
+npx drizzle-kit push
+</code></pre>
+<h3>Schema Example</h3>
+<pre><code class="language-typescript">import { pgTable, text, timestamp, uuid, boolean } from &quot;drizzle-orm/pg-core&quot;;
+
+export const users = pgTable(&quot;users&quot;, {
+  id: uuid(&quot;id&quot;).primaryKey().defaultRandom(),
+  email: text(&quot;email&quot;).notNull().unique(),
+  name: text(&quot;name&quot;),
+  isActive: boolean(&quot;is_active&quot;).notNull().default(true),
+  createdAt: timestamp(&quot;created_at&quot;).notNull().defaultNow(),
+  updatedAt: timestamp(&quot;updated_at&quot;).notNull().defaultNow(),
+});
+</code></pre>
+<h2>Django (Python)</h2>
+<h3>Workflow</h3>
+<pre><code class="language-bash"># Generate migration from model changes
+python manage.py makemigrations
+
+# Apply migrations
+python manage.py migrate
+
+# Show migration status
+python manage.py showmigrations
+
+# Generate empty migration for custom SQL
+python manage.py makemigrations --empty app_name -n description
+</code></pre>
+<h3>Data Migration</h3>
+<pre><code class="language-python">from django.db import migrations
+
+def backfill_display_names(apps, schema_editor):
+    User = apps.get_model(&quot;accounts&quot;, &quot;User&quot;)
+    batch_size = 5000
+    users = User.objects.filter(display_name=&quot;&quot;)
+    while users.exists():
+        batch = list(users[:batch_size])
+        for user in batch:
+            user.display_name = user.username
+        User.objects.bulk_update(batch, [&quot;display_name&quot;], batch_size=batch_size)
+
+def reverse_backfill(apps, schema_editor):
+    pass  # Data migration, no reverse needed
+
+class Migration(migrations.Migration):
+    dependencies = [(&quot;accounts&quot;, &quot;0015_add_display_name&quot;)]
+
+    operations = [
+        migrations.RunPython(backfill_display_names, reverse_backfill),
+    ]
+</code></pre>
+<h3>SeparateDatabaseAndState</h3>
+<p>Remove a column from the Django model without dropping it from the database immediately:</p>
+<pre><code class="language-python">class Migration(migrations.Migration):
+    operations = [
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RemoveField(model_name=&quot;user&quot;, name=&quot;legacy_field&quot;),
+            ],
+            database_operations=[],  # Don&#39;t touch the DB yet
+        ),
+    ]
+</code></pre>
+<h2>golang-migrate (Go)</h2>
+<h3>Workflow</h3>
+<pre><code class="language-bash"># Create migration pair
+migrate create -ext sql -dir migrations -seq add_user_avatar
+
+# Apply all pending migrations
+migrate -path migrations -database &quot;$DATABASE_URL&quot; up
+
+# Rollback last migration
+migrate -path migrations -database &quot;$DATABASE_URL&quot; down 1
+
+# Force version (fix dirty state)
+migrate -path migrations -database &quot;$DATABASE_URL&quot; force VERSION
+</code></pre>
+<h3>Migration Files</h3>
+<pre><code class="language-sql">-- migrations/000003_add_user_avatar.up.sql
+ALTER TABLE users ADD COLUMN avatar_url TEXT;
+CREATE INDEX CONCURRENTLY idx_users_avatar ON users (avatar_url) WHERE avatar_url IS NOT NULL;
+
+-- migrations/000003_add_user_avatar.down.sql
+DROP INDEX IF EXISTS idx_users_avatar;
+ALTER TABLE users DROP COLUMN IF EXISTS avatar_url;
+</code></pre>
+<h2>Zero-Downtime Migration Strategy</h2>
+<p>For critical production changes, follow the expand-contract pattern:</p>
+<pre><code>Phase 1: EXPAND
+  - Add new column/table (nullable or with default)
+  - Deploy: app writes to BOTH old and new
+  - Backfill existing data
+
+Phase 2: MIGRATE
+  - Deploy: app reads from NEW, writes to BOTH
+  - Verify data consistency
+
+Phase 3: CONTRACT
+  - Deploy: app only uses NEW
+  - Drop old column/table in separate migration
+</code></pre>
+<h3>Timeline Example</h3>
+<pre><code>Day 1: Migration adds new_status column (nullable)
+Day 1: Deploy app v2 — writes to both status and new_status
+Day 2: Run backfill migration for existing rows
+Day 3: Deploy app v3 — reads from new_status only
+Day 7: Migration drops old status column
+</code></pre>
+<h2>Anti-Patterns</h2>
+<table>
+<thead>
+<tr>
+<th>Anti-Pattern</th>
+<th>Why It Fails</th>
+<th>Better Approach</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Manual SQL in production</td>
+<td>No audit trail, unrepeatable</td>
+<td>Always use migration files</td>
+</tr>
+<tr>
+<td>Editing deployed migrations</td>
+<td>Causes drift between environments</td>
+<td>Create new migration instead</td>
+</tr>
+<tr>
+<td>NOT NULL without default</td>
+<td>Locks table, rewrites all rows</td>
+<td>Add nullable, backfill, then add constraint</td>
+</tr>
+<tr>
+<td>Inline index on large table</td>
+<td>Blocks writes during build</td>
+<td>CREATE INDEX CONCURRENTLY</td>
+</tr>
+<tr>
+<td>Schema + data in one migration</td>
+<td>Hard to rollback, long transactions</td>
+<td>Separate migrations</td>
+</tr>
+<tr>
+<td>Dropping column before removing code</td>
+<td>Application errors on missing column</td>
+<td>Remove code first, drop column next deploy</td>
+</tr>
+</tbody></table>
+
+</body>
+</html>

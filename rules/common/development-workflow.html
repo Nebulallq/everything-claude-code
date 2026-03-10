@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>development-workflow</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Development Workflow</h1>
+<blockquote>
+<p>This file extends <a href="./git-workflow.md">common/git-workflow.md</a> with the full feature development process that happens before git operations.</p>
+</blockquote>
+<p>The Feature Implementation Workflow describes the development pipeline: research, planning, TDD, code review, and then committing to git.</p>
+<h2>Feature Implementation Workflow</h2>
+<ol start="0">
+<li><p><strong>Research &amp; Reuse</strong> <em>(mandatory before any new implementation)</em></p>
+<ul>
+<li><strong>GitHub code search first:</strong> Run <code>gh search repos</code> and <code>gh search code</code> to find existing implementations, templates, and patterns before writing anything new.</li>
+<li><strong>Exa MCP for research:</strong> Use <code>exa-web-search</code> MCP during the planning phase for broader research, data ingestion, and discovering prior art.</li>
+<li><strong>Check package registries:</strong> Search npm, PyPI, crates.io, and other registries before writing utility code. Prefer battle-tested libraries over hand-rolled solutions.</li>
+<li><strong>Search for adaptable implementations:</strong> Look for open-source projects that solve 80%+ of the problem and can be forked, ported, or wrapped.</li>
+<li>Prefer adopting or porting a proven approach over writing net-new code when it meets the requirement.</li>
+</ul>
+</li>
+<li><p><strong>Plan First</strong></p>
+<ul>
+<li>Use <strong>planner</strong> agent to create implementation plan</li>
+<li>Generate planning docs before coding: PRD, architecture, system_design, tech_doc, task_list</li>
+<li>Identify dependencies and risks</li>
+<li>Break down into phases</li>
+</ul>
+</li>
+<li><p><strong>TDD Approach</strong></p>
+<ul>
+<li>Use <strong>tdd-guide</strong> agent</li>
+<li>Write tests first (RED)</li>
+<li>Implement to pass tests (GREEN)</li>
+<li>Refactor (IMPROVE)</li>
+<li>Verify 80%+ coverage</li>
+</ul>
+</li>
+<li><p><strong>Code Review</strong></p>
+<ul>
+<li>Use <strong>code-reviewer</strong> agent immediately after writing code</li>
+<li>Address CRITICAL and HIGH issues</li>
+<li>Fix MEDIUM issues when possible</li>
+</ul>
+</li>
+<li><p><strong>Commit &amp; Push</strong></p>
+<ul>
+<li>Detailed commit messages</li>
+<li>Follow conventional commits format</li>
+<li>See <a href="./git-workflow.md">git-workflow.md</a> for commit message format and PR process</li>
+</ul>
+</li>
+</ol>
+
+</body>
+</html>

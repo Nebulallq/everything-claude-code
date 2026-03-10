@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: ralphinho-rfc-pipeline<br>description: RFC-driven multi-agent DAG execution pattern with quality gates, merge queues, and work unit orchestration.<br>origin: ECC</h2>
+<h1>Ralphinho RFC Pipeline</h1>
+<p>Inspired by <a href="https://github.com/humanplane">humanplane</a> style RFC decomposition patterns and multi-unit orchestration workflows.</p>
+<p>Use this skill when a feature is too large for a single agent pass and must be split into independently verifiable work units.</p>
+<h2>Pipeline Stages</h2>
+<ol>
+<li>RFC intake</li>
+<li>DAG decomposition</li>
+<li>Unit assignment</li>
+<li>Unit implementation</li>
+<li>Unit validation</li>
+<li>Merge queue and integration</li>
+<li>Final system verification</li>
+</ol>
+<h2>Unit Spec Template</h2>
+<p>Each work unit should include:</p>
+<ul>
+<li><code>id</code></li>
+<li><code>depends_on</code></li>
+<li><code>scope</code></li>
+<li><code>acceptance_tests</code></li>
+<li><code>risk_level</code></li>
+<li><code>rollback_plan</code></li>
+</ul>
+<h2>Complexity Tiers</h2>
+<ul>
+<li>Tier 1: isolated file edits, deterministic tests</li>
+<li>Tier 2: multi-file behavior changes, moderate integration risk</li>
+<li>Tier 3: schema/auth/perf/security changes</li>
+</ul>
+<h2>Quality Pipeline per Unit</h2>
+<ol>
+<li>research</li>
+<li>implementation plan</li>
+<li>implementation</li>
+<li>tests</li>
+<li>review</li>
+<li>merge-ready report</li>
+</ol>
+<h2>Merge Queue Rules</h2>
+<ul>
+<li>Never merge a unit with unresolved dependency failures.</li>
+<li>Always rebase unit branches on latest integration branch.</li>
+<li>Re-run integration tests after each queued merge.</li>
+</ul>
+<h2>Recovery</h2>
+<p>If a unit stalls:</p>
+<ul>
+<li>evict from active queue</li>
+<li>snapshot findings</li>
+<li>regenerate narrowed unit scope</li>
+<li>retry with updated constraints</li>
+</ul>
+<h2>Outputs</h2>
+<ul>
+<li>RFC execution log</li>
+<li>unit scorecards</li>
+<li>dependency graph snapshot</li>
+<li>integration risk summary</li>
+</ul>
+
+</body>
+</html>

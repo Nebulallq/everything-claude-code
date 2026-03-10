@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Visa Document Translator</h1>
+<p>Automatically translate visa application documents from images to professional English PDFs.</p>
+<h2>Features</h2>
+<ul>
+<li>🔄 <strong>Automatic OCR</strong>: Tries multiple OCR methods (macOS Vision, EasyOCR, Tesseract)</li>
+<li>📄 <strong>Bilingual PDF</strong>: Original image + professional English translation</li>
+<li>🌍 <strong>Multi-language</strong>: Supports Chinese, and other languages</li>
+<li>📋 <strong>Professional Format</strong>: Suitable for official visa applications</li>
+<li>🚀 <strong>Fully Automated</strong>: No manual intervention required</li>
+</ul>
+<h2>Supported Documents</h2>
+<ul>
+<li>Bank deposit certificates (存款证明)</li>
+<li>Employment certificates (在职证明)</li>
+<li>Retirement certificates (退休证明)</li>
+<li>Income certificates (收入证明)</li>
+<li>Property certificates (房产证明)</li>
+<li>Business licenses (营业执照)</li>
+<li>ID cards and passports</li>
+</ul>
+<h2>Usage</h2>
+<pre><code class="language-bash">/visa-doc-translate &lt;image-file&gt;
+</code></pre>
+<h3>Examples</h3>
+<pre><code class="language-bash">/visa-doc-translate RetirementCertificate.PNG
+/visa-doc-translate BankStatement.HEIC
+/visa-doc-translate EmploymentLetter.jpg
+</code></pre>
+<h2>Output</h2>
+<p>Creates <code>&lt;filename&gt;_Translated.pdf</code> with:</p>
+<ul>
+<li><strong>Page 1</strong>: Original document image (centered, A4 size)</li>
+<li><strong>Page 2</strong>: Professional English translation</li>
+</ul>
+<h2>Requirements</h2>
+<h3>Python Libraries</h3>
+<pre><code class="language-bash">pip install pillow reportlab
+</code></pre>
+<h3>OCR (one of the following)</h3>
+<p><strong>macOS (recommended)</strong>:</p>
+<pre><code class="language-bash">pip install pyobjc-framework-Vision pyobjc-framework-Quartz
+</code></pre>
+<p><strong>Cross-platform</strong>:</p>
+<pre><code class="language-bash">pip install easyocr
+</code></pre>
+<p><strong>Tesseract</strong>:</p>
+<pre><code class="language-bash">brew install tesseract tesseract-lang
+pip install pytesseract
+</code></pre>
+<h2>How It Works</h2>
+<ol>
+<li>Converts HEIC to PNG if needed</li>
+<li>Checks and applies EXIF rotation</li>
+<li>Extracts text using available OCR method</li>
+<li>Translates to professional English</li>
+<li>Generates bilingual PDF</li>
+</ol>
+<h2>Perfect For</h2>
+<ul>
+<li>🇦🇺 Australia visa applications</li>
+<li>🇺🇸 USA visa applications</li>
+<li>🇨🇦 Canada visa applications</li>
+<li>🇬🇧 UK visa applications</li>
+<li>🇪🇺 EU visa applications</li>
+</ul>
+<h2>License</h2>
+<p>MIT</p>
+
+</body>
+</html>

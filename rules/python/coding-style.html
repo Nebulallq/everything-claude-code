@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>coding-style</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<p>paths:</p>
+<ul>
+<li>&quot;**/*.py&quot;</li>
+<li>&quot;**/*.pyi&quot;</li>
+</ul>
+<hr>
+<h1>Python Coding Style</h1>
+<blockquote>
+<p>This file extends <a href="../common/coding-style.md">common/coding-style.md</a> with Python specific content.</p>
+</blockquote>
+<h2>Standards</h2>
+<ul>
+<li>Follow <strong>PEP 8</strong> conventions</li>
+<li>Use <strong>type annotations</strong> on all function signatures</li>
+</ul>
+<h2>Immutability</h2>
+<p>Prefer immutable data structures:</p>
+<pre><code class="language-python">from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class User:
+    name: str
+    email: str
+
+from typing import NamedTuple
+
+class Point(NamedTuple):
+    x: float
+    y: float
+</code></pre>
+<h2>Formatting</h2>
+<ul>
+<li><strong>black</strong> for code formatting</li>
+<li><strong>isort</strong> for import sorting</li>
+<li><strong>ruff</strong> for linting</li>
+</ul>
+<h2>Reference</h2>
+<p>See skill: <code>python-patterns</code> for comprehensive Python idioms and patterns.</p>
+
+</body>
+</html>

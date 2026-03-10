@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: continuous-learning<br>description: Automatically extract reusable patterns from Claude Code sessions and save them as learned skills for future use.<br>origin: ECC</h2>
+<h1>Continuous Learning Skill</h1>
+<p>Automatically evaluates Claude Code sessions on end to extract reusable patterns that can be saved as learned skills.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Setting up automatic pattern extraction from Claude Code sessions</li>
+<li>Configuring the Stop hook for session evaluation</li>
+<li>Reviewing or curating learned skills in <code>~/.claude/skills/learned/</code></li>
+<li>Adjusting extraction thresholds or pattern categories</li>
+<li>Comparing v1 (this) vs v2 (instinct-based) approaches</li>
+</ul>
+<h2>How It Works</h2>
+<p>This skill runs as a <strong>Stop hook</strong> at the end of each session:</p>
+<ol>
+<li><strong>Session Evaluation</strong>: Checks if session has enough messages (default: 10+)</li>
+<li><strong>Pattern Detection</strong>: Identifies extractable patterns from the session</li>
+<li><strong>Skill Extraction</strong>: Saves useful patterns to <code>~/.claude/skills/learned/</code></li>
+</ol>
+<h2>Configuration</h2>
+<p>Edit <code>config.json</code> to customize:</p>
+<pre><code class="language-json">{
+  &quot;min_session_length&quot;: 10,
+  &quot;extraction_threshold&quot;: &quot;medium&quot;,
+  &quot;auto_approve&quot;: false,
+  &quot;learned_skills_path&quot;: &quot;~/.claude/skills/learned/&quot;,
+  &quot;patterns_to_detect&quot;: [
+    &quot;error_resolution&quot;,
+    &quot;user_corrections&quot;,
+    &quot;workarounds&quot;,
+    &quot;debugging_techniques&quot;,
+    &quot;project_specific&quot;
+  ],
+  &quot;ignore_patterns&quot;: [
+    &quot;simple_typos&quot;,
+    &quot;one_time_fixes&quot;,
+    &quot;external_api_issues&quot;
+  ]
+}
+</code></pre>
+<h2>Pattern Types</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>error_resolution</code></td>
+<td>How specific errors were resolved</td>
+</tr>
+<tr>
+<td><code>user_corrections</code></td>
+<td>Patterns from user corrections</td>
+</tr>
+<tr>
+<td><code>workarounds</code></td>
+<td>Solutions to framework/library quirks</td>
+</tr>
+<tr>
+<td><code>debugging_techniques</code></td>
+<td>Effective debugging approaches</td>
+</tr>
+<tr>
+<td><code>project_specific</code></td>
+<td>Project-specific conventions</td>
+</tr>
+</tbody></table>
+<h2>Hook Setup</h2>
+<p>Add to your <code>~/.claude/settings.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;Stop&quot;: [{
+      &quot;matcher&quot;: &quot;*&quot;,
+      &quot;hooks&quot;: [{
+        &quot;type&quot;: &quot;command&quot;,
+        &quot;command&quot;: &quot;~/.claude/skills/continuous-learning/evaluate-session.sh&quot;
+      }]
+    }]
+  }
+}
+</code></pre>
+<h2>Why Stop Hook?</h2>
+<ul>
+<li><strong>Lightweight</strong>: Runs once at session end</li>
+<li><strong>Non-blocking</strong>: Doesn&#39;t add latency to every message</li>
+<li><strong>Complete context</strong>: Has access to full session transcript</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a href="https://x.com/affaanmustafa/status/2014040193557471352">The Longform Guide</a> - Section on continuous learning</li>
+<li><code>/learn</code> command - Manual pattern extraction mid-session</li>
+</ul>
+<hr>
+<h2>Comparison Notes (Research: Jan 2025)</h2>
+<h3>vs Homunculus</h3>
+<p>Homunculus v2 takes a more sophisticated approach:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Our Approach</th>
+<th>Homunculus v2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Observation</td>
+<td>Stop hook (end of session)</td>
+<td>PreToolUse/PostToolUse hooks (100% reliable)</td>
+</tr>
+<tr>
+<td>Analysis</td>
+<td>Main context</td>
+<td>Background agent (Haiku)</td>
+</tr>
+<tr>
+<td>Granularity</td>
+<td>Full skills</td>
+<td>Atomic &quot;instincts&quot;</td>
+</tr>
+<tr>
+<td>Confidence</td>
+<td>None</td>
+<td>0.3-0.9 weighted</td>
+</tr>
+<tr>
+<td>Evolution</td>
+<td>Direct to skill</td>
+<td>Instincts → cluster → skill/command/agent</td>
+</tr>
+<tr>
+<td>Sharing</td>
+<td>None</td>
+<td>Export/import instincts</td>
+</tr>
+</tbody></table>
+<p><strong>Key insight from homunculus:</strong></p>
+<blockquote>
+<p>&quot;v1 relied on skills to observe. Skills are probabilistic—they fire ~50-80% of the time. v2 uses hooks for observation (100% reliable) and instincts as the atomic unit of learned behavior.&quot;</p>
+</blockquote>
+<h3>Potential v2 Enhancements</h3>
+<ol>
+<li><strong>Instinct-based learning</strong> - Smaller, atomic behaviors with confidence scoring</li>
+<li><strong>Background observer</strong> - Haiku agent analyzing in parallel</li>
+<li><strong>Confidence decay</strong> - Instincts lose confidence if contradicted</li>
+<li><strong>Domain tagging</strong> - code-style, testing, git, debugging, etc.</li>
+<li><strong>Evolution path</strong> - Cluster related instincts into skills/commands</li>
+</ol>
+<p>See: <code>docs/continuous-learning-v2-spec.md</code> for full spec.</p>
+
+</body>
+</html>

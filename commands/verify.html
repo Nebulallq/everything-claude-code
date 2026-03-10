@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>verify</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Verification Command</h1>
+<p>Run comprehensive verification on current codebase state.</p>
+<h2>Instructions</h2>
+<p>Execute verification in this exact order:</p>
+<ol>
+<li><p><strong>Build Check</strong></p>
+<ul>
+<li>Run the build command for this project</li>
+<li>If it fails, report errors and STOP</li>
+</ul>
+</li>
+<li><p><strong>Type Check</strong></p>
+<ul>
+<li>Run TypeScript/type checker</li>
+<li>Report all errors with file:line</li>
+</ul>
+</li>
+<li><p><strong>Lint Check</strong></p>
+<ul>
+<li>Run linter</li>
+<li>Report warnings and errors</li>
+</ul>
+</li>
+<li><p><strong>Test Suite</strong></p>
+<ul>
+<li>Run all tests</li>
+<li>Report pass/fail count</li>
+<li>Report coverage percentage</li>
+</ul>
+</li>
+<li><p><strong>Console.log Audit</strong></p>
+<ul>
+<li>Search for console.log in source files</li>
+<li>Report locations</li>
+</ul>
+</li>
+<li><p><strong>Git Status</strong></p>
+<ul>
+<li>Show uncommitted changes</li>
+<li>Show files modified since last commit</li>
+</ul>
+</li>
+</ol>
+<h2>Output</h2>
+<p>Produce a concise verification report:</p>
+<pre><code>VERIFICATION: [PASS/FAIL]
+
+Build:    [OK/FAIL]
+Types:    [OK/X errors]
+Lint:     [OK/X issues]
+Tests:    [X/Y passed, Z% coverage]
+Secrets:  [OK/X found]
+Logs:     [OK/X console.logs]
+
+Ready for PR: [YES/NO]
+</code></pre>
+<p>If any critical issues, list them with fix suggestions.</p>
+<h2>Arguments</h2>
+<p>$ARGUMENTS can be:</p>
+<ul>
+<li><code>quick</code> - Only build + types</li>
+<li><code>full</code> - All checks (default)</li>
+<li><code>pre-commit</code> - Checks relevant for commits</li>
+<li><code>pre-pr</code> - Full checks plus security scan</li>
+</ul>
+
+</body>
+</html>

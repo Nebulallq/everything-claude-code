@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>code-review</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Code Review</h1>
+<p>Comprehensive security and quality review of uncommitted changes:</p>
+<ol>
+<li><p>Get changed files: git diff --name-only HEAD</p>
+</li>
+<li><p>For each changed file, check for:</p>
+</li>
+</ol>
+<p><strong>Security Issues (CRITICAL):</strong></p>
+<ul>
+<li>Hardcoded credentials, API keys, tokens</li>
+<li>SQL injection vulnerabilities</li>
+<li>XSS vulnerabilities  </li>
+<li>Missing input validation</li>
+<li>Insecure dependencies</li>
+<li>Path traversal risks</li>
+</ul>
+<p><strong>Code Quality (HIGH):</strong></p>
+<ul>
+<li>Functions &gt; 50 lines</li>
+<li>Files &gt; 800 lines</li>
+<li>Nesting depth &gt; 4 levels</li>
+<li>Missing error handling</li>
+<li>console.log statements</li>
+<li>TODO/FIXME comments</li>
+<li>Missing JSDoc for public APIs</li>
+</ul>
+<p><strong>Best Practices (MEDIUM):</strong></p>
+<ul>
+<li>Mutation patterns (use immutable instead)</li>
+<li>Emoji usage in code/comments</li>
+<li>Missing tests for new code</li>
+<li>Accessibility issues (a11y)</li>
+</ul>
+<ol start="3">
+<li><p>Generate report with:</p>
+<ul>
+<li>Severity: CRITICAL, HIGH, MEDIUM, LOW</li>
+<li>File location and line numbers</li>
+<li>Issue description</li>
+<li>Suggested fix</li>
+</ul>
+</li>
+<li><p>Block commit if CRITICAL or HIGH issues found</p>
+</li>
+</ol>
+<p>Never approve code with security vulnerabilities!</p>
+
+</body>
+</html>

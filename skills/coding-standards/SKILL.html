@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: coding-standards<br>description: Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development.<br>origin: ECC</h2>
+<h1>Coding Standards &amp; Best Practices</h1>
+<p>Universal coding standards applicable across all projects.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Starting a new project or module</li>
+<li>Reviewing code for quality and maintainability</li>
+<li>Refactoring existing code to follow conventions</li>
+<li>Enforcing naming, formatting, or structural consistency</li>
+<li>Setting up linting, formatting, or type-checking rules</li>
+<li>Onboarding new contributors to coding conventions</li>
+</ul>
+<h2>Code Quality Principles</h2>
+<h3>1. Readability First</h3>
+<ul>
+<li>Code is read more than written</li>
+<li>Clear variable and function names</li>
+<li>Self-documenting code preferred over comments</li>
+<li>Consistent formatting</li>
+</ul>
+<h3>2. KISS (Keep It Simple, Stupid)</h3>
+<ul>
+<li>Simplest solution that works</li>
+<li>Avoid over-engineering</li>
+<li>No premature optimization</li>
+<li>Easy to understand &gt; clever code</li>
+</ul>
+<h3>3. DRY (Don&#39;t Repeat Yourself)</h3>
+<ul>
+<li>Extract common logic into functions</li>
+<li>Create reusable components</li>
+<li>Share utilities across modules</li>
+<li>Avoid copy-paste programming</li>
+</ul>
+<h3>4. YAGNI (You Aren&#39;t Gonna Need It)</h3>
+<ul>
+<li>Don&#39;t build features before they&#39;re needed</li>
+<li>Avoid speculative generality</li>
+<li>Add complexity only when required</li>
+<li>Start simple, refactor when needed</li>
+</ul>
+<h2>TypeScript/JavaScript Standards</h2>
+<h3>Variable Naming</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Descriptive names
+const marketSearchQuery = &#39;election&#39;
+const isUserAuthenticated = true
+const totalRevenue = 1000
+
+// ❌ BAD: Unclear names
+const q = &#39;election&#39;
+const flag = true
+const x = 1000
+</code></pre>
+<h3>Function Naming</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Verb-noun pattern
+async function fetchMarketData(marketId: string) { }
+function calculateSimilarity(a: number[], b: number[]) { }
+function isValidEmail(email: string): boolean { }
+
+// ❌ BAD: Unclear or noun-only
+async function market(id: string) { }
+function similarity(a, b) { }
+function email(e) { }
+</code></pre>
+<h3>Immutability Pattern (CRITICAL)</h3>
+<pre><code class="language-typescript">// ✅ ALWAYS use spread operator
+const updatedUser = {
+  ...user,
+  name: &#39;New Name&#39;
+}
+
+const updatedArray = [...items, newItem]
+
+// ❌ NEVER mutate directly
+user.name = &#39;New Name&#39;  // BAD
+items.push(newItem)     // BAD
+</code></pre>
+<h3>Error Handling</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Comprehensive error handling
+async function fetchData(url: string) {
+  try {
+    const response = await fetch(url)
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error(&#39;Fetch failed:&#39;, error)
+    throw new Error(&#39;Failed to fetch data&#39;)
+  }
+}
+
+// ❌ BAD: No error handling
+async function fetchData(url) {
+  const response = await fetch(url)
+  return response.json()
+}
+</code></pre>
+<h3>Async/Await Best Practices</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Parallel execution when possible
+const [users, markets, stats] = await Promise.all([
+  fetchUsers(),
+  fetchMarkets(),
+  fetchStats()
+])
+
+// ❌ BAD: Sequential when unnecessary
+const users = await fetchUsers()
+const markets = await fetchMarkets()
+const stats = await fetchStats()
+</code></pre>
+<h3>Type Safety</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Proper types
+interface Market {
+  id: string
+  name: string
+  status: &#39;active&#39; | &#39;resolved&#39; | &#39;closed&#39;
+  created_at: Date
+}
+
+function getMarket(id: string): Promise&lt;Market&gt; {
+  // Implementation
+}
+
+// ❌ BAD: Using &#39;any&#39;
+function getMarket(id: any): Promise&lt;any&gt; {
+  // Implementation
+}
+</code></pre>
+<h2>React Best Practices</h2>
+<h3>Component Structure</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Functional component with types
+interface ButtonProps {
+  children: React.ReactNode
+  onClick: () =&gt; void
+  disabled?: boolean
+  variant?: &#39;primary&#39; | &#39;secondary&#39;
+}
+
+export function Button({
+  children,
+  onClick,
+  disabled = false,
+  variant = &#39;primary&#39;
+}: ButtonProps) {
+  return (
+    &lt;button
+      onClick={onClick}
+      disabled={disabled}
+      className={`btn btn-${variant}`}
+    &gt;
+      {children}
+    &lt;/button&gt;
+  )
+}
+
+// ❌ BAD: No types, unclear structure
+export function Button(props) {
+  return &lt;button onClick={props.onClick}&gt;{props.children}&lt;/button&gt;
+}
+</code></pre>
+<h3>Custom Hooks</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Reusable custom hook
+export function useDebounce&lt;T&gt;(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState&lt;T&gt;(value)
+
+  useEffect(() =&gt; {
+    const handler = setTimeout(() =&gt; {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () =&gt; clearTimeout(handler)
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// Usage
+const debouncedQuery = useDebounce(searchQuery, 500)
+</code></pre>
+<h3>State Management</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Proper state updates
+const [count, setCount] = useState(0)
+
+// Functional update for state based on previous state
+setCount(prev =&gt; prev + 1)
+
+// ❌ BAD: Direct state reference
+setCount(count + 1)  // Can be stale in async scenarios
+</code></pre>
+<h3>Conditional Rendering</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Clear conditional rendering
+{isLoading &amp;&amp; &lt;Spinner /&gt;}
+{error &amp;&amp; &lt;ErrorMessage error={error} /&gt;}
+{data &amp;&amp; &lt;DataDisplay data={data} /&gt;}
+
+// ❌ BAD: Ternary hell
+{isLoading ? &lt;Spinner /&gt; : error ? &lt;ErrorMessage error={error} /&gt; : data ? &lt;DataDisplay data={data} /&gt; : null}
+</code></pre>
+<h2>API Design Standards</h2>
+<h3>REST API Conventions</h3>
+<pre><code>GET    /api/markets              # List all markets
+GET    /api/markets/:id          # Get specific market
+POST   /api/markets              # Create new market
+PUT    /api/markets/:id          # Update market (full)
+PATCH  /api/markets/:id          # Update market (partial)
+DELETE /api/markets/:id          # Delete market
+
+# Query parameters for filtering
+GET /api/markets?status=active&amp;limit=10&amp;offset=0
+</code></pre>
+<h3>Response Format</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Consistent response structure
+interface ApiResponse&lt;T&gt; {
+  success: boolean
+  data?: T
+  error?: string
+  meta?: {
+    total: number
+    page: number
+    limit: number
+  }
+}
+
+// Success response
+return NextResponse.json({
+  success: true,
+  data: markets,
+  meta: { total: 100, page: 1, limit: 10 }
+})
+
+// Error response
+return NextResponse.json({
+  success: false,
+  error: &#39;Invalid request&#39;
+}, { status: 400 })
+</code></pre>
+<h3>Input Validation</h3>
+<pre><code class="language-typescript">import { z } from &#39;zod&#39;
+
+// ✅ GOOD: Schema validation
+const CreateMarketSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().min(1).max(2000),
+  endDate: z.string().datetime(),
+  categories: z.array(z.string()).min(1)
+})
+
+export async function POST(request: Request) {
+  const body = await request.json()
+
+  try {
+    const validated = CreateMarketSchema.parse(body)
+    // Proceed with validated data
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({
+        success: false,
+        error: &#39;Validation failed&#39;,
+        details: error.errors
+      }, { status: 400 })
+    }
+  }
+}
+</code></pre>
+<h2>File Organization</h2>
+<h3>Project Structure</h3>
+<pre><code>src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── markets/           # Market pages
+│   └── (auth)/           # Auth pages (route groups)
+├── components/            # React components
+│   ├── ui/               # Generic UI components
+│   ├── forms/            # Form components
+│   └── layouts/          # Layout components
+├── hooks/                # Custom React hooks
+├── lib/                  # Utilities and configs
+│   ├── api/             # API clients
+│   ├── utils/           # Helper functions
+│   └── constants/       # Constants
+├── types/                # TypeScript types
+└── styles/              # Global styles
+</code></pre>
+<h3>File Naming</h3>
+<pre><code>components/Button.tsx          # PascalCase for components
+hooks/useAuth.ts              # camelCase with &#39;use&#39; prefix
+lib/formatDate.ts             # camelCase for utilities
+types/market.types.ts         # camelCase with .types suffix
+</code></pre>
+<h2>Comments &amp; Documentation</h2>
+<h3>When to Comment</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Explain WHY, not WHAT
+// Use exponential backoff to avoid overwhelming the API during outages
+const delay = Math.min(1000 * Math.pow(2, retryCount), 30000)
+
+// Deliberately using mutation here for performance with large arrays
+items.push(newItem)
+
+// ❌ BAD: Stating the obvious
+// Increment counter by 1
+count++
+
+// Set name to user&#39;s name
+name = user.name
+</code></pre>
+<h3>JSDoc for Public APIs</h3>
+<pre><code class="language-typescript">/**
+ * Searches markets using semantic similarity.
+ *
+ * @param query - Natural language search query
+ * @param limit - Maximum number of results (default: 10)
+ * @returns Array of markets sorted by similarity score
+ * @throws {Error} If OpenAI API fails or Redis unavailable
+ *
+ * @example
+ * ```typescript
+ * const results = await searchMarkets(&#39;election&#39;, 5)
+ * console.log(results[0].name) // &quot;Trump vs Biden&quot;
+ * ```
+ */
+export async function searchMarkets(
+  query: string,
+  limit: number = 10
+): Promise&lt;Market[]&gt; {
+  // Implementation
+}
+</code></pre>
+<h2>Performance Best Practices</h2>
+<h3>Memoization</h3>
+<pre><code class="language-typescript">import { useMemo, useCallback } from &#39;react&#39;
+
+// ✅ GOOD: Memoize expensive computations
+const sortedMarkets = useMemo(() =&gt; {
+  return markets.sort((a, b) =&gt; b.volume - a.volume)
+}, [markets])
+
+// ✅ GOOD: Memoize callbacks
+const handleSearch = useCallback((query: string) =&gt; {
+  setSearchQuery(query)
+}, [])
+</code></pre>
+<h3>Lazy Loading</h3>
+<pre><code class="language-typescript">import { lazy, Suspense } from &#39;react&#39;
+
+// ✅ GOOD: Lazy load heavy components
+const HeavyChart = lazy(() =&gt; import(&#39;./HeavyChart&#39;))
+
+export function Dashboard() {
+  return (
+    &lt;Suspense fallback={&lt;Spinner /&gt;}&gt;
+      &lt;HeavyChart /&gt;
+    &lt;/Suspense&gt;
+  )
+}
+</code></pre>
+<h3>Database Queries</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Select only needed columns
+const { data } = await supabase
+  .from(&#39;markets&#39;)
+  .select(&#39;id, name, status&#39;)
+  .limit(10)
+
+// ❌ BAD: Select everything
+const { data } = await supabase
+  .from(&#39;markets&#39;)
+  .select(&#39;*&#39;)
+</code></pre>
+<h2>Testing Standards</h2>
+<h3>Test Structure (AAA Pattern)</h3>
+<pre><code class="language-typescript">test(&#39;calculates similarity correctly&#39;, () =&gt; {
+  // Arrange
+  const vector1 = [1, 0, 0]
+  const vector2 = [0, 1, 0]
+
+  // Act
+  const similarity = calculateCosineSimilarity(vector1, vector2)
+
+  // Assert
+  expect(similarity).toBe(0)
+})
+</code></pre>
+<h3>Test Naming</h3>
+<pre><code class="language-typescript">// ✅ GOOD: Descriptive test names
+test(&#39;returns empty array when no markets match query&#39;, () =&gt; { })
+test(&#39;throws error when OpenAI API key is missing&#39;, () =&gt; { })
+test(&#39;falls back to substring search when Redis unavailable&#39;, () =&gt; { })
+
+// ❌ BAD: Vague test names
+test(&#39;works&#39;, () =&gt; { })
+test(&#39;test search&#39;, () =&gt; { })
+</code></pre>
+<h2>Code Smell Detection</h2>
+<p>Watch for these anti-patterns:</p>
+<h3>1. Long Functions</h3>
+<pre><code class="language-typescript">// ❌ BAD: Function &gt; 50 lines
+function processMarketData() {
+  // 100 lines of code
+}
+
+// ✅ GOOD: Split into smaller functions
+function processMarketData() {
+  const validated = validateData()
+  const transformed = transformData(validated)
+  return saveData(transformed)
+}
+</code></pre>
+<h3>2. Deep Nesting</h3>
+<pre><code class="language-typescript">// ❌ BAD: 5+ levels of nesting
+if (user) {
+  if (user.isAdmin) {
+    if (market) {
+      if (market.isActive) {
+        if (hasPermission) {
+          // Do something
+        }
+      }
+    }
+  }
+}
+
+// ✅ GOOD: Early returns
+if (!user) return
+if (!user.isAdmin) return
+if (!market) return
+if (!market.isActive) return
+if (!hasPermission) return
+
+// Do something
+</code></pre>
+<h3>3. Magic Numbers</h3>
+<pre><code class="language-typescript">// ❌ BAD: Unexplained numbers
+if (retryCount &gt; 3) { }
+setTimeout(callback, 500)
+
+// ✅ GOOD: Named constants
+const MAX_RETRIES = 3
+const DEBOUNCE_DELAY_MS = 500
+
+if (retryCount &gt; MAX_RETRIES) { }
+setTimeout(callback, DEBOUNCE_DELAY_MS)
+</code></pre>
+<p><strong>Remember</strong>: Code quality is not negotiable. Clear, maintainable code enables rapid development and confident refactoring.</p>
+
+</body>
+</html>

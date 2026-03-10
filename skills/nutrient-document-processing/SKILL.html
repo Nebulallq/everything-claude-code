@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: nutrient-document-processing<br>description: Process, convert, OCR, extract, redact, sign, and fill documents using the Nutrient DWS API. Works with PDFs, DOCX, XLSX, PPTX, HTML, and images.<br>origin: ECC</h2>
+<h1>Nutrient Document Processing</h1>
+<p>Process documents with the <a href="https://www.nutrient.io/api/">Nutrient DWS Processor API</a>. Convert formats, extract text and tables, OCR scanned documents, redact PII, add watermarks, digitally sign, and fill PDF forms.</p>
+<h2>Setup</h2>
+<p>Get a free API key at <strong><a href="https://dashboard.nutrient.io/sign_up/?product=processor">nutrient.io</a></strong></p>
+<pre><code class="language-bash">export NUTRIENT_API_KEY=&quot;pdf_live_...&quot;
+</code></pre>
+<p>All requests go to <code>https://api.nutrient.io/build</code> as multipart POST with an <code>instructions</code> JSON field.</p>
+<h2>Operations</h2>
+<h3>Convert Documents</h3>
+<pre><code class="language-bash"># DOCX to PDF
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.docx=@document.docx&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.docx&quot;}]}&#39; \
+  -o output.pdf
+
+# PDF to DOCX
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.pdf=@document.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.pdf&quot;}],&quot;output&quot;:{&quot;type&quot;:&quot;docx&quot;}}&#39; \
+  -o output.docx
+
+# HTML to PDF
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;index.html=@index.html&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;html&quot;:&quot;index.html&quot;}]}&#39; \
+  -o output.pdf
+</code></pre>
+<p>Supported inputs: PDF, DOCX, XLSX, PPTX, DOC, XLS, PPT, PPS, PPSX, ODT, RTF, HTML, JPG, PNG, TIFF, HEIC, GIF, WebP, SVG, TGA, EPS.</p>
+<h3>Extract Text and Data</h3>
+<pre><code class="language-bash"># Extract plain text
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.pdf=@document.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.pdf&quot;}],&quot;output&quot;:{&quot;type&quot;:&quot;text&quot;}}&#39; \
+  -o output.txt
+
+# Extract tables as Excel
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.pdf=@document.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.pdf&quot;}],&quot;output&quot;:{&quot;type&quot;:&quot;xlsx&quot;}}&#39; \
+  -o tables.xlsx
+</code></pre>
+<h3>OCR Scanned Documents</h3>
+<pre><code class="language-bash"># OCR to searchable PDF (supports 100+ languages)
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;scanned.pdf=@scanned.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;scanned.pdf&quot;}],&quot;actions&quot;:[{&quot;type&quot;:&quot;ocr&quot;,&quot;language&quot;:&quot;english&quot;}]}&#39; \
+  -o searchable.pdf
+</code></pre>
+<p>Languages: Supports 100+ languages via ISO 639-2 codes (e.g., <code>eng</code>, <code>deu</code>, <code>fra</code>, <code>spa</code>, <code>jpn</code>, <code>kor</code>, <code>chi_sim</code>, <code>chi_tra</code>, <code>ara</code>, <code>hin</code>, <code>rus</code>). Full language names like <code>english</code> or <code>german</code> also work. See the <a href="https://www.nutrient.io/guides/document-engine/ocr/language-support/">complete OCR language table</a> for all supported codes.</p>
+<h3>Redact Sensitive Information</h3>
+<pre><code class="language-bash"># Pattern-based (SSN, email)
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.pdf=@document.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.pdf&quot;}],&quot;actions&quot;:[{&quot;type&quot;:&quot;redaction&quot;,&quot;strategy&quot;:&quot;preset&quot;,&quot;strategyOptions&quot;:{&quot;preset&quot;:&quot;social-security-number&quot;}},{&quot;type&quot;:&quot;redaction&quot;,&quot;strategy&quot;:&quot;preset&quot;,&quot;strategyOptions&quot;:{&quot;preset&quot;:&quot;email-address&quot;}}]}&#39; \
+  -o redacted.pdf
+
+# Regex-based
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.pdf=@document.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.pdf&quot;}],&quot;actions&quot;:[{&quot;type&quot;:&quot;redaction&quot;,&quot;strategy&quot;:&quot;regex&quot;,&quot;strategyOptions&quot;:{&quot;regex&quot;:&quot;\\b[A-Z]{2}\\d{6}\\b&quot;}}]}&#39; \
+  -o redacted.pdf
+</code></pre>
+<p>Presets: <code>social-security-number</code>, <code>email-address</code>, <code>credit-card-number</code>, <code>international-phone-number</code>, <code>north-american-phone-number</code>, <code>date</code>, <code>time</code>, <code>url</code>, <code>ipv4</code>, <code>ipv6</code>, <code>mac-address</code>, <code>us-zip-code</code>, <code>vin</code>.</p>
+<h3>Add Watermarks</h3>
+<pre><code class="language-bash">curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.pdf=@document.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.pdf&quot;}],&quot;actions&quot;:[{&quot;type&quot;:&quot;watermark&quot;,&quot;text&quot;:&quot;CONFIDENTIAL&quot;,&quot;fontSize&quot;:72,&quot;opacity&quot;:0.3,&quot;rotation&quot;:-45}]}&#39; \
+  -o watermarked.pdf
+</code></pre>
+<h3>Digital Signatures</h3>
+<pre><code class="language-bash"># Self-signed CMS signature
+curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;document.pdf=@document.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;document.pdf&quot;}],&quot;actions&quot;:[{&quot;type&quot;:&quot;sign&quot;,&quot;signatureType&quot;:&quot;cms&quot;}]}&#39; \
+  -o signed.pdf
+</code></pre>
+<h3>Fill PDF Forms</h3>
+<pre><code class="language-bash">curl -X POST https://api.nutrient.io/build \
+  -H &quot;Authorization: Bearer $NUTRIENT_API_KEY&quot; \
+  -F &quot;form.pdf=@form.pdf&quot; \
+  -F &#39;instructions={&quot;parts&quot;:[{&quot;file&quot;:&quot;form.pdf&quot;}],&quot;actions&quot;:[{&quot;type&quot;:&quot;fillForm&quot;,&quot;formFields&quot;:{&quot;name&quot;:&quot;Jane Smith&quot;,&quot;email&quot;:&quot;jane@example.com&quot;,&quot;date&quot;:&quot;2026-02-06&quot;}}]}&#39; \
+  -o filled.pdf
+</code></pre>
+<h2>MCP Server (Alternative)</h2>
+<p>For native tool integration, use the MCP server instead of curl:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;nutrient-dws&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@nutrient-sdk/dws-mcp-server&quot;],
+      &quot;env&quot;: {
+        &quot;NUTRIENT_DWS_API_KEY&quot;: &quot;YOUR_API_KEY&quot;,
+        &quot;SANDBOX_PATH&quot;: &quot;/path/to/working/directory&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h2>When to Use</h2>
+<ul>
+<li>Converting documents between formats (PDF, DOCX, XLSX, PPTX, HTML, images)</li>
+<li>Extracting text, tables, or key-value pairs from PDFs</li>
+<li>OCR on scanned documents or images</li>
+<li>Redacting PII before sharing documents</li>
+<li>Adding watermarks to drafts or confidential documents</li>
+<li>Digitally signing contracts or agreements</li>
+<li>Filling PDF forms programmatically</li>
+</ul>
+<h2>Links</h2>
+<ul>
+<li><a href="https://dashboard.nutrient.io/processor-api/playground/">API Playground</a></li>
+<li><a href="https://www.nutrient.io/guides/dws-processor/">Full API Docs</a></li>
+<li><a href="https://www.npmjs.com/package/@nutrient-sdk/dws-mcp-server">npm MCP Server</a></li>
+</ul>
+
+</body>
+</html>

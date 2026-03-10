@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sessions</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Sessions Command</h1>
+<p>Manage Claude Code session history - list, load, alias, and edit sessions stored in <code>~/.claude/sessions/</code>.</p>
+<h2>Usage</h2>
+<p><code>/sessions [list|load|alias|info|help] [options]</code></p>
+<h2>Actions</h2>
+<h3>List Sessions</h3>
+<p>Display all sessions with metadata, filtering, and pagination.</p>
+<pre><code class="language-bash">/sessions                              # List all sessions (default)
+/sessions list                         # Same as above
+/sessions list --limit 10              # Show 10 sessions
+/sessions list --date 2026-02-01       # Filter by date
+/sessions list --search abc            # Search by session ID
+</code></pre>
+<p><strong>Script:</strong></p>
+<pre><code class="language-bash">node -e &quot;
+const sm = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-manager&#39;);
+const aa = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-aliases&#39;);
+
+const result = sm.getAllSessions({ limit: 20 });
+const aliases = aa.listAliases();
+const aliasMap = {};
+for (const a of aliases) aliasMap[a.sessionPath] = a.name;
+
+console.log(&#39;Sessions (showing &#39; + result.sessions.length + &#39; of &#39; + result.total + &#39;):&#39;);
+console.log(&#39;&#39;);
+console.log(&#39;ID        Date        Time     Size     Lines  Alias&#39;);
+console.log(&#39;────────────────────────────────────────────────────&#39;);
+
+for (const s of result.sessions) {
+  const alias = aliasMap[s.filename] || &#39;&#39;;
+  const size = sm.getSessionSize(s.sessionPath);
+  const stats = sm.getSessionStats(s.sessionPath);
+  const id = s.shortId === &#39;no-id&#39; ? &#39;(none)&#39; : s.shortId.slice(0, 8);
+  const time = s.modifiedTime.toTimeString().slice(0, 5);
+
+  console.log(id.padEnd(8) + &#39; &#39; + s.date + &#39;  &#39; + time + &#39;   &#39; + size.padEnd(7) + &#39;  &#39; + String(stats.lineCount).padEnd(5) + &#39;  &#39; + alias);
+}
+&quot;
+</code></pre>
+<h3>Load Session</h3>
+<p>Load and display a session&#39;s content (by ID or alias).</p>
+<pre><code class="language-bash">/sessions load &lt;id|alias&gt;             # Load session
+/sessions load 2026-02-01             # By date (for no-id sessions)
+/sessions load a1b2c3d4               # By short ID
+/sessions load my-alias               # By alias name
+</code></pre>
+<p><strong>Script:</strong></p>
+<pre><code class="language-bash">node -e &quot;
+const sm = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-manager&#39;);
+const aa = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-aliases&#39;);
+const id = process.argv[1];
+
+// First try to resolve as alias
+const resolved = aa.resolveAlias(id);
+const sessionId = resolved ? resolved.sessionPath : id;
+
+const session = sm.getSessionById(sessionId, true);
+if (!session) {
+  console.log(&#39;Session not found: &#39; + id);
+  process.exit(1);
+}
+
+const stats = sm.getSessionStats(session.sessionPath);
+const size = sm.getSessionSize(session.sessionPath);
+const aliases = aa.getAliasesForSession(session.filename);
+
+console.log(&#39;Session: &#39; + session.filename);
+console.log(&#39;Path: ~/.claude/sessions/&#39; + session.filename);
+console.log(&#39;&#39;);
+console.log(&#39;Statistics:&#39;);
+console.log(&#39;  Lines: &#39; + stats.lineCount);
+console.log(&#39;  Total items: &#39; + stats.totalItems);
+console.log(&#39;  Completed: &#39; + stats.completedItems);
+console.log(&#39;  In progress: &#39; + stats.inProgressItems);
+console.log(&#39;  Size: &#39; + size);
+console.log(&#39;&#39;);
+
+if (aliases.length &gt; 0) {
+  console.log(&#39;Aliases: &#39; + aliases.map(a =&gt; a.name).join(&#39;, &#39;));
+  console.log(&#39;&#39;);
+}
+
+if (session.metadata.title) {
+  console.log(&#39;Title: &#39; + session.metadata.title);
+  console.log(&#39;&#39;);
+}
+
+if (session.metadata.started) {
+  console.log(&#39;Started: &#39; + session.metadata.started);
+}
+
+if (session.metadata.lastUpdated) {
+  console.log(&#39;Last Updated: &#39; + session.metadata.lastUpdated);
+}
+&quot; &quot;$ARGUMENTS&quot;
+</code></pre>
+<h3>Create Alias</h3>
+<p>Create a memorable alias for a session.</p>
+<pre><code class="language-bash">/sessions alias &lt;id&gt; &lt;name&gt;           # Create alias
+/sessions alias 2026-02-01 today-work # Create alias named &quot;today-work&quot;
+</code></pre>
+<p><strong>Script:</strong></p>
+<pre><code class="language-bash">node -e &quot;
+const sm = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-manager&#39;);
+const aa = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-aliases&#39;);
+
+const sessionId = process.argv[1];
+const aliasName = process.argv[2];
+
+if (!sessionId || !aliasName) {
+  console.log(&#39;Usage: /sessions alias &lt;id&gt; &lt;name&gt;&#39;);
+  process.exit(1);
+}
+
+// Get session filename
+const session = sm.getSessionById(sessionId);
+if (!session) {
+  console.log(&#39;Session not found: &#39; + sessionId);
+  process.exit(1);
+}
+
+const result = aa.setAlias(aliasName, session.filename);
+if (result.success) {
+  console.log(&#39;✓ Alias created: &#39; + aliasName + &#39; → &#39; + session.filename);
+} else {
+  console.log(&#39;✗ Error: &#39; + result.error);
+  process.exit(1);
+}
+&quot; &quot;$ARGUMENTS&quot;
+</code></pre>
+<h3>Remove Alias</h3>
+<p>Delete an existing alias.</p>
+<pre><code class="language-bash">/sessions alias --remove &lt;name&gt;        # Remove alias
+/sessions unalias &lt;name&gt;               # Same as above
+</code></pre>
+<p><strong>Script:</strong></p>
+<pre><code class="language-bash">node -e &quot;
+const aa = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-aliases&#39;);
+
+const aliasName = process.argv[1];
+if (!aliasName) {
+  console.log(&#39;Usage: /sessions alias --remove &lt;name&gt;&#39;);
+  process.exit(1);
+}
+
+const result = aa.deleteAlias(aliasName);
+if (result.success) {
+  console.log(&#39;✓ Alias removed: &#39; + aliasName);
+} else {
+  console.log(&#39;✗ Error: &#39; + result.error);
+  process.exit(1);
+}
+&quot; &quot;$ARGUMENTS&quot;
+</code></pre>
+<h3>Session Info</h3>
+<p>Show detailed information about a session.</p>
+<pre><code class="language-bash">/sessions info &lt;id|alias&gt;              # Show session details
+</code></pre>
+<p><strong>Script:</strong></p>
+<pre><code class="language-bash">node -e &quot;
+const sm = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-manager&#39;);
+const aa = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-aliases&#39;);
+
+const id = process.argv[1];
+const resolved = aa.resolveAlias(id);
+const sessionId = resolved ? resolved.sessionPath : id;
+
+const session = sm.getSessionById(sessionId, true);
+if (!session) {
+  console.log(&#39;Session not found: &#39; + id);
+  process.exit(1);
+}
+
+const stats = sm.getSessionStats(session.sessionPath);
+const size = sm.getSessionSize(session.sessionPath);
+const aliases = aa.getAliasesForSession(session.filename);
+
+console.log(&#39;Session Information&#39;);
+console.log(&#39;════════════════════&#39;);
+console.log(&#39;ID:          &#39; + (session.shortId === &#39;no-id&#39; ? &#39;(none)&#39; : session.shortId));
+console.log(&#39;Filename:    &#39; + session.filename);
+console.log(&#39;Date:        &#39; + session.date);
+console.log(&#39;Modified:    &#39; + session.modifiedTime.toISOString().slice(0, 19).replace(&#39;T&#39;, &#39; &#39;));
+console.log(&#39;&#39;);
+console.log(&#39;Content:&#39;);
+console.log(&#39;  Lines:         &#39; + stats.lineCount);
+console.log(&#39;  Total items:   &#39; + stats.totalItems);
+console.log(&#39;  Completed:     &#39; + stats.completedItems);
+console.log(&#39;  In progress:   &#39; + stats.inProgressItems);
+console.log(&#39;  Size:          &#39; + size);
+if (aliases.length &gt; 0) {
+  console.log(&#39;Aliases:     &#39; + aliases.map(a =&gt; a.name).join(&#39;, &#39;));
+}
+&quot; &quot;$ARGUMENTS&quot;
+</code></pre>
+<h3>List Aliases</h3>
+<p>Show all session aliases.</p>
+<pre><code class="language-bash">/sessions aliases                      # List all aliases
+</code></pre>
+<p><strong>Script:</strong></p>
+<pre><code class="language-bash">node -e &quot;
+const aa = require((process.env.CLAUDE_PLUGIN_ROOT||require(&#39;path&#39;).join(require(&#39;os&#39;).homedir(),&#39;.claude&#39;))+&#39;/scripts/lib/session-aliases&#39;);
+
+const aliases = aa.listAliases();
+console.log(&#39;Session Aliases (&#39; + aliases.length + &#39;):&#39;);
+console.log(&#39;&#39;);
+
+if (aliases.length === 0) {
+  console.log(&#39;No aliases found.&#39;);
+} else {
+  console.log(&#39;Name          Session File                    Title&#39;);
+  console.log(&#39;─────────────────────────────────────────────────────────────&#39;);
+  for (const a of aliases) {
+    const name = a.name.padEnd(12);
+    const file = (a.sessionPath.length &gt; 30 ? a.sessionPath.slice(0, 27) + &#39;...&#39; : a.sessionPath).padEnd(30);
+    const title = a.title || &#39;&#39;;
+    console.log(name + &#39; &#39; + file + &#39; &#39; + title);
+  }
+}
+&quot;
+</code></pre>
+<h2>Arguments</h2>
+<p>$ARGUMENTS:</p>
+<ul>
+<li><code>list [options]</code> - List sessions<ul>
+<li><code>--limit &lt;n&gt;</code> - Max sessions to show (default: 50)</li>
+<li><code>--date &lt;YYYY-MM-DD&gt;</code> - Filter by date</li>
+<li><code>--search &lt;pattern&gt;</code> - Search in session ID</li>
+</ul>
+</li>
+<li><code>load &lt;id|alias&gt;</code> - Load session content</li>
+<li><code>alias &lt;id&gt; &lt;name&gt;</code> - Create alias for session</li>
+<li><code>alias --remove &lt;name&gt;</code> - Remove alias</li>
+<li><code>unalias &lt;name&gt;</code> - Same as <code>--remove</code></li>
+<li><code>info &lt;id|alias&gt;</code> - Show session statistics</li>
+<li><code>aliases</code> - List all aliases</li>
+<li><code>help</code> - Show this help</li>
+</ul>
+<h2>Examples</h2>
+<pre><code class="language-bash"># List all sessions
+/sessions list
+
+# Create an alias for today&#39;s session
+/sessions alias 2026-02-01 today
+
+# Load session by alias
+/sessions load today
+
+# Show session info
+/sessions info today
+
+# Remove alias
+/sessions alias --remove today
+
+# List all aliases
+/sessions aliases
+</code></pre>
+<h2>Notes</h2>
+<ul>
+<li>Sessions are stored as markdown files in <code>~/.claude/sessions/</code></li>
+<li>Aliases are stored in <code>~/.claude/session-aliases.json</code></li>
+<li>Session IDs can be shortened (first 4-8 characters usually unique enough)</li>
+<li>Use aliases for frequently referenced sessions</li>
+</ul>
+
+</body>
+</html>

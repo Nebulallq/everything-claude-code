@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>instinct-export</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: instinct-export<br>description: Export instincts from project/global scope to a file<br>command: /instinct-export</h2>
+<h1>Instinct Export Command</h1>
+<p>Exports instincts to a shareable format. Perfect for:</p>
+<ul>
+<li>Sharing with teammates</li>
+<li>Transferring to a new machine</li>
+<li>Contributing to project conventions</li>
+</ul>
+<h2>Usage</h2>
+<pre><code>/instinct-export                           # Export all personal instincts
+/instinct-export --domain testing          # Export only testing instincts
+/instinct-export --min-confidence 0.7      # Only export high-confidence instincts
+/instinct-export --output team-instincts.yaml
+/instinct-export --scope project --output project-instincts.yaml
+</code></pre>
+<h2>What to Do</h2>
+<ol>
+<li>Detect current project context</li>
+<li>Load instincts by selected scope:<ul>
+<li><code>project</code>: current project only</li>
+<li><code>global</code>: global only</li>
+<li><code>all</code>: project + global merged (default)</li>
+</ul>
+</li>
+<li>Apply filters (<code>--domain</code>, <code>--min-confidence</code>)</li>
+<li>Write YAML-style export to file (or stdout if no output path provided)</li>
+</ol>
+<h2>Output Format</h2>
+<p>Creates a YAML file:</p>
+<pre><code class="language-yaml"># Instincts Export
+# Generated: 2025-01-22
+# Source: personal
+# Count: 12 instincts
+
+---
+id: prefer-functional-style
+trigger: &quot;when writing new functions&quot;
+confidence: 0.8
+domain: code-style
+source: session-observation
+scope: project
+project_id: a1b2c3d4e5f6
+project_name: my-app
+---
+
+# Prefer Functional Style
+
+## Action
+Use functional patterns over classes.
+</code></pre>
+<h2>Flags</h2>
+<ul>
+<li><code>--domain &lt;name&gt;</code>: Export only specified domain</li>
+<li><code>--min-confidence &lt;n&gt;</code>: Minimum confidence threshold</li>
+<li><code>--output &lt;file&gt;</code>: Output file path (prints to stdout when omitted)</li>
+<li><code>--scope &lt;project|global|all&gt;</code>: Export scope (default: <code>all</code>)</li>
+</ul>
+
+</body>
+</html>

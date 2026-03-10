@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: security-scan<br>description: Scan your Claude Code configuration (.claude/ directory) for security vulnerabilities, misconfigurations, and injection risks using AgentShield. Checks CLAUDE.md, settings.json, MCP servers, hooks, and agent definitions.<br>origin: ECC</h2>
+<h1>Security Scan Skill</h1>
+<p>Audit your Claude Code configuration for security issues using <a href="https://github.com/affaan-m/agentshield">AgentShield</a>.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Setting up a new Claude Code project</li>
+<li>After modifying <code>.claude/settings.json</code>, <code>CLAUDE.md</code>, or MCP configs</li>
+<li>Before committing configuration changes</li>
+<li>When onboarding to a new repository with existing Claude Code configs</li>
+<li>Periodic security hygiene checks</li>
+</ul>
+<h2>What It Scans</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Checks</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLAUDE.md</code></td>
+<td>Hardcoded secrets, auto-run instructions, prompt injection patterns</td>
+</tr>
+<tr>
+<td><code>settings.json</code></td>
+<td>Overly permissive allow lists, missing deny lists, dangerous bypass flags</td>
+</tr>
+<tr>
+<td><code>mcp.json</code></td>
+<td>Risky MCP servers, hardcoded env secrets, npx supply chain risks</td>
+</tr>
+<tr>
+<td><code>hooks/</code></td>
+<td>Command injection via interpolation, data exfiltration, silent error suppression</td>
+</tr>
+<tr>
+<td><code>agents/*.md</code></td>
+<td>Unrestricted tool access, prompt injection surface, missing model specs</td>
+</tr>
+</tbody></table>
+<h2>Prerequisites</h2>
+<p>AgentShield must be installed. Check and install if needed:</p>
+<pre><code class="language-bash"># Check if installed
+npx ecc-agentshield --version
+
+# Install globally (recommended)
+npm install -g ecc-agentshield
+
+# Or run directly via npx (no install needed)
+npx ecc-agentshield scan .
+</code></pre>
+<h2>Usage</h2>
+<h3>Basic Scan</h3>
+<p>Run against the current project&#39;s <code>.claude/</code> directory:</p>
+<pre><code class="language-bash"># Scan current project
+npx ecc-agentshield scan
+
+# Scan a specific path
+npx ecc-agentshield scan --path /path/to/.claude
+
+# Scan with minimum severity filter
+npx ecc-agentshield scan --min-severity medium
+</code></pre>
+<h3>Output Formats</h3>
+<pre><code class="language-bash"># Terminal output (default) — colored report with grade
+npx ecc-agentshield scan
+
+# JSON — for CI/CD integration
+npx ecc-agentshield scan --format json
+
+# Markdown — for documentation
+npx ecc-agentshield scan --format markdown
+
+# HTML — self-contained dark-theme report
+npx ecc-agentshield scan --format html &gt; security-report.html
+</code></pre>
+<h3>Auto-Fix</h3>
+<p>Apply safe fixes automatically (only fixes marked as auto-fixable):</p>
+<pre><code class="language-bash">npx ecc-agentshield scan --fix
+</code></pre>
+<p>This will:</p>
+<ul>
+<li>Replace hardcoded secrets with environment variable references</li>
+<li>Tighten wildcard permissions to scoped alternatives</li>
+<li>Never modify manual-only suggestions</li>
+</ul>
+<h3>Opus 4.6 Deep Analysis</h3>
+<p>Run the adversarial three-agent pipeline for deeper analysis:</p>
+<pre><code class="language-bash"># Requires ANTHROPIC_API_KEY
+export ANTHROPIC_API_KEY=your-key
+npx ecc-agentshield scan --opus --stream
+</code></pre>
+<p>This runs:</p>
+<ol>
+<li><strong>Attacker (Red Team)</strong> — finds attack vectors</li>
+<li><strong>Defender (Blue Team)</strong> — recommends hardening</li>
+<li><strong>Auditor (Final Verdict)</strong> — synthesizes both perspectives</li>
+</ol>
+<h3>Initialize Secure Config</h3>
+<p>Scaffold a new secure <code>.claude/</code> configuration from scratch:</p>
+<pre><code class="language-bash">npx ecc-agentshield init
+</code></pre>
+<p>Creates:</p>
+<ul>
+<li><code>settings.json</code> with scoped permissions and deny list</li>
+<li><code>CLAUDE.md</code> with security best practices</li>
+<li><code>mcp.json</code> placeholder</li>
+</ul>
+<h3>GitHub Action</h3>
+<p>Add to your CI pipeline:</p>
+<pre><code class="language-yaml">- uses: affaan-m/agentshield@v1
+  with:
+    path: &#39;.&#39;
+    min-severity: &#39;medium&#39;
+    fail-on-findings: true
+</code></pre>
+<h2>Severity Levels</h2>
+<table>
+<thead>
+<tr>
+<th>Grade</th>
+<th>Score</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td>90-100</td>
+<td>Secure configuration</td>
+</tr>
+<tr>
+<td>B</td>
+<td>75-89</td>
+<td>Minor issues</td>
+</tr>
+<tr>
+<td>C</td>
+<td>60-74</td>
+<td>Needs attention</td>
+</tr>
+<tr>
+<td>D</td>
+<td>40-59</td>
+<td>Significant risks</td>
+</tr>
+<tr>
+<td>F</td>
+<td>0-39</td>
+<td>Critical vulnerabilities</td>
+</tr>
+</tbody></table>
+<h2>Interpreting Results</h2>
+<h3>Critical Findings (fix immediately)</h3>
+<ul>
+<li>Hardcoded API keys or tokens in config files</li>
+<li><code>Bash(*)</code> in the allow list (unrestricted shell access)</li>
+<li>Command injection in hooks via <code>${file}</code> interpolation</li>
+<li>Shell-running MCP servers</li>
+</ul>
+<h3>High Findings (fix before production)</h3>
+<ul>
+<li>Auto-run instructions in CLAUDE.md (prompt injection vector)</li>
+<li>Missing deny lists in permissions</li>
+<li>Agents with unnecessary Bash access</li>
+</ul>
+<h3>Medium Findings (recommended)</h3>
+<ul>
+<li>Silent error suppression in hooks (<code>2&gt;/dev/null</code>, <code>|| true</code>)</li>
+<li>Missing PreToolUse security hooks</li>
+<li><code>npx -y</code> auto-install in MCP server configs</li>
+</ul>
+<h3>Info Findings (awareness)</h3>
+<ul>
+<li>Missing descriptions on MCP servers</li>
+<li>Prohibitive instructions correctly flagged as good practice</li>
+</ul>
+<h2>Links</h2>
+<ul>
+<li><strong>GitHub</strong>: <a href="https://github.com/affaan-m/agentshield">github.com/affaan-m/agentshield</a></li>
+<li><strong>npm</strong>: <a href="https://www.npmjs.com/package/ecc-agentshield">npmjs.com/package/ecc-agentshield</a></li>
+</ul>
+
+</body>
+</html>

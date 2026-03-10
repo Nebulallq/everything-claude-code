@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLAUDE</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>CLAUDE.md</h1>
+<p>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</p>
+<h2>Project Overview</h2>
+<p>This is a <strong>Claude Code plugin</strong> - a collection of production-ready agents, skills, hooks, commands, rules, and MCP configurations. The project provides battle-tested workflows for software development using Claude Code.</p>
+<h2>Running Tests</h2>
+<pre><code class="language-bash"># Run all tests
+node tests/run-all.js
+
+# Run individual test files
+node tests/lib/utils.test.js
+node tests/lib/package-manager.test.js
+node tests/hooks/hooks.test.js
+</code></pre>
+<h2>Architecture</h2>
+<p>The project is organized into several core components:</p>
+<ul>
+<li><strong>agents/</strong> - Specialized subagents for delegation (planner, code-reviewer, tdd-guide, etc.)</li>
+<li><strong>skills/</strong> - Workflow definitions and domain knowledge (coding standards, patterns, testing)</li>
+<li><strong>commands/</strong> - Slash commands invoked by users (/tdd, /plan, /e2e, etc.)</li>
+<li><strong>hooks/</strong> - Trigger-based automations (session persistence, pre/post-tool hooks)</li>
+<li><strong>rules/</strong> - Always-follow guidelines (security, coding style, testing requirements)</li>
+<li><strong>mcp-configs/</strong> - MCP server configurations for external integrations</li>
+<li><strong>scripts/</strong> - Cross-platform Node.js utilities for hooks and setup</li>
+<li><strong>tests/</strong> - Test suite for scripts and utilities</li>
+</ul>
+<h2>Key Commands</h2>
+<ul>
+<li><code>/tdd</code> - Test-driven development workflow</li>
+<li><code>/plan</code> - Implementation planning</li>
+<li><code>/e2e</code> - Generate and run E2E tests</li>
+<li><code>/code-review</code> - Quality review</li>
+<li><code>/build-fix</code> - Fix build errors</li>
+<li><code>/learn</code> - Extract patterns from sessions</li>
+<li><code>/skill-create</code> - Generate skills from git history</li>
+</ul>
+<h2>Development Notes</h2>
+<ul>
+<li>Package manager detection: npm, pnpm, yarn, bun (configurable via <code>CLAUDE_PACKAGE_MANAGER</code> env var or project config)</li>
+<li>Cross-platform: Windows, macOS, Linux support via Node.js scripts</li>
+<li>Agent format: Markdown with YAML frontmatter (name, description, tools, model)</li>
+<li>Skill format: Markdown with clear sections for when to use, how it works, examples</li>
+<li>Hook format: JSON with matcher conditions and command/notification hooks</li>
+</ul>
+<h2>Contributing</h2>
+<p>Follow the formats in CONTRIBUTING.md:</p>
+<ul>
+<li>Agents: Markdown with frontmatter (name, description, tools, model)</li>
+<li>Skills: Clear sections (When to Use, How It Works, Examples)</li>
+<li>Commands: Markdown with description frontmatter</li>
+<li>Hooks: JSON with matcher and hooks array</li>
+</ul>
+<p>File naming: lowercase with hyphens (e.g., <code>python-reviewer.md</code>, <code>tdd-workflow.md</code>)</p>
+
+</body>
+</html>

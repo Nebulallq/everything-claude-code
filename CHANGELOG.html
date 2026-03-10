@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHANGELOG</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Changelog</h1>
+<h2>1.8.0 - 2026-03-04</h2>
+<h3>Highlights</h3>
+<ul>
+<li>Harness-first release focused on reliability, eval discipline, and autonomous loop operations.</li>
+<li>Hook runtime now supports profile-based control and targeted hook disabling.</li>
+<li>NanoClaw v2 adds model routing, skill hot-load, branching, search, compaction, export, and metrics.</li>
+</ul>
+<h3>Core</h3>
+<ul>
+<li>Added new commands: <code>/harness-audit</code>, <code>/loop-start</code>, <code>/loop-status</code>, <code>/quality-gate</code>, <code>/model-route</code>.</li>
+<li>Added new skills:<ul>
+<li><code>agent-harness-construction</code></li>
+<li><code>agentic-engineering</code></li>
+<li><code>ralphinho-rfc-pipeline</code></li>
+<li><code>ai-first-engineering</code></li>
+<li><code>enterprise-agent-ops</code></li>
+<li><code>nanoclaw-repl</code></li>
+<li><code>continuous-agent-loop</code></li>
+</ul>
+</li>
+<li>Added new agents:<ul>
+<li><code>harness-optimizer</code></li>
+<li><code>loop-operator</code></li>
+</ul>
+</li>
+</ul>
+<h3>Hook Reliability</h3>
+<ul>
+<li>Fixed SessionStart root resolution with robust fallback search.</li>
+<li>Moved session summary persistence to <code>Stop</code> where transcript payload is available.</li>
+<li>Added quality-gate and cost-tracker hooks.</li>
+<li>Replaced fragile inline hook one-liners with dedicated script files.</li>
+<li>Added <code>ECC_HOOK_PROFILE</code> and <code>ECC_DISABLED_HOOKS</code> controls.</li>
+</ul>
+<h3>Cross-Platform</h3>
+<ul>
+<li>Improved Windows-safe path handling in doc warning logic.</li>
+<li>Hardened observer loop behavior to avoid non-interactive hangs.</li>
+</ul>
+<h3>Notes</h3>
+<ul>
+<li><code>autonomous-loops</code> is kept as a compatibility alias for one release; <code>continuous-agent-loop</code> is the canonical name.</li>
+</ul>
+<h3>Credits</h3>
+<ul>
+<li>inspired by <a href="https://github.com/zarazhangrui">zarazhangrui</a></li>
+<li>homunculus-inspired by <a href="https://github.com/humanplane">humanplane</a></li>
+</ul>
+
+</body>
+</html>

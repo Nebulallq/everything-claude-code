@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>coding-style</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<p>paths:</p>
+<ul>
+<li>&quot;**/*.ts&quot;</li>
+<li>&quot;**/*.tsx&quot;</li>
+<li>&quot;**/*.js&quot;</li>
+<li>&quot;**/*.jsx&quot;</li>
+</ul>
+<hr>
+<h1>TypeScript/JavaScript Coding Style</h1>
+<blockquote>
+<p>This file extends <a href="../common/coding-style.md">common/coding-style.md</a> with TypeScript/JavaScript specific content.</p>
+</blockquote>
+<h2>Immutability</h2>
+<p>Use spread operator for immutable updates:</p>
+<pre><code class="language-typescript">// WRONG: Mutation
+function updateUser(user, name) {
+  user.name = name  // MUTATION!
+  return user
+}
+
+// CORRECT: Immutability
+function updateUser(user, name) {
+  return {
+    ...user,
+    name
+  }
+}
+</code></pre>
+<h2>Error Handling</h2>
+<p>Use async/await with try-catch:</p>
+<pre><code class="language-typescript">try {
+  const result = await riskyOperation()
+  return result
+} catch (error) {
+  console.error(&#39;Operation failed:&#39;, error)
+  throw new Error(&#39;Detailed user-friendly message&#39;)
+}
+</code></pre>
+<h2>Input Validation</h2>
+<p>Use Zod for schema-based validation:</p>
+<pre><code class="language-typescript">import { z } from &#39;zod&#39;
+
+const schema = z.object({
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150)
+})
+
+const validated = schema.parse(input)
+</code></pre>
+<h2>Console.log</h2>
+<ul>
+<li>No <code>console.log</code> statements in production code</li>
+<li>Use proper logging libraries instead</li>
+<li>See hooks for automatic detection</li>
+</ul>
+
+</body>
+</html>

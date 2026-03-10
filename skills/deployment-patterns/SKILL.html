@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: deployment-patterns<br>description: Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checklists for web applications.<br>origin: ECC</h2>
+<h1>Deployment Patterns</h1>
+<p>Production deployment workflows and CI/CD best practices.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Setting up CI/CD pipelines</li>
+<li>Dockerizing an application</li>
+<li>Planning deployment strategy (blue-green, canary, rolling)</li>
+<li>Implementing health checks and readiness probes</li>
+<li>Preparing for a production release</li>
+<li>Configuring environment-specific settings</li>
+</ul>
+<h2>Deployment Strategies</h2>
+<h3>Rolling Deployment (Default)</h3>
+<p>Replace instances gradually — old and new versions run simultaneously during rollout.</p>
+<pre><code>Instance 1: v1 → v2  (update first)
+Instance 2: v1        (still running v1)
+Instance 3: v1        (still running v1)
+
+Instance 1: v2
+Instance 2: v1 → v2  (update second)
+Instance 3: v1
+
+Instance 1: v2
+Instance 2: v2
+Instance 3: v1 → v2  (update last)
+</code></pre>
+<p><strong>Pros:</strong> Zero downtime, gradual rollout<br><strong>Cons:</strong> Two versions run simultaneously — requires backward-compatible changes<br><strong>Use when:</strong> Standard deployments, backward-compatible changes</p>
+<h3>Blue-Green Deployment</h3>
+<p>Run two identical environments. Switch traffic atomically.</p>
+<pre><code>Blue  (v1) ← traffic
+Green (v2)   idle, running new version
+
+# After verification:
+Blue  (v1)   idle (becomes standby)
+Green (v2) ← traffic
+</code></pre>
+<p><strong>Pros:</strong> Instant rollback (switch back to blue), clean cutover<br><strong>Cons:</strong> Requires 2x infrastructure during deployment<br><strong>Use when:</strong> Critical services, zero-tolerance for issues</p>
+<h3>Canary Deployment</h3>
+<p>Route a small percentage of traffic to the new version first.</p>
+<pre><code>v1: 95% of traffic
+v2:  5% of traffic  (canary)
+
+# If metrics look good:
+v1: 50% of traffic
+v2: 50% of traffic
+
+# Final:
+v2: 100% of traffic
+</code></pre>
+<p><strong>Pros:</strong> Catches issues with real traffic before full rollout<br><strong>Cons:</strong> Requires traffic splitting infrastructure, monitoring<br><strong>Use when:</strong> High-traffic services, risky changes, feature flags</p>
+<h2>Docker</h2>
+<h3>Multi-Stage Dockerfile (Node.js)</h3>
+<pre><code class="language-dockerfile"># Stage 1: Install dependencies
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --production=false
+
+# Stage 2: Build
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+RUN npm prune --production
+
+# Stage 3: Production image
+FROM node:22-alpine AS runner
+WORKDIR /app
+
+RUN addgroup -g 1001 -S appgroup &amp;&amp; adduser -S appuser -u 1001
+USER appuser
+
+COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
+COPY --from=builder --chown=appuser:appgroup /app/package.json ./
+
+ENV NODE_ENV=production
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+CMD [&quot;node&quot;, &quot;dist/server.js&quot;]
+</code></pre>
+<h3>Multi-Stage Dockerfile (Go)</h3>
+<pre><code class="language-dockerfile">FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags=&quot;-s -w&quot; -o /server ./cmd/server
+
+FROM alpine:3.19 AS runner
+RUN apk --no-cache add ca-certificates
+RUN adduser -D -u 1001 appuser
+USER appuser
+
+COPY --from=builder /server /server
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:8080/health || exit 1
+CMD [&quot;/server&quot;]
+</code></pre>
+<h3>Multi-Stage Dockerfile (Python/Django)</h3>
+<pre><code class="language-dockerfile">FROM python:3.12-slim AS builder
+WORKDIR /app
+RUN pip install --no-cache-dir uv
+COPY requirements.txt .
+RUN uv pip install --system --no-cache -r requirements.txt
+
+FROM python:3.12-slim AS runner
+WORKDIR /app
+
+RUN useradd -r -u 1001 appuser
+USER appuser
+
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY . .
+
+ENV PYTHONUNBUFFERED=1
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=3s CMD python -c &quot;import urllib.request; urllib.request.urlopen(&#39;http://localhost:8000/health/&#39;)&quot; || exit 1
+CMD [&quot;gunicorn&quot;, &quot;config.wsgi:application&quot;, &quot;--bind&quot;, &quot;0.0.0.0:8000&quot;, &quot;--workers&quot;, &quot;4&quot;]
+</code></pre>
+<h3>Docker Best Practices</h3>
+<pre><code># GOOD practices
+- Use specific version tags (node:22-alpine, not node:latest)
+- Multi-stage builds to minimize image size
+- Run as non-root user
+- Copy dependency files first (layer caching)
+- Use .dockerignore to exclude node_modules, .git, tests
+- Add HEALTHCHECK instruction
+- Set resource limits in docker-compose or k8s
+
+# BAD practices
+- Running as root
+- Using :latest tags
+- Copying entire repo in one COPY layer
+- Installing dev dependencies in production image
+- Storing secrets in image (use env vars or secrets manager)
+</code></pre>
+<h2>CI/CD Pipeline</h2>
+<h3>GitHub Actions (Standard Pipeline)</h3>
+<pre><code class="language-yaml">name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == &#39;refs/heads/main&#39;
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == &#39;refs/heads/main&#39;
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: |
+          # Platform-specific deployment command
+          # Railway: railway up
+          # Vercel: vercel --prod
+          # K8s: kubectl set image deployment/app app=ghcr.io/${{ github.repository }}:${{ github.sha }}
+          echo &quot;Deploying ${{ github.sha }}&quot;
+</code></pre>
+<h3>Pipeline Stages</h3>
+<pre><code>PR opened:
+  lint → typecheck → unit tests → integration tests → preview deploy
+
+Merged to main:
+  lint → typecheck → unit tests → integration tests → build image → deploy staging → smoke tests → deploy production
+</code></pre>
+<h2>Health Checks</h2>
+<h3>Health Check Endpoint</h3>
+<pre><code class="language-typescript">// Simple health check
+app.get(&quot;/health&quot;, (req, res) =&gt; {
+  res.status(200).json({ status: &quot;ok&quot; });
+});
+
+// Detailed health check (for internal monitoring)
+app.get(&quot;/health/detailed&quot;, async (req, res) =&gt; {
+  const checks = {
+    database: await checkDatabase(),
+    redis: await checkRedis(),
+    externalApi: await checkExternalApi(),
+  };
+
+  const allHealthy = Object.values(checks).every(c =&gt; c.status === &quot;ok&quot;);
+
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? &quot;ok&quot; : &quot;degraded&quot;,
+    timestamp: new Date().toISOString(),
+    version: process.env.APP_VERSION || &quot;unknown&quot;,
+    uptime: process.uptime(),
+    checks,
+  });
+});
+
+async function checkDatabase(): Promise&lt;HealthCheck&gt; {
+  try {
+    await db.query(&quot;SELECT 1&quot;);
+    return { status: &quot;ok&quot;, latency_ms: 2 };
+  } catch (err) {
+    return { status: &quot;error&quot;, message: &quot;Database unreachable&quot; };
+  }
+}
+</code></pre>
+<h3>Kubernetes Probes</h3>
+<pre><code class="language-yaml">livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 2
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  failureThreshold: 30    # 30 * 5s = 150s max startup time
+</code></pre>
+<h2>Environment Configuration</h2>
+<h3>Twelve-Factor App Pattern</h3>
+<pre><code class="language-bash"># All config via environment variables — never in code
+DATABASE_URL=postgres://user:pass@host:5432/db
+REDIS_URL=redis://host:6379/0
+API_KEY=${API_KEY}           # injected by secrets manager
+LOG_LEVEL=info
+PORT=3000
+
+# Environment-specific behavior
+NODE_ENV=production          # or staging, development
+APP_ENV=production           # explicit app environment
+</code></pre>
+<h3>Configuration Validation</h3>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+const envSchema = z.object({
+  NODE_ENV: z.enum([&quot;development&quot;, &quot;staging&quot;, &quot;production&quot;]),
+  PORT: z.coerce.number().default(3000),
+  DATABASE_URL: z.string().url(),
+  REDIS_URL: z.string().url(),
+  JWT_SECRET: z.string().min(32),
+  LOG_LEVEL: z.enum([&quot;debug&quot;, &quot;info&quot;, &quot;warn&quot;, &quot;error&quot;]).default(&quot;info&quot;),
+});
+
+// Validate at startup — fail fast if config is wrong
+export const env = envSchema.parse(process.env);
+</code></pre>
+<h2>Rollback Strategy</h2>
+<h3>Instant Rollback</h3>
+<pre><code class="language-bash"># Docker/Kubernetes: point to previous image
+kubectl rollout undo deployment/app
+
+# Vercel: promote previous deployment
+vercel rollback
+
+# Railway: redeploy previous commit
+railway up --commit &lt;previous-sha&gt;
+
+# Database: rollback migration (if reversible)
+npx prisma migrate resolve --rolled-back &lt;migration-name&gt;
+</code></pre>
+<h3>Rollback Checklist</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Previous image/artifact is available and tagged</li>
+<li><input disabled="" type="checkbox"> Database migrations are backward-compatible (no destructive changes)</li>
+<li><input disabled="" type="checkbox"> Feature flags can disable new features without deploy</li>
+<li><input disabled="" type="checkbox"> Monitoring alerts configured for error rate spikes</li>
+<li><input disabled="" type="checkbox"> Rollback tested in staging before production release</li>
+</ul>
+<h2>Production Readiness Checklist</h2>
+<p>Before any production deployment:</p>
+<h3>Application</h3>
+<ul>
+<li><input disabled="" type="checkbox"> All tests pass (unit, integration, E2E)</li>
+<li><input disabled="" type="checkbox"> No hardcoded secrets in code or config files</li>
+<li><input disabled="" type="checkbox"> Error handling covers all edge cases</li>
+<li><input disabled="" type="checkbox"> Logging is structured (JSON) and does not contain PII</li>
+<li><input disabled="" type="checkbox"> Health check endpoint returns meaningful status</li>
+</ul>
+<h3>Infrastructure</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Docker image builds reproducibly (pinned versions)</li>
+<li><input disabled="" type="checkbox"> Environment variables documented and validated at startup</li>
+<li><input disabled="" type="checkbox"> Resource limits set (CPU, memory)</li>
+<li><input disabled="" type="checkbox"> Horizontal scaling configured (min/max instances)</li>
+<li><input disabled="" type="checkbox"> SSL/TLS enabled on all endpoints</li>
+</ul>
+<h3>Monitoring</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Application metrics exported (request rate, latency, errors)</li>
+<li><input disabled="" type="checkbox"> Alerts configured for error rate &gt; threshold</li>
+<li><input disabled="" type="checkbox"> Log aggregation set up (structured logs, searchable)</li>
+<li><input disabled="" type="checkbox"> Uptime monitoring on health endpoint</li>
+</ul>
+<h3>Security</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Dependencies scanned for CVEs</li>
+<li><input disabled="" type="checkbox"> CORS configured for allowed origins only</li>
+<li><input disabled="" type="checkbox"> Rate limiting enabled on public endpoints</li>
+<li><input disabled="" type="checkbox"> Authentication and authorization verified</li>
+<li><input disabled="" type="checkbox"> Security headers set (CSP, HSTS, X-Frame-Options)</li>
+</ul>
+<h3>Operations</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Rollback plan documented and tested</li>
+<li><input disabled="" type="checkbox"> Database migration tested against production-sized data</li>
+<li><input disabled="" type="checkbox"> Runbook for common failure scenarios</li>
+<li><input disabled="" type="checkbox"> On-call rotation and escalation path defined</li>
+</ul>
+
+</body>
+</html>

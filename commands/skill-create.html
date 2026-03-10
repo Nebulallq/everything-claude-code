@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>skill-create</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: skill-create<br>description: Analyze local git history to extract coding patterns and generate SKILL.md files. Local version of the Skill Creator GitHub App.<br>allowed_tools: [&quot;Bash&quot;, &quot;Read&quot;, &quot;Write&quot;, &quot;Grep&quot;, &quot;Glob&quot;]</h2>
+<h1>/skill-create - Local Skill Generation</h1>
+<p>Analyze your repository&#39;s git history to extract coding patterns and generate SKILL.md files that teach Claude your team&#39;s practices.</p>
+<h2>Usage</h2>
+<pre><code class="language-bash">/skill-create                    # Analyze current repo
+/skill-create --commits 100      # Analyze last 100 commits
+/skill-create --output ./skills  # Custom output directory
+/skill-create --instincts        # Also generate instincts for continuous-learning-v2
+</code></pre>
+<h2>What It Does</h2>
+<ol>
+<li><strong>Parses Git History</strong> - Analyzes commits, file changes, and patterns</li>
+<li><strong>Detects Patterns</strong> - Identifies recurring workflows and conventions</li>
+<li><strong>Generates SKILL.md</strong> - Creates valid Claude Code skill files</li>
+<li><strong>Optionally Creates Instincts</strong> - For the continuous-learning-v2 system</li>
+</ol>
+<h2>Analysis Steps</h2>
+<h3>Step 1: Gather Git Data</h3>
+<pre><code class="language-bash"># Get recent commits with file changes
+git log --oneline -n ${COMMITS:-200} --name-only --pretty=format:&quot;%H|%s|%ad&quot; --date=short
+
+# Get commit frequency by file
+git log --oneline -n 200 --name-only | grep -v &quot;^$&quot; | grep -v &quot;^[a-f0-9]&quot; | sort | uniq -c | sort -rn | head -20
+
+# Get commit message patterns
+git log --oneline -n 200 | cut -d&#39; &#39; -f2- | head -50
+</code></pre>
+<h3>Step 2: Detect Patterns</h3>
+<p>Look for these pattern types:</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Detection Method</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Commit conventions</strong></td>
+<td>Regex on commit messages (feat:, fix:, chore:)</td>
+</tr>
+<tr>
+<td><strong>File co-changes</strong></td>
+<td>Files that always change together</td>
+</tr>
+<tr>
+<td><strong>Workflow sequences</strong></td>
+<td>Repeated file change patterns</td>
+</tr>
+<tr>
+<td><strong>Architecture</strong></td>
+<td>Folder structure and naming conventions</td>
+</tr>
+<tr>
+<td><strong>Testing patterns</strong></td>
+<td>Test file locations, naming, coverage</td>
+</tr>
+</tbody></table>
+<h3>Step 3: Generate SKILL.md</h3>
+<p>Output format:</p>
+<pre><code class="language-markdown">---
+name: {repo-name}-patterns
+description: Coding patterns extracted from {repo-name}
+version: 1.0.0
+source: local-git-analysis
+analyzed_commits: {count}
+---
+
+# {Repo Name} Patterns
+
+## Commit Conventions
+{detected commit message patterns}
+
+## Code Architecture
+{detected folder structure and organization}
+
+## Workflows
+{detected repeating file change patterns}
+
+## Testing Patterns
+{detected test conventions}
+</code></pre>
+<h3>Step 4: Generate Instincts (if --instincts)</h3>
+<p>For continuous-learning-v2 integration:</p>
+<pre><code class="language-yaml">---
+id: {repo}-commit-convention
+trigger: &quot;when writing a commit message&quot;
+confidence: 0.8
+domain: git
+source: local-repo-analysis
+---
+
+# Use Conventional Commits
+
+## Action
+Prefix commits with: feat:, fix:, chore:, docs:, test:, refactor:
+
+## Evidence
+- Analyzed {n} commits
+- {percentage}% follow conventional commit format
+</code></pre>
+<h2>Example Output</h2>
+<p>Running <code>/skill-create</code> on a TypeScript project might produce:</p>
+<pre><code class="language-markdown">---
+name: my-app-patterns
+description: Coding patterns from my-app repository
+version: 1.0.0
+source: local-git-analysis
+analyzed_commits: 150
+---
+
+# My App Patterns
+
+## Commit Conventions
+
+This project uses **conventional commits**:
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `chore:` - Maintenance tasks
+- `docs:` - Documentation updates
+
+## Code Architecture
+</code></pre>
+<p>src/<br>├── components/     # React components (PascalCase.tsx)<br>├── hooks/          # Custom hooks (use*.ts)<br>├── utils/          # Utility functions<br>├── types/          # TypeScript type definitions<br>└── services/       # API and external services</p>
+<pre><code>
+## Workflows
+
+### Adding a New Component
+1. Create `src/components/ComponentName.tsx`
+2. Add tests in `src/components/__tests__/ComponentName.test.tsx`
+3. Export from `src/components/index.ts`
+
+### Database Migration
+1. Modify `src/db/schema.ts`
+2. Run `pnpm db:generate`
+3. Run `pnpm db:migrate`
+
+## Testing Patterns
+
+- Test files: `__tests__/` directories or `.test.ts` suffix
+- Coverage target: 80%+
+- Framework: Vitest
+</code></pre>
+<h2>GitHub App Integration</h2>
+<p>For advanced features (10k+ commits, team sharing, auto-PRs), use the <a href="https://github.com/apps/skill-creator">Skill Creator GitHub App</a>:</p>
+<ul>
+<li>Install: <a href="https://github.com/apps/skill-creator">github.com/apps/skill-creator</a></li>
+<li>Comment <code>/skill-creator analyze</code> on any issue</li>
+<li>Receives PR with generated skills</li>
+</ul>
+<h2>Related Commands</h2>
+<ul>
+<li><code>/instinct-import</code> - Import generated instincts</li>
+<li><code>/instinct-status</code> - View learned instincts</li>
+<li><code>/evolve</code> - Cluster instincts into skills/agents</li>
+</ul>
+<hr>
+<p><em>Part of <a href="https://github.com/affaan-m/everything-claude-code">Everything Claude Code</a></em></p>
+
+</body>
+</html>

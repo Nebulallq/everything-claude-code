@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>instinct-import</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: instinct-import<br>description: Import instincts from file or URL into project/global scope<br>command: true</h2>
+<h1>Instinct Import Command</h1>
+<h2>Implementation</h2>
+<p>Run the instinct CLI using the plugin root path:</p>
+<pre><code class="language-bash">python3 &quot;${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py&quot; import &lt;file-or-url&gt; [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
+</code></pre>
+<p>Or if <code>CLAUDE_PLUGIN_ROOT</code> is not set (manual installation):</p>
+<pre><code class="language-bash">python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py import &lt;file-or-url&gt;
+</code></pre>
+<p>Import instincts from local file paths or HTTP(S) URLs.</p>
+<h2>Usage</h2>
+<pre><code>/instinct-import team-instincts.yaml
+/instinct-import https://github.com/org/repo/instincts.yaml
+/instinct-import team-instincts.yaml --dry-run
+/instinct-import team-instincts.yaml --scope global --force
+</code></pre>
+<h2>What to Do</h2>
+<ol>
+<li>Fetch the instinct file (local path or URL)</li>
+<li>Parse and validate the format</li>
+<li>Check for duplicates with existing instincts</li>
+<li>Merge or add new instincts</li>
+<li>Save to inherited instincts directory:<ul>
+<li>Project scope: <code>~/.claude/homunculus/projects/&lt;project-id&gt;/instincts/inherited/</code></li>
+<li>Global scope: <code>~/.claude/homunculus/instincts/inherited/</code></li>
+</ul>
+</li>
+</ol>
+<h2>Import Process</h2>
+<pre><code>📥 Importing instincts from: team-instincts.yaml
+================================================
+
+Found 12 instincts to import.
+
+Analyzing conflicts...
+
+## New Instincts (8)
+These will be added:
+  ✓ use-zod-validation (confidence: 0.7)
+  ✓ prefer-named-exports (confidence: 0.65)
+  ✓ test-async-functions (confidence: 0.8)
+  ...
+
+## Duplicate Instincts (3)
+Already have similar instincts:
+  ⚠️ prefer-functional-style
+     Local: 0.8 confidence, 12 observations
+     Import: 0.7 confidence
+     → Keep local (higher confidence)
+
+  ⚠️ test-first-workflow
+     Local: 0.75 confidence
+     Import: 0.9 confidence
+     → Update to import (higher confidence)
+
+Import 8 new, update 1?
+</code></pre>
+<h2>Merge Behavior</h2>
+<p>When importing an instinct with an existing ID:</p>
+<ul>
+<li>Higher-confidence import becomes an update candidate</li>
+<li>Equal/lower-confidence import is skipped</li>
+<li>User confirms unless <code>--force</code> is used</li>
+</ul>
+<h2>Source Tracking</h2>
+<p>Imported instincts are marked with:</p>
+<pre><code class="language-yaml">source: inherited
+scope: project
+imported_from: &quot;team-instincts.yaml&quot;
+project_id: &quot;a1b2c3d4e5f6&quot;
+project_name: &quot;my-project&quot;
+</code></pre>
+<h2>Flags</h2>
+<ul>
+<li><code>--dry-run</code>: Preview without importing</li>
+<li><code>--force</code>: Skip confirmation prompt</li>
+<li><code>--min-confidence &lt;n&gt;</code>: Only import instincts above threshold</li>
+<li><code>--scope &lt;project|global&gt;</code>: Select target scope (default: <code>project</code>)</li>
+</ul>
+<h2>Output</h2>
+<p>After import:</p>
+<pre><code>✅ Import complete!
+
+Added: 8 instincts
+Updated: 1 instinct
+Skipped: 3 instincts (equal/higher confidence already exists)
+
+New instincts saved to: ~/.claude/homunculus/instincts/inherited/
+
+Run /instinct-status to see all instincts.
+</code></pre>
+
+</body>
+</html>

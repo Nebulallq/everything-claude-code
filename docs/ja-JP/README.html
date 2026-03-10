@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<p><strong>言語:</strong> English | <a href="../../README.zh-CN.md">简体中文</a> | <a href="docs/zh-TW/README.md">繁體中文</a> | <a href="docs/ja-JP/README.md">日本語</a></p>
+<h1>Everything Claude Code</h1>
+<p><a href="https://github.com/affaan-m/everything-claude-code/stargazers"><img src="https://img.shields.io/github/stars/affaan-m/everything-claude-code?style=flat" alt="Stars"></a><br><a href="https://github.com/affaan-m/everything-claude-code/network/members"><img src="https://img.shields.io/github/forks/affaan-m/everything-claude-code?style=flat" alt="Forks"></a><br><a href="https://github.com/affaan-m/everything-claude-code/graphs/contributors"><img src="https://img.shields.io/github/contributors/affaan-m/everything-claude-code?style=flat" alt="Contributors"></a><br><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a><br><img src="https://img.shields.io/badge/-Shell-4EAA25?logo=gnu-bash&logoColor=white" alt="Shell"><br><img src="https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"><br><img src="https://img.shields.io/badge/-Python-3776AB?logo=python&logoColor=white" alt="Python"><br><img src="https://img.shields.io/badge/-Go-00ADD8?logo=go&logoColor=white" alt="Go"><br><img src="https://img.shields.io/badge/-Java-ED8B00?logo=openjdk&logoColor=white" alt="Java"><br><img src="https://img.shields.io/badge/-Markdown-000000?logo=markdown&logoColor=white" alt="Markdown"></p>
+<blockquote>
+<p><strong>42K+ stars</strong> | <strong>5K+ forks</strong> | <strong>24 contributors</strong> | <strong>6 languages supported</strong></p>
+</blockquote>
+<hr>
+<div align="center">
+
+<p><strong>🌐 言語 / Language / 語言</strong></p>
+<p><a href="README.md"><strong>English</strong></a> | <a href="README.zh-CN.md">简体中文</a> | <a href="docs/zh-TW/README.md">繁體中文</a> | <a href="docs/ja-JP/README.md">日本語</a></p>
+</div>
+
+<hr>
+<p><strong>Anthropicハッカソン優勝者による完全なClaude Code設定集。</strong></p>
+<p>10ヶ月以上の集中的な日常使用により、実際のプロダクト構築の過程で進化した、本番環境対応のエージェント、スキル、フック、コマンド、ルール、MCP設定。</p>
+<hr>
+<h2>ガイド</h2>
+<p>このリポジトリには、原始コードのみが含まれています。ガイドがすべてを説明しています。</p>
+<table>
+<tr>
+<td width="50%">
+<a href="https://x.com/affaanmustafa/status/2012378465664745795">
+<img src="https://github.com/user-attachments/assets/1a471488-59cc-425b-8345-5245c7efbcef" alt="The Shorthand Guide to Everything Claude Code" />
+</a>
+</td>
+<td width="50%">
+<a href="https://x.com/affaanmustafa/status/2014040193557471352">
+<img src="https://github.com/user-attachments/assets/c9ca43bc-b149-427f-b551-af6840c368f0" alt="The Longform Guide to Everything Claude Code" />
+</a>
+</td>
+</tr>
+<tr>
+<td align="center"><b>簡潔ガイド</b><br/>セットアップ、基礎、哲学。<b>まずこれを読んでください。</b></td>
+<td align="center"><b>長文ガイド</b><br/>トークン最適化、メモリ永続化、評価、並列化。</td>
+</tr>
+</table>
+
+<table>
+<thead>
+<tr>
+<th>トピック</th>
+<th>学べる内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>トークン最適化</td>
+<td>モデル選択、システムプロンプト削減、バックグラウンドプロセス</td>
+</tr>
+<tr>
+<td>メモリ永続化</td>
+<td>セッション間でコンテキストを自動保存/読み込みするフック</td>
+</tr>
+<tr>
+<td>継続的学習</td>
+<td>セッションからパターンを自動抽出して再利用可能なスキルに変換</td>
+</tr>
+<tr>
+<td>検証ループ</td>
+<td>チェックポイントと継続的評価、スコアラータイプ、pass@k メトリクス</td>
+</tr>
+<tr>
+<td>並列化</td>
+<td>Git ワークツリー、カスケード方法、スケーリング時期</td>
+</tr>
+<tr>
+<td>サブエージェント オーケストレーション</td>
+<td>コンテキスト問題、反復検索パターン</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>新機能</h2>
+<h3>v1.4.1 — バグ修正（2026年2月）</h3>
+<ul>
+<li><strong>instinctインポート時のコンテンツ喪失を修正</strong> — <code>/instinct-import</code>実行時に<code>parse_instinct_file()</code>がfrontmatter後のすべてのコンテンツ（Action、Evidence、Examplesセクション）を暗黙的に削除していた問題を修正。コミュニティ貢献者@ericcai0814により解決されました（<a href="https://github.com/affaan-m/everything-claude-code/issues/148">#148</a>, <a href="https://github.com/affaan-m/everything-claude-code/pull/161">#161</a>）</li>
+</ul>
+<h3>v1.4.0 — マルチ言語ルール、インストールウィザード &amp; PM2（2026年2月）</h3>
+<ul>
+<li><strong>インタラクティブインストールウィザード</strong> — 新しい<code>configure-ecc</code>スキルがマージ/上書き検出付きガイドセットアップを提供</li>
+<li><strong>PM2 &amp; マルチエージェントオーケストレーション</strong> — 複雑なマルチサービスワークフロー管理用の6つの新コマンド（<code>/pm2</code>, <code>/multi-plan</code>, <code>/multi-execute</code>, <code>/multi-backend</code>, <code>/multi-frontend</code>, <code>/multi-workflow</code>）</li>
+<li><strong>マルチ言語ルールアーキテクチャ</strong> — ルールをフラットファイルから<code>common/</code> + <code>typescript/</code> + <code>python/</code> + <code>golang/</code>ディレクトリに再構成。必要な言語のみインストール可能</li>
+<li><strong>中国語（zh-CN）翻訳</strong> — すべてのエージェント、コマンド、スキル、ルールの完全翻訳（80+ファイル）</li>
+<li><strong>GitHub Sponsorsサポート</strong> — GitHub Sponsors経由でプロジェクトをスポンサー可能</li>
+<li><strong>強化されたCONTRIBUTING.md</strong> — 各貢献タイプ向けの詳細なPRテンプレート</li>
+</ul>
+<h3>v1.3.0 — OpenCodeプラグイン対応（2026年2月）</h3>
+<ul>
+<li><strong>フルOpenCode統合</strong> — 20+イベントタイプを通じてOpenCodeのプラグインシステムでフック対応の12エージェント、24コマンド、16スキル</li>
+<li><strong>3つのネイティブカスタムツール</strong> — run-tests、check-coverage、security-audit</li>
+<li><strong>LLMドキュメンテーション</strong> — 包括的なOpenCodeドキュメント用の<code>llms.txt</code></li>
+</ul>
+<h3>v1.2.0 — 統合コマンド &amp; スキル（2026年2月）</h3>
+<ul>
+<li><strong>Python/Djangoサポート</strong> — Djangoパターン、セキュリティ、TDD、検証スキル</li>
+<li><strong>Java Spring Bootスキル</strong> — Spring Boot用パターン、セキュリティ、TDD、検証</li>
+<li><strong>セッション管理</strong> — セッション履歴用の<code>/sessions</code>コマンド</li>
+<li><strong>継続的学習 v2</strong> — 信頼度スコアリング、インポート/エクスポート、進化を伴うinstinctベースの学習</li>
+</ul>
+<p>完全なチェンジログは<a href="https://github.com/affaan-m/everything-claude-code/releases">Releases</a>を参照してください。</p>
+<hr>
+<h2>🚀 クイックスタート</h2>
+<p>2分以内に起動できます：</p>
+<h3>ステップ 1：プラグインをインストール</h3>
+<pre><code class="language-bash"># マーケットプレイスを追加
+/plugin marketplace add affaan-m/everything-claude-code
+
+# プラグインをインストール
+/plugin install everything-claude-code@everything-claude-code
+</code></pre>
+<h3>ステップ2：ルールをインストール（必須）</h3>
+<blockquote>
+<p>⚠️ <strong>重要:</strong> Claude Codeプラグインは<code>rules</code>を自動配布できません。手動でインストールしてください：</p>
+</blockquote>
+<pre><code class="language-bash"># まずリポジトリをクローン
+git clone https://github.com/affaan-m/everything-claude-code.git
+
+# 共通ルールをインストール（必須）
+cp -r everything-claude-code/rules/common/* ~/.claude/rules/
+
+# 言語固有ルールをインストール（スタックを選択）
+cp -r everything-claude-code/rules/typescript/* ~/.claude/rules/
+cp -r everything-claude-code/rules/python/* ~/.claude/rules/
+cp -r everything-claude-code/rules/golang/* ~/.claude/rules/
+</code></pre>
+<h3>ステップ3：使用開始</h3>
+<pre><code class="language-bash"># コマンドを試す（プラグインはネームスペース形式）
+/everything-claude-code:plan &quot;ユーザー認証を追加&quot;
+
+# 手動インストール（オプション2）は短縮形式：
+# /plan &quot;ユーザー認証を追加&quot;
+
+# 利用可能なコマンドを確認
+/plugin list everything-claude-code@everything-claude-code
+</code></pre>
+<p>✨ <strong>完了です！</strong> これで13のエージェント、43のスキル、31のコマンドにアクセスできます。</p>
+<hr>
+<h2>🌐 クロスプラットフォーム対応</h2>
+<p>このプラグインは <strong>Windows、macOS、Linux</strong> を完全にサポートしています。すべてのフックとスクリプトが Node.js で書き直され、最大の互換性を実現しています。</p>
+<h3>パッケージマネージャー検出</h3>
+<p>プラグインは、以下の優先順位で、お好みのパッケージマネージャー（npm、pnpm、yarn、bun）を自動検出します：</p>
+<ol>
+<li><strong>環境変数</strong>: <code>CLAUDE_PACKAGE_MANAGER</code></li>
+<li><strong>プロジェクト設定</strong>: <code>.claude/package-manager.json</code></li>
+<li><strong>package.json</strong>: <code>packageManager</code> フィールド</li>
+<li><strong>ロックファイル</strong>: package-lock.json、yarn.lock、pnpm-lock.yaml、bun.lockb から検出</li>
+<li><strong>グローバル設定</strong>: <code>~/.claude/package-manager.json</code></li>
+<li><strong>フォールバック</strong>: 最初に利用可能なパッケージマネージャー</li>
+</ol>
+<p>お好みのパッケージマネージャーを設定するには：</p>
+<pre><code class="language-bash"># 環境変数経由
+export CLAUDE_PACKAGE_MANAGER=pnpm
+
+# グローバル設定経由
+node scripts/setup-package-manager.js --global pnpm
+
+# プロジェクト設定経由
+node scripts/setup-package-manager.js --project bun
+
+# 現在の設定を検出
+node scripts/setup-package-manager.js --detect
+</code></pre>
+<p>または Claude Code で <code>/setup-pm</code> コマンドを使用。</p>
+<hr>
+<h2>📦 含まれるもの</h2>
+<p>このリポジトリは<strong>Claude Codeプラグイン</strong>です - 直接インストールするか、コンポーネントを手動でコピーできます。</p>
+<pre><code>everything-claude-code/
+|-- .claude-plugin/   # プラグインとマーケットプレイスマニフェスト
+|   |-- plugin.json         # プラグインメタデータとコンポーネントパス
+|   |-- marketplace.json    # /plugin marketplace add 用のマーケットプレイスカタログ
+|
+|-- agents/           # 委任用の専門サブエージェント
+|   |-- planner.md           # 機能実装計画
+|   |-- architect.md         # システム設計決定
+|   |-- tdd-guide.md         # テスト駆動開発
+|   |-- code-reviewer.md     # 品質とセキュリティレビュー
+|   |-- security-reviewer.md # 脆弱性分析
+|   |-- build-error-resolver.md
+|   |-- e2e-runner.md        # Playwright E2E テスト
+|   |-- refactor-cleaner.md  # デッドコード削除
+|   |-- doc-updater.md       # ドキュメント同期
+|   |-- go-reviewer.md       # Go コードレビュー
+|   |-- go-build-resolver.md # Go ビルドエラー解決
+|   |-- python-reviewer.md   # Python コードレビュー（新規）
+|   |-- database-reviewer.md # データベース/Supabase レビュー（新規）
+|
+|-- skills/           # ワークフロー定義と領域知識
+|   |-- coding-standards/           # 言語ベストプラクティス
+|   |-- backend-patterns/           # API、データベース、キャッシュパターン
+|   |-- frontend-patterns/          # React、Next.js パターン
+|   |-- continuous-learning/        # セッションからパターンを自動抽出（長文ガイド）
+|   |-- continuous-learning-v2/     # 信頼度スコア付き直感ベース学習
+|   |-- iterative-retrieval/        # サブエージェント用の段階的コンテキスト精製
+|   |-- strategic-compact/          # 手動圧縮提案（長文ガイド）
+|   |-- tdd-workflow/               # TDD 方法論
+|   |-- security-review/            # セキュリティチェックリスト
+|   |-- eval-harness/               # 検証ループ評価（長文ガイド）
+|   |-- verification-loop/          # 継続的検証（長文ガイド）
+|   |-- golang-patterns/            # Go イディオムとベストプラクティス
+|   |-- golang-testing/             # Go テストパターン、TDD、ベンチマーク
+|   |-- cpp-testing/                # C++ テスト GoogleTest、CMake/CTest（新規）
+|   |-- django-patterns/            # Django パターン、モデル、ビュー（新規）
+|   |-- django-security/            # Django セキュリティベストプラクティス（新規）
+|   |-- django-tdd/                 # Django TDD ワークフロー（新規）
+|   |-- django-verification/        # Django 検証ループ（新規）
+|   |-- python-patterns/            # Python イディオムとベストプラクティス（新規）
+|   |-- python-testing/             # pytest を使った Python テスト（新規）
+|   |-- springboot-patterns/        # Java Spring Boot パターン（新規）
+|   |-- springboot-security/        # Spring Boot セキュリティ（新規）
+|   |-- springboot-tdd/             # Spring Boot TDD（新規）
+|   |-- springboot-verification/    # Spring Boot 検証（新規）
+|   |-- configure-ecc/              # インタラクティブインストールウィザード（新規）
+|   |-- security-scan/              # AgentShield セキュリティ監査統合（新規）
+|
+|-- commands/         # スラッシュコマンド用クイック実行
+|   |-- tdd.md              # /tdd - テスト駆動開発
+|   |-- plan.md             # /plan - 実装計画
+|   |-- e2e.md              # /e2e - E2E テスト生成
+|   |-- code-review.md      # /code-review - 品質レビュー
+|   |-- build-fix.md        # /build-fix - ビルドエラー修正
+|   |-- refactor-clean.md   # /refactor-clean - デッドコード削除
+|   |-- learn.md            # /learn - セッション中のパターン抽出（長文ガイド）
+|   |-- checkpoint.md       # /checkpoint - 検証状態を保存（長文ガイド）
+|   |-- verify.md           # /verify - 検証ループを実行（長文ガイド）
+|   |-- setup-pm.md         # /setup-pm - パッケージマネージャーを設定
+|   |-- go-review.md        # /go-review - Go コードレビュー（新規）
+|   |-- go-test.md          # /go-test - Go TDD ワークフロー（新規）
+|   |-- go-build.md         # /go-build - Go ビルドエラーを修正（新規）
+|   |-- skill-create.md     # /skill-create - Git 履歴からスキルを生成（新規）
+|   |-- instinct-status.md  # /instinct-status - 学習した直感を表示（新規）
+|   |-- instinct-import.md  # /instinct-import - 直感をインポート（新規）
+|   |-- instinct-export.md  # /instinct-export - 直感をエクスポート（新規）
+|   |-- evolve.md           # /evolve - 直感をスキルにクラスタリング
+|   |-- pm2.md              # /pm2 - PM2 サービスライフサイクル管理（新規）
+|   |-- multi-plan.md       # /multi-plan - マルチエージェント タスク分解（新規）
+|   |-- multi-execute.md    # /multi-execute - オーケストレーション マルチエージェント ワークフロー（新規）
+|   |-- multi-backend.md    # /multi-backend - バックエンド マルチサービス オーケストレーション（新規）
+|   |-- multi-frontend.md   # /multi-frontend - フロントエンド マルチサービス オーケストレーション（新規）
+|   |-- multi-workflow.md   # /multi-workflow - 一般的なマルチサービス ワークフロー（新規）
+|
+|-- rules/            # 常に従うべきガイドライン（~/.claude/rules/ にコピー）
+|   |-- README.md            # 構造概要とインストールガイド
+|   |-- common/              # 言語非依存の原則
+|   |   |-- coding-style.md    # イミュータビリティ、ファイル組織
+|   |   |-- git-workflow.md    # コミットフォーマット、PR プロセス
+|   |   |-- testing.md         # TDD、80% カバレッジ要件
+|   |   |-- performance.md     # モデル選択、コンテキスト管理
+|   |   |-- patterns.md        # デザインパターン、スケルトンプロジェクト
+|   |   |-- hooks.md           # フック アーキテクチャ、TodoWrite
+|   |   |-- agents.md          # サブエージェントへの委任時機
+|   |   |-- security.md        # 必須セキュリティチェック
+|   |-- typescript/          # TypeScript/JavaScript 固有
+|   |-- python/              # Python 固有
+|   |-- golang/              # Go 固有
+|
+|-- hooks/            # トリガーベースの自動化
+|   |-- hooks.json                # すべてのフック設定（PreToolUse、PostToolUse、Stop など）
+|   |-- memory-persistence/       # セッションライフサイクルフック（長文ガイド）
+|   |-- strategic-compact/        # 圧縮提案（長文ガイド）
+|
+|-- scripts/          # クロスプラットフォーム Node.js スクリプト（新規）
+|   |-- lib/                     # 共有ユーティリティ
+|   |   |-- utils.js             # クロスプラットフォーム ファイル/パス/システムユーティリティ
+|   |   |-- package-manager.js   # パッケージマネージャー検出と選択
+|   |-- hooks/                   # フック実装
+|   |   |-- session-start.js     # セッション開始時にコンテキストを読み込む
+|   |   |-- session-end.js       # セッション終了時に状態を保存
+|   |   |-- pre-compact.js       # 圧縮前の状態保存
+|   |   |-- suggest-compact.js   # 戦略的圧縮提案
+|   |   |-- evaluate-session.js  # セッションからパターンを抽出
+|   |-- setup-package-manager.js # インタラクティブ PM セットアップ
+|
+|-- tests/            # テストスイート（新規）
+|   |-- lib/                     # ライブラリテスト
+|   |-- hooks/                   # フックテスト
+|   |-- run-all.js               # すべてのテストを実行
+|
+|-- contexts/         # 動的システムプロンプト注入コンテキスト（長文ガイド）
+|   |-- dev.md              # 開発モード コンテキスト
+|   |-- review.md           # コードレビューモード コンテキスト
+|   |-- research.md         # リサーチ/探索モード コンテキスト
+|
+|-- examples/         # 設定例とセッション
+|   |-- CLAUDE.md           # プロジェクトレベル設定例
+|   |-- user-CLAUDE.md      # ユーザーレベル設定例
+|
+|-- mcp-configs/      # MCP サーバー設定
+|   |-- mcp-servers.json    # GitHub、Supabase、Vercel、Railway など
+|
+|-- marketplace.json  # 自己ホストマーケットプレイス設定（/plugin marketplace add 用）
+</code></pre>
+<hr>
+<h2>🛠️ エコシステムツール</h2>
+<h3>スキル作成ツール</h3>
+<p>リポジトリから Claude Code スキルを生成する 2 つの方法：</p>
+<h4>オプション A：ローカル分析（ビルトイン）</h4>
+<p>外部サービスなしで、ローカル分析に <code>/skill-create</code> コマンドを使用：</p>
+<pre><code class="language-bash">/skill-create                    # 現在のリポジトリを分析
+/skill-create --instincts        # 継続的学習用の直感も生成
+</code></pre>
+<p>これはローカルで Git 履歴を分析し、SKILL.md ファイルを生成します。</p>
+<h4>オプション B：GitHub アプリ（高度な機能）</h4>
+<p>高度な機能用（10k+ コミット、自動 PR、チーム共有）：</p>
+<p><a href="https://github.com/apps/skill-creator">GitHub アプリをインストール</a> | <a href="https://ecc.tools">ecc.tools</a></p>
+<pre><code class="language-bash"># 任意の Issue にコメント：
+/skill-creator analyze
+
+# またはデフォルトブランチへのプッシュで自動トリガー
+</code></pre>
+<p>両オプションで生成されるもの：</p>
+<ul>
+<li><strong>SKILL.mdファイル</strong> - Claude Codeですぐに使えるスキル</li>
+<li><strong>instinctコレクション</strong> - continuous-learning-v2用</li>
+<li><strong>パターン抽出</strong> - コミット履歴からの学習</li>
+</ul>
+<h3>AgentShield — セキュリティ監査ツール</h3>
+<p>Claude Code 設定の脆弱性、誤設定、インジェクションリスクをスキャンします。</p>
+<pre><code class="language-bash"># クイックスキャン（インストール不要）
+npx ecc-agentshield scan
+
+# 安全な問題を自動修正
+npx ecc-agentshield scan --fix
+
+# Opus 4.6 による深い分析
+npx ecc-agentshield scan --opus --stream
+
+# ゼロから安全な設定を生成
+npx ecc-agentshield init
+</code></pre>
+<p>CLAUDE.md、settings.json、MCP サーバー、フック、エージェント定義をチェックします。セキュリティグレード（A-F）と実行可能な結果を生成します。</p>
+<p>Claude Codeで<code>/security-scan</code>を実行、または<a href="https://github.com/affaan-m/agentshield">GitHub Action</a>でCIに追加できます。</p>
+<p><a href="https://github.com/affaan-m/agentshield">GitHub</a> | <a href="https://www.npmjs.com/package/ecc-agentshield">npm</a></p>
+<h3>🧠 継続的学習 v2</h3>
+<p>instinctベースの学習システムがパターンを自動学習：</p>
+<pre><code class="language-bash">/instinct-status        # 信頼度付きで学習したinstinctを表示
+/instinct-import &lt;file&gt; # 他者のinstinctをインポート
+/instinct-export        # instinctをエクスポートして共有
+/evolve                 # 関連するinstinctをスキルにクラスタリング
+</code></pre>
+<p>完全なドキュメントは<code>skills/continuous-learning-v2/</code>を参照してください。</p>
+<hr>
+<h2>📋 要件</h2>
+<h3>Claude Code CLI バージョン</h3>
+<p><strong>最小バージョン: v2.1.0 以上</strong></p>
+<p>このプラグインは Claude Code CLI v2.1.0+ が必要です。プラグインシステムがフックを処理する方法が変更されたためです。</p>
+<p>バージョンを確認：</p>
+<pre><code class="language-bash">claude --version
+</code></pre>
+<h3>重要: フック自動読み込み動作</h3>
+<blockquote>
+<p>⚠️ <strong>貢献者向け:</strong> <code>.claude-plugin/plugin.json</code>に<code>&quot;hooks&quot;</code>フィールドを追加しないでください。これは回帰テストで強制されます。</p>
+</blockquote>
+<p>Claude Code v2.1+は、インストール済みプラグインの<code>hooks/hooks.json</code>（規約）を自動読み込みします。<code>plugin.json</code>で明示的に宣言するとエラーが発生します：</p>
+<pre><code>Duplicate hooks file detected: ./hooks/hooks.json resolves to already-loaded file
+</code></pre>
+<p><strong>背景:</strong> これは本リポジトリで複数の修正/リバート循環を引き起こしました（<a href="https://github.com/affaan-m/everything-claude-code/issues/29">#29</a>, <a href="https://github.com/affaan-m/everything-claude-code/issues/52">#52</a>, <a href="https://github.com/affaan-m/everything-claude-code/issues/103">#103</a>）。Claude Codeバージョン間で動作が変わったため混乱がありました。今後を防ぐため回帰テストがあります。</p>
+<hr>
+<h2>📥 インストール</h2>
+<h3>オプション1：プラグインとしてインストール（推奨）</h3>
+<p>このリポジトリを使用する最も簡単な方法 - Claude Codeプラグインとしてインストール：</p>
+<pre><code class="language-bash"># このリポジトリをマーケットプレイスとして追加
+/plugin marketplace add affaan-m/everything-claude-code
+
+# プラグインをインストール
+/plugin install everything-claude-code@everything-claude-code
+</code></pre>
+<p>または、<code>~/.claude/settings.json</code> に直接追加：</p>
+<pre><code class="language-json">{
+  &quot;extraKnownMarketplaces&quot;: {
+    &quot;everything-claude-code&quot;: {
+      &quot;source&quot;: {
+        &quot;source&quot;: &quot;github&quot;,
+        &quot;repo&quot;: &quot;affaan-m/everything-claude-code&quot;
+      }
+    }
+  },
+  &quot;enabledPlugins&quot;: {
+    &quot;everything-claude-code@everything-claude-code&quot;: true
+  }
+}
+</code></pre>
+<p>これで、すべてのコマンド、エージェント、スキル、フックにすぐにアクセスできます。</p>
+<blockquote>
+<p><strong>注:</strong> Claude Codeプラグインシステムは<code>rules</code>をプラグイン経由で配布できません（<a href="https://code.claude.com/docs/en/plugins-reference">アップストリーム制限</a>）。ルールは手動でインストールする必要があります：</p>
+<pre><code class="language-bash"># まずリポジトリをクローン
+git clone https://github.com/affaan-m/everything-claude-code.git
+
+# オプション A：ユーザーレベルルール（すべてのプロジェクトに適用）
+mkdir -p ~/.claude/rules
+cp -r everything-claude-code/rules/common/* ~/.claude/rules/
+cp -r everything-claude-code/rules/typescript/* ~/.claude/rules/   # スタックを選択
+cp -r everything-claude-code/rules/python/* ~/.claude/rules/
+cp -r everything-claude-code/rules/golang/* ~/.claude/rules/
+
+# オプション B：プロジェクトレベルルール（現在のプロジェクトのみ）
+mkdir -p .claude/rules
+cp -r everything-claude-code/rules/common/* .claude/rules/
+cp -r everything-claude-code/rules/typescript/* .claude/rules/     # スタックを選択
+</code></pre>
+</blockquote>
+<hr>
+<h3>🔧 オプション2：手動インストール</h3>
+<p>インストール内容を手動で制御したい場合：</p>
+<pre><code class="language-bash"># リポジトリをクローン
+git clone https://github.com/affaan-m/everything-claude-code.git
+
+# エージェントを Claude 設定にコピー
+cp everything-claude-code/agents/*.md ~/.claude/agents/
+
+# ルール（共通 + 言語固有）をコピー
+cp -r everything-claude-code/rules/common/* ~/.claude/rules/
+cp -r everything-claude-code/rules/typescript/* ~/.claude/rules/   # スタックを選択
+cp -r everything-claude-code/rules/python/* ~/.claude/rules/
+cp -r everything-claude-code/rules/golang/* ~/.claude/rules/
+
+# コマンドをコピー
+cp everything-claude-code/commands/*.md ~/.claude/commands/
+
+# スキルをコピー
+cp -r everything-claude-code/skills/* ~/.claude/skills/
+</code></pre>
+<h4>settings.json にフックを追加</h4>
+<p><code>hooks/hooks.json</code> のフックを <code>~/.claude/settings.json</code> にコピーします。</p>
+<h4>MCP を設定</h4>
+<p><code>mcp-configs/mcp-servers.json</code> から必要な MCP サーバーを <code>~/.claude.json</code> にコピーします。</p>
+<p><strong>重要:</strong> <code>YOUR_*_HERE</code>プレースホルダーを実際のAPIキーに置き換えてください。</p>
+<hr>
+<h2>🎯 主要概念</h2>
+<h3>エージェント</h3>
+<p>サブエージェントは限定的な範囲のタスクを処理します。例：</p>
+<pre><code class="language-markdown">---
+name: code-reviewer
+description: コードの品質、セキュリティ、保守性をレビュー
+tools: [&quot;Read&quot;, &quot;Grep&quot;, &quot;Glob&quot;, &quot;Bash&quot;]
+model: opus
+---
+
+あなたは経験豊富なコードレビュアーです...
+</code></pre>
+<h3>スキル</h3>
+<p>スキルはコマンドまたはエージェントによって呼び出されるワークフロー定義：</p>
+<pre><code class="language-markdown"># TDD ワークフロー
+
+1. インターフェースを最初に定義
+2. テストを失敗させる (RED)
+3. 最小限のコードを実装 (GREEN)
+4. リファクタリング (IMPROVE)
+5. 80%+ のカバレッジを確認
+</code></pre>
+<h3>フック</h3>
+<p>フックはツールイベントでトリガーされます。例 - console.log についての警告：</p>
+<pre><code class="language-json">{
+  &quot;matcher&quot;: &quot;tool == \&quot;Edit\&quot; &amp;&amp; tool_input.file_path matches \&quot;\\\\.(ts|tsx|js|jsx)$\&quot;&quot;,
+  &quot;hooks&quot;: [{
+    &quot;type&quot;: &quot;command&quot;,
+    &quot;command&quot;: &quot;#!/bin/bash\ngrep -n &#39;console\\.log&#39; \&quot;$file_path\&quot; &amp;&amp; echo &#39;[Hook] Remove console.log&#39; &gt;&amp;2&quot;
+  }]
+}
+</code></pre>
+<h3>ルール</h3>
+<p>ルールは常に従うべきガイドラインで、<code>common/</code>（言語非依存）+ 言語固有ディレクトリに組織化：</p>
+<pre><code>rules/
+  common/          # 普遍的な原則（常にインストール）
+  typescript/      # TS/JS 固有パターンとツール
+  python/          # Python 固有パターンとツール
+  golang/          # Go 固有パターンとツール
+</code></pre>
+<p>インストールと構造の詳細は<a href="rules/README.md"><code>rules/README.md</code></a>を参照してください。</p>
+<hr>
+<h2>🧪 テストを実行</h2>
+<p>プラグインには包括的なテストスイートが含まれています：</p>
+<pre><code class="language-bash"># すべてのテストを実行
+node tests/run-all.js
+
+# 個別のテストファイルを実行
+node tests/lib/utils.test.js
+node tests/lib/package-manager.test.js
+node tests/hooks/hooks.test.js
+</code></pre>
+<hr>
+<h2>🤝 貢献</h2>
+<p><strong>貢献は大歓迎で、奨励されています。</strong></p>
+<p>このリポジトリはコミュニティリソースを目指しています。以下のようなものがあれば：</p>
+<ul>
+<li>有用なエージェントまたはスキル</li>
+<li>巧妙なフック</li>
+<li>より良い MCP 設定</li>
+<li>改善されたルール</li>
+</ul>
+<p>ぜひ貢献してください！ガイドについては<a href="CONTRIBUTING.md">CONTRIBUTING.md</a>を参照してください。</p>
+<h3>貢献アイデア</h3>
+<ul>
+<li>言語固有のスキル（Rust、C#、Swift、Kotlin） — Go、Python、Javaは既に含まれています</li>
+<li>フレームワーク固有の設定（Rails、Laravel、FastAPI、NestJS） — Django、Spring Bootは既に含まれています</li>
+<li>DevOpsエージェント（Kubernetes、Terraform、AWS、Docker）</li>
+<li>テスト戦略（異なるフレームワーク、ビジュアルリグレッション）</li>
+<li>専門領域の知識（ML、データエンジニアリング、モバイル開発）</li>
+</ul>
+<hr>
+<h2>Cursor IDE サポート</h2>
+<p>ecc-universal は <a href="https://cursor.com">Cursor IDE</a> の事前翻訳設定を含みます。<code>.cursor/</code> ディレクトリには、Cursor フォーマット向けに適応されたルール、エージェント、スキル、コマンド、MCP 設定が含まれています。</p>
+<h3>クイックスタート (Cursor)</h3>
+<pre><code class="language-bash"># パッケージをインストール
+npm install ecc-universal
+
+# 言語をインストール
+./install.sh --target cursor typescript
+./install.sh --target cursor python golang
+</code></pre>
+<h3>翻訳内容</h3>
+<table>
+<thead>
+<tr>
+<th>コンポーネント</th>
+<th>Claude Code → Cursor</th>
+<th>パリティ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Rules</td>
+<td>YAML フロントマター追加、パスフラット化</td>
+<td>完全</td>
+</tr>
+<tr>
+<td>Agents</td>
+<td>モデル ID 展開、ツール → 読み取り専用フラグ</td>
+<td>完全</td>
+</tr>
+<tr>
+<td>Skills</td>
+<td>変更不要（同一の標準）</td>
+<td>同一</td>
+</tr>
+<tr>
+<td>Commands</td>
+<td>パス参照更新、multi-* スタブ化</td>
+<td>部分的</td>
+</tr>
+<tr>
+<td>MCP Config</td>
+<td>環境補間構文更新</td>
+<td>完全</td>
+</tr>
+<tr>
+<td>Hooks</td>
+<td>Cursor相当なし</td>
+<td>別の方法を参照</td>
+</tr>
+</tbody></table>
+<p>詳細は<a href=".cursor/README.md">.cursor/README.md</a>および完全な移行ガイドは<a href=".cursor/MIGRATION.md">.cursor/MIGRATION.md</a>を参照してください。</p>
+<hr>
+<h2>🔌 OpenCodeサポート</h2>
+<p>ECCは<strong>フルOpenCodeサポート</strong>をプラグインとフック含めて提供。</p>
+<h3>クイックスタート</h3>
+<pre><code class="language-bash"># OpenCode をインストール
+npm install -g opencode
+
+# リポジトリルートで実行
+opencode
+</code></pre>
+<p>設定は<code>.opencode/opencode.json</code>から自動検出されます。</p>
+<h3>機能パリティ</h3>
+<table>
+<thead>
+<tr>
+<th>機能</th>
+<th>Claude Code</th>
+<th>OpenCode</th>
+<th>ステータス</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Agents</td>
+<td>✅ 14 エージェント</td>
+<td>✅ 12 エージェント</td>
+<td><strong>Claude Code がリード</strong></td>
+</tr>
+<tr>
+<td>Commands</td>
+<td>✅ 30 コマンド</td>
+<td>✅ 24 コマンド</td>
+<td><strong>Claude Code がリード</strong></td>
+</tr>
+<tr>
+<td>Skills</td>
+<td>✅ 28 スキル</td>
+<td>✅ 16 スキル</td>
+<td><strong>Claude Code がリード</strong></td>
+</tr>
+<tr>
+<td>Hooks</td>
+<td>✅ 3 フェーズ</td>
+<td>✅ 20+ イベント</td>
+<td><strong>OpenCode が多い！</strong></td>
+</tr>
+<tr>
+<td>Rules</td>
+<td>✅ 8 ルール</td>
+<td>✅ 8 ルール</td>
+<td><strong>完全パリティ</strong></td>
+</tr>
+<tr>
+<td>MCP Servers</td>
+<td>✅ 完全</td>
+<td>✅ 完全</td>
+<td><strong>完全パリティ</strong></td>
+</tr>
+<tr>
+<td>Custom Tools</td>
+<td>✅ フック経由</td>
+<td>✅ ネイティブサポート</td>
+<td><strong>OpenCode がより良い</strong></td>
+</tr>
+</tbody></table>
+<h3>プラグイン経由のフックサポート</h3>
+<p>OpenCodeのプラグインシステムはClaude Codeより高度で、20+イベントタイプ：</p>
+<table>
+<thead>
+<tr>
+<th>Claude Code フック</th>
+<th>OpenCode プラグインイベント</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PreToolUse</td>
+<td><code>tool.execute.before</code></td>
+</tr>
+<tr>
+<td>PostToolUse</td>
+<td><code>tool.execute.after</code></td>
+</tr>
+<tr>
+<td>Stop</td>
+<td><code>session.idle</code></td>
+</tr>
+<tr>
+<td>SessionStart</td>
+<td><code>session.created</code></td>
+</tr>
+<tr>
+<td>SessionEnd</td>
+<td><code>session.deleted</code></td>
+</tr>
+</tbody></table>
+<p><strong>追加OpenCodeイベント</strong>: <code>file.edited</code>, <code>file.watcher.updated</code>, <code>message.updated</code>, <code>lsp.client.diagnostics</code>, <code>tui.toast.show</code>など。</p>
+<h3>利用可能なコマンド（24）</h3>
+<table>
+<thead>
+<tr>
+<th>コマンド</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/plan</code></td>
+<td>実装計画を作成</td>
+</tr>
+<tr>
+<td><code>/tdd</code></td>
+<td>TDD ワークフロー実行</td>
+</tr>
+<tr>
+<td><code>/code-review</code></td>
+<td>コード変更をレビュー</td>
+</tr>
+<tr>
+<td><code>/security</code></td>
+<td>セキュリティレビュー実行</td>
+</tr>
+<tr>
+<td><code>/build-fix</code></td>
+<td>ビルドエラーを修正</td>
+</tr>
+<tr>
+<td><code>/e2e</code></td>
+<td>E2E テストを生成</td>
+</tr>
+<tr>
+<td><code>/refactor-clean</code></td>
+<td>デッドコードを削除</td>
+</tr>
+<tr>
+<td><code>/orchestrate</code></td>
+<td>マルチエージェント ワークフロー</td>
+</tr>
+<tr>
+<td><code>/learn</code></td>
+<td>セッションからパターン抽出</td>
+</tr>
+<tr>
+<td><code>/checkpoint</code></td>
+<td>検証状態を保存</td>
+</tr>
+<tr>
+<td><code>/verify</code></td>
+<td>検証ループを実行</td>
+</tr>
+<tr>
+<td><code>/eval</code></td>
+<td>基準に対して評価</td>
+</tr>
+<tr>
+<td><code>/update-docs</code></td>
+<td>ドキュメントを更新</td>
+</tr>
+<tr>
+<td><code>/update-codemaps</code></td>
+<td>コードマップを更新</td>
+</tr>
+<tr>
+<td><code>/test-coverage</code></td>
+<td>カバレッジを分析</td>
+</tr>
+<tr>
+<td><code>/go-review</code></td>
+<td>Go コードレビュー</td>
+</tr>
+<tr>
+<td><code>/go-test</code></td>
+<td>Go TDD ワークフロー</td>
+</tr>
+<tr>
+<td><code>/go-build</code></td>
+<td>Go ビルドエラーを修正</td>
+</tr>
+<tr>
+<td><code>/skill-create</code></td>
+<td>Git からスキル生成</td>
+</tr>
+<tr>
+<td><code>/instinct-status</code></td>
+<td>学習した直感を表示</td>
+</tr>
+<tr>
+<td><code>/instinct-import</code></td>
+<td>直感をインポート</td>
+</tr>
+<tr>
+<td><code>/instinct-export</code></td>
+<td>直感をエクスポート</td>
+</tr>
+<tr>
+<td><code>/evolve</code></td>
+<td>直感をスキルにクラスタリング</td>
+</tr>
+<tr>
+<td><code>/setup-pm</code></td>
+<td>パッケージマネージャーを設定</td>
+</tr>
+</tbody></table>
+<h3>プラグインインストール</h3>
+<p><strong>オプション1：直接使用</strong></p>
+<pre><code class="language-bash">cd everything-claude-code
+opencode
+</code></pre>
+<p><strong>オプション2：npmパッケージとしてインストール</strong></p>
+<pre><code class="language-bash">npm install ecc-universal
+</code></pre>
+<p>その後<code>opencode.json</code>に追加：</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;ecc-universal&quot;]
+}
+</code></pre>
+<h3>ドキュメンテーション</h3>
+<ul>
+<li><strong>移行ガイド</strong>: <code>.opencode/MIGRATION.md</code></li>
+<li><strong>OpenCode プラグイン README</strong>: <code>.opencode/README.md</code></li>
+<li><strong>統合ルール</strong>: <code>.opencode/instructions/INSTRUCTIONS.md</code></li>
+<li><strong>LLM ドキュメンテーション</strong>: <code>llms.txt</code>（完全な OpenCode ドキュメント）</li>
+</ul>
+<hr>
+<h2>📖 背景</h2>
+<p>実験的なリリース以来、Claude Codeを使用してきました。2025年9月、<a href="https://x.com/DRodriguezFX">@DRodriguezFX</a>と一緒にClaude Codeで<a href="https://zenith.chat">zenith.chat</a>を構築し、Anthropic x Forum Venturesハッカソンで優勝しました。</p>
+<p>これらの設定は複数の本番環境アプリケーションで実戦テストされています。</p>
+<hr>
+<h2>⚠️ 重要な注記</h2>
+<h3>コンテキストウィンドウ管理</h3>
+<p><strong>重要:</strong> すべてのMCPを一度に有効にしないでください。多くのツールを有効にすると、200kのコンテキストウィンドウが70kに縮小される可能性があります。</p>
+<p>経験則：</p>
+<ul>
+<li>20-30のMCPを設定</li>
+<li>プロジェクトごとに10未満を有効にしたままにしておく</li>
+<li>アクティブなツール80未満</li>
+</ul>
+<p>プロジェクト設定で<code>disabledMcpServers</code>を使用して、未使用のツールを無効にします。</p>
+<h3>カスタマイズ</h3>
+<p>これらの設定は私のワークフロー用です。あなたは以下を行うべきです：</p>
+<ol>
+<li>共感できる部分から始める</li>
+<li>技術スタックに合わせて修正</li>
+<li>使用しない部分を削除</li>
+<li>独自のパターンを追加</li>
+</ol>
+<hr>
+<h2>🌟 Star 履歴</h2>
+<p><a href="https://star-history.com/#affaan-m/everything-claude-code&Date"><img src="https://api.star-history.com/svg?repos=affaan-m/everything-claude-code&type=Date" alt="Star History Chart"></a></p>
+<hr>
+<h2>🔗 リンク</h2>
+<ul>
+<li><strong>簡潔ガイド（まずはこれ）:</strong> <a href="https://x.com/affaanmustafa/status/2012378465664745795">Everything Claude Code 簡潔ガイド</a></li>
+<li><strong>詳細ガイド（高度）:</strong> <a href="https://x.com/affaanmustafa/status/2014040193557471352">Everything Claude Code 詳細ガイド</a></li>
+<li><strong>フォロー:</strong> <a href="https://x.com/affaanmustafa">@affaanmustafa</a></li>
+<li><strong>zenith.chat:</strong> <a href="https://zenith.chat">zenith.chat</a></li>
+<li><strong>スキル ディレクトリ:</strong> awesome-agent-skills（コミュニティ管理のエージェントスキル ディレクトリ）</li>
+</ul>
+<hr>
+<h2>📄 ライセンス</h2>
+<p>MIT - 自由に使用、必要に応じて修正、可能であれば貢献してください。</p>
+<hr>
+<p><strong>このリポジトリが役に立ったら、Star を付けてください。両方のガイドを読んでください。素晴らしいものを構築してください。</strong></p>
+
+</body>
+</html>

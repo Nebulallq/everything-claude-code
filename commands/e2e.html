@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e2e</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Generate and run end-to-end tests with Playwright. Creates test journeys, runs tests, captures screenshots/videos/traces, and uploads artifacts.</h2>
+<h1>E2E Command</h1>
+<p>This command invokes the <strong>e2e-runner</strong> agent to generate, maintain, and execute end-to-end tests using Playwright.</p>
+<h2>What This Command Does</h2>
+<ol>
+<li><strong>Generate Test Journeys</strong> - Create Playwright tests for user flows</li>
+<li><strong>Run E2E Tests</strong> - Execute tests across browsers</li>
+<li><strong>Capture Artifacts</strong> - Screenshots, videos, traces on failures</li>
+<li><strong>Upload Results</strong> - HTML reports and JUnit XML</li>
+<li><strong>Identify Flaky Tests</strong> - Quarantine unstable tests</li>
+</ol>
+<h2>When to Use</h2>
+<p>Use <code>/e2e</code> when:</p>
+<ul>
+<li>Testing critical user journeys (login, trading, payments)</li>
+<li>Verifying multi-step flows work end-to-end</li>
+<li>Testing UI interactions and navigation</li>
+<li>Validating integration between frontend and backend</li>
+<li>Preparing for production deployment</li>
+</ul>
+<h2>How It Works</h2>
+<p>The e2e-runner agent will:</p>
+<ol>
+<li><strong>Analyze user flow</strong> and identify test scenarios</li>
+<li><strong>Generate Playwright test</strong> using Page Object Model pattern</li>
+<li><strong>Run tests</strong> across multiple browsers (Chrome, Firefox, Safari)</li>
+<li><strong>Capture failures</strong> with screenshots, videos, and traces</li>
+<li><strong>Generate report</strong> with results and artifacts</li>
+<li><strong>Identify flaky tests</strong> and recommend fixes</li>
+</ol>
+<h2>Example Usage</h2>
+<pre><code>User: /e2e Test the market search and view flow
+
+Agent (e2e-runner):
+# E2E Test Generation: Market Search and View Flow
+
+## Test Scenario Identified
+
+**User Journey:** Market Search → View Results → Click Market → View Details
+
+**Test Coverage:**
+1. Navigate to markets page
+2. Perform semantic search
+3. Verify search results
+4. Click on first result
+5. Verify market details page loads
+6. Verify chart renders
+
+## Generated Test Code
+
+```typescript
+// tests/e2e/markets/search-and-view.spec.ts
+import { test, expect } from &#39;@playwright/test&#39;
+import { MarketsPage } from &#39;../../pages/MarketsPage&#39;
+import { MarketDetailsPage } from &#39;../../pages/MarketDetailsPage&#39;
+
+test.describe(&#39;Market Search and View Flow&#39;, () =&gt; {
+  test(&#39;user can search markets and view details&#39;, async ({ page }) =&gt; {
+    // 1. Navigate to markets page
+    const marketsPage = new MarketsPage(page)
+    await marketsPage.goto()
+
+    // Verify page loaded
+    await expect(page).toHaveTitle(/Markets/)
+    await expect(page.locator(&#39;h1&#39;)).toContainText(&#39;Markets&#39;)
+
+    // 2. Perform semantic search
+    await marketsPage.searchMarkets(&#39;election&#39;)
+
+    // Wait for API response
+    await page.waitForResponse(resp =&gt;
+      resp.url().includes(&#39;/api/markets/search&#39;) &amp;&amp; resp.status() === 200
+    )
+
+    // 3. Verify search results
+    const marketCards = marketsPage.marketCards
+    await expect(marketCards.first()).toBeVisible()
+    const resultCount = await marketCards.count()
+    expect(resultCount).toBeGreaterThan(0)
+
+    // Take screenshot of search results
+    await page.screenshot({ path: &#39;artifacts/search-results.png&#39; })
+
+    // 4. Click on first result
+    const firstMarketTitle = await marketCards.first().textContent()
+    await marketCards.first().click()
+
+    // 5. Verify market details page loads
+    await expect(page).toHaveURL(/\/markets\/[a-z0-9-]+/)
+
+    const detailsPage = new MarketDetailsPage(page)
+    await expect(detailsPage.marketName).toBeVisible()
+    await expect(detailsPage.marketDescription).toBeVisible()
+
+    // 6. Verify chart renders
+    await expect(detailsPage.priceChart).toBeVisible()
+
+    // Verify market name matches
+    const detailsTitle = await detailsPage.marketName.textContent()
+    expect(detailsTitle?.toLowerCase()).toContain(
+      firstMarketTitle?.toLowerCase().substring(0, 20) || &#39;&#39;
+    )
+
+    // Take screenshot of market details
+    await page.screenshot({ path: &#39;artifacts/market-details.png&#39; })
+  })
+
+  test(&#39;search with no results shows empty state&#39;, async ({ page }) =&gt; {
+    const marketsPage = new MarketsPage(page)
+    await marketsPage.goto()
+
+    // Search for non-existent market
+    await marketsPage.searchMarkets(&#39;xyznonexistentmarket123456&#39;)
+
+    // Verify empty state
+    await expect(page.locator(&#39;[data-testid=&quot;no-results&quot;]&#39;)).toBeVisible()
+    await expect(page.locator(&#39;[data-testid=&quot;no-results&quot;]&#39;)).toContainText(
+      /no.*results|no.*markets/i
+    )
+
+    const marketCount = await marketsPage.marketCards.count()
+    expect(marketCount).toBe(0)
+  })
+
+  test(&#39;can clear search and see all markets again&#39;, async ({ page }) =&gt; {
+    const marketsPage = new MarketsPage(page)
+    await marketsPage.goto()
+
+    // Initial market count
+    const initialCount = await marketsPage.marketCards.count()
+
+    // Perform search
+    await marketsPage.searchMarkets(&#39;trump&#39;)
+    await page.waitForLoadState(&#39;networkidle&#39;)
+
+    // Verify filtered results
+    const filteredCount = await marketsPage.marketCards.count()
+    expect(filteredCount).toBeLessThan(initialCount)
+
+    // Clear search
+    await marketsPage.searchInput.clear()
+    await page.waitForLoadState(&#39;networkidle&#39;)
+
+    // Verify all markets shown again
+    const finalCount = await marketsPage.marketCards.count()
+    expect(finalCount).toBe(initialCount)
+  })
+})
+</code></pre>
+<h2>Running Tests</h2>
+<pre><code class="language-bash"># Run the generated test
+npx playwright test tests/e2e/markets/search-and-view.spec.ts
+
+Running 3 tests using 3 workers
+
+  ✓  [chromium] › search-and-view.spec.ts:5:3 › user can search markets and view details (4.2s)
+  ✓  [chromium] › search-and-view.spec.ts:52:3 › search with no results shows empty state (1.8s)
+  ✓  [chromium] › search-and-view.spec.ts:67:3 › can clear search and see all markets again (2.9s)
+
+  3 passed (9.1s)
+
+Artifacts generated:
+- artifacts/search-results.png
+- artifacts/market-details.png
+- playwright-report/index.html
+</code></pre>
+<h2>Test Report</h2>
+<pre><code>╔══════════════════════════════════════════════════════════════╗
+║                    E2E Test Results                          ║
+╠══════════════════════════════════════════════════════════════╣
+║ Status:     ✅ ALL TESTS PASSED                              ║
+║ Total:      3 tests                                          ║
+║ Passed:     3 (100%)                                         ║
+║ Failed:     0                                                ║
+║ Flaky:      0                                                ║
+║ Duration:   9.1s                                             ║
+╚══════════════════════════════════════════════════════════════╝
+
+Artifacts:
+📸 Screenshots: 2 files
+📹 Videos: 0 files (only on failure)
+🔍 Traces: 0 files (only on failure)
+📊 HTML Report: playwright-report/index.html
+
+View report: npx playwright show-report
+</code></pre>
+<p>✅ E2E test suite ready for CI/CD integration!</p>
+<pre><code>
+## Test Artifacts
+
+When tests run, the following artifacts are captured:
+
+**On All Tests:**
+- HTML Report with timeline and results
+- JUnit XML for CI integration
+
+**On Failure Only:**
+- Screenshot of the failing state
+- Video recording of the test
+- Trace file for debugging (step-by-step replay)
+- Network logs
+- Console logs
+
+## Viewing Artifacts
+
+```bash
+# View HTML report in browser
+npx playwright show-report
+
+# View specific trace file
+npx playwright show-trace artifacts/trace-abc123.zip
+
+# Screenshots are saved in artifacts/ directory
+open artifacts/search-results.png
+</code></pre>
+<h2>Flaky Test Detection</h2>
+<p>If a test fails intermittently:</p>
+<pre><code>⚠️  FLAKY TEST DETECTED: tests/e2e/markets/trade.spec.ts
+
+Test passed 7/10 runs (70% pass rate)
+
+Common failure:
+&quot;Timeout waiting for element &#39;[data-testid=&quot;confirm-btn&quot;]&#39;&quot;
+
+Recommended fixes:
+1. Add explicit wait: await page.waitForSelector(&#39;[data-testid=&quot;confirm-btn&quot;]&#39;)
+2. Increase timeout: { timeout: 10000 }
+3. Check for race conditions in component
+4. Verify element is not hidden by animation
+
+Quarantine recommendation: Mark as test.fixme() until fixed
+</code></pre>
+<h2>Browser Configuration</h2>
+<p>Tests run on multiple browsers by default:</p>
+<ul>
+<li>✅ Chromium (Desktop Chrome)</li>
+<li>✅ Firefox (Desktop)</li>
+<li>✅ WebKit (Desktop Safari)</li>
+<li>✅ Mobile Chrome (optional)</li>
+</ul>
+<p>Configure in <code>playwright.config.ts</code> to adjust browsers.</p>
+<h2>CI/CD Integration</h2>
+<p>Add to your CI pipeline:</p>
+<pre><code class="language-yaml"># .github/workflows/e2e.yml
+- name: Install Playwright
+  run: npx playwright install --with-deps
+
+- name: Run E2E tests
+  run: npx playwright test
+
+- name: Upload artifacts
+  if: always()
+  uses: actions/upload-artifact@v3
+  with:
+    name: playwright-report
+    path: playwright-report/
+</code></pre>
+<h2>PMX-Specific Critical Flows</h2>
+<p>For PMX, prioritize these E2E tests:</p>
+<p><strong>🔴 CRITICAL (Must Always Pass):</strong></p>
+<ol>
+<li>User can connect wallet</li>
+<li>User can browse markets</li>
+<li>User can search markets (semantic search)</li>
+<li>User can view market details</li>
+<li>User can place trade (with test funds)</li>
+<li>Market resolves correctly</li>
+<li>User can withdraw funds</li>
+</ol>
+<p><strong>🟡 IMPORTANT:</strong></p>
+<ol>
+<li>Market creation flow</li>
+<li>User profile updates</li>
+<li>Real-time price updates</li>
+<li>Chart rendering</li>
+<li>Filter and sort markets</li>
+<li>Mobile responsive layout</li>
+</ol>
+<h2>Best Practices</h2>
+<p><strong>DO:</strong></p>
+<ul>
+<li>✅ Use Page Object Model for maintainability</li>
+<li>✅ Use data-testid attributes for selectors</li>
+<li>✅ Wait for API responses, not arbitrary timeouts</li>
+<li>✅ Test critical user journeys end-to-end</li>
+<li>✅ Run tests before merging to main</li>
+<li>✅ Review artifacts when tests fail</li>
+</ul>
+<p><strong>DON&#39;T:</strong></p>
+<ul>
+<li>❌ Use brittle selectors (CSS classes can change)</li>
+<li>❌ Test implementation details</li>
+<li>❌ Run tests against production</li>
+<li>❌ Ignore flaky tests</li>
+<li>❌ Skip artifact review on failures</li>
+<li>❌ Test every edge case with E2E (use unit tests)</li>
+</ul>
+<h2>Important Notes</h2>
+<p><strong>CRITICAL for PMX:</strong></p>
+<ul>
+<li>E2E tests involving real money MUST run on testnet/staging only</li>
+<li>Never run trading tests against production</li>
+<li>Set <code>test.skip(process.env.NODE_ENV === &#39;production&#39;)</code> for financial tests</li>
+<li>Use test wallets with small test funds only</li>
+</ul>
+<h2>Integration with Other Commands</h2>
+<ul>
+<li>Use <code>/plan</code> to identify critical journeys to test</li>
+<li>Use <code>/tdd</code> for unit tests (faster, more granular)</li>
+<li>Use <code>/e2e</code> for integration and user journey tests</li>
+<li>Use <code>/code-review</code> to verify test quality</li>
+</ul>
+<h2>Related Agents</h2>
+<p>This command invokes the <code>e2e-runner</code> agent located at:<br><code>~/.claude/agents/e2e-runner.md</code></p>
+<h2>Quick Commands</h2>
+<pre><code class="language-bash"># Run all E2E tests
+npx playwright test
+
+# Run specific test file
+npx playwright test tests/e2e/markets/search.spec.ts
+
+# Run in headed mode (see browser)
+npx playwright test --headed
+
+# Debug test
+npx playwright test --debug
+
+# Generate test code
+npx playwright codegen http://localhost:3000
+
+# View report
+npx playwright show-report
+</code></pre>
+
+</body>
+</html>

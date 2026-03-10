@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>the-shortform-guide</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Claude Code 简明指南</h1>
+<p><img src="../../assets/images/shortform/00-header.png" alt="标题：Anthropic 黑客马拉松获胜者 - Claude Code 技巧与窍门"></p>
+<hr>
+<p><strong>自 2 月实验性推出以来，我一直是 Claude Code 的忠实用户，并凭借 <a href="https://zenith.chat">zenith.chat</a> 与 <a href="https://x.com/DRodriguezFX">@DRodriguezFX</a> 一起赢得了 Anthropic x Forum Ventures 的黑客马拉松——完全使用 Claude Code。</strong></p>
+<p>经过 10 个月的日常使用，以下是我的完整设置：技能、钩子、子代理、MCP、插件以及实际有效的方法。</p>
+<hr>
+<h2>技能和命令</h2>
+<p>技能就像规则，受限于特定的范围和流程。当你需要执行特定工作流时，它们是提示词的简写。</p>
+<p>在使用 Opus 4.5 长时间编码后，你想清理死代码和松散的 .md 文件吗？运行 <code>/refactor-clean</code>。需要测试吗？<code>/tdd</code>、<code>/e2e</code>、<code>/test-coverage</code>。技能也可以包含代码地图——一种让 Claude 快速浏览你的代码库而无需消耗上下文进行探索的方式。</p>
+<p><img src="../../assets/images/shortform/02-chaining-commands.jpeg" alt="显示链式命令的终端"><br><em>将命令链接在一起</em></p>
+<p>命令是通过斜杠命令执行的技能。它们有重叠但存储方式不同：</p>
+<ul>
+<li><strong>技能</strong>: <code>~/.claude/skills/</code> - 更广泛的工作流定义</li>
+<li><strong>命令</strong>: <code>~/.claude/commands/</code> - 快速可执行的提示词</li>
+</ul>
+<pre><code class="language-bash"># Example skill structure
+~/.claude/skills/
+  pmx-guidelines.md      # Project-specific patterns
+  coding-standards.md    # Language best practices
+  tdd-workflow/          # Multi-file skill with README.md
+  security-review/       # Checklist-based skill
+</code></pre>
+<hr>
+<h2>钩子</h2>
+<p>钩子是基于触发的自动化，在特定事件发生时触发。与技能不同，它们受限于工具调用和生命周期事件。</p>
+<p><strong>钩子类型：</strong></p>
+<ol>
+<li><strong>PreToolUse</strong> - 工具执行前（验证、提醒）</li>
+<li><strong>PostToolUse</strong> - 工具完成后（格式化、反馈循环）</li>
+<li><strong>UserPromptSubmit</strong> - 当你发送消息时</li>
+<li><strong>Stop</strong> - 当 Claude 完成响应时</li>
+<li><strong>PreCompact</strong> - 上下文压缩前</li>
+<li><strong>Notification</strong> - 权限请求</li>
+</ol>
+<p><strong>示例：长时间运行命令前的 tmux 提醒</strong></p>
+<pre><code class="language-json">{
+  &quot;PreToolUse&quot;: [
+    {
+      &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;(npm|pnpm|yarn|cargo|pytest)\&quot;&quot;,
+      &quot;hooks&quot;: [
+        {
+          &quot;type&quot;: &quot;command&quot;,
+          &quot;command&quot;: &quot;if [ -z \&quot;$TMUX\&quot; ]; then echo &#39;[Hook] Consider tmux for session persistence&#39; &gt;&amp;2; fi&quot;
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+<p><img src="../../assets/images/shortform/03-posttooluse-hook.png" alt="PostToolUse 钩子反馈"><br><em>在 Claude Code 中运行 PostToolUse 钩子时获得的反馈示例</em></p>
+<p><strong>专业提示：</strong> 使用 <code>hookify</code> 插件以对话方式创建钩子，而不是手动编写 JSON。运行 <code>/hookify</code> 并描述你想要什么。</p>
+<hr>
+<h2>子代理</h2>
+<p>子代理是你的编排器（主 Claude）可以委托任务给它的、具有有限范围的进程。它们可以在后台或前台运行，为主代理释放上下文。</p>
+<p>子代理与技能配合得很好——一个能够执行你技能子集的子代理可以被委托任务并自主使用这些技能。它们也可以用特定的工具权限进行沙盒化。</p>
+<pre><code class="language-bash"># Example subagent structure
+~/.claude/agents/
+  planner.md           # Feature implementation planning
+  architect.md         # System design decisions
+  tdd-guide.md         # Test-driven development
+  code-reviewer.md     # Quality/security review
+  security-reviewer.md # Vulnerability analysis
+  build-error-resolver.md
+  e2e-runner.md
+  refactor-cleaner.md
+</code></pre>
+<p>为每个子代理配置允许的工具、MCP 和权限，以实现适当的范围界定。</p>
+<hr>
+<h2>规则和记忆</h2>
+<p>你的 <code>.rules</code> 文件夹包含 <code>.md</code> 文件，其中是 Claude 应始终遵循的最佳实践。有两种方法：</p>
+<ol>
+<li><strong>单一 CLAUDE.md</strong> - 所有内容在一个文件中（用户或项目级别）</li>
+<li><strong>规则文件夹</strong> - 按关注点分组的模块化 <code>.md</code> 文件</li>
+</ol>
+<pre><code class="language-bash">~/.claude/rules/
+  security.md      # No hardcoded secrets, validate inputs
+  coding-style.md  # Immutability, file organization
+  testing.md       # TDD workflow, 80% coverage
+  git-workflow.md  # Commit format, PR process
+  agents.md        # When to delegate to subagents
+  performance.md   # Model selection, context management
+</code></pre>
+<p><strong>规则示例：</strong></p>
+<ul>
+<li>代码库中不使用表情符号</li>
+<li>前端避免使用紫色色调</li>
+<li>部署前始终测试代码</li>
+<li>优先考虑模块化代码而非巨型文件</li>
+<li>绝不提交 console.log</li>
+</ul>
+<hr>
+<h2>MCP（模型上下文协议）</h2>
+<p>MCP 将 Claude 直接连接到外部服务。它不是 API 的替代品——而是围绕 API 的提示驱动包装器，允许在导航信息时具有更大的灵活性。</p>
+<p><strong>示例：</strong> Supabase MCP 允许 Claude 提取特定数据，直接在上游运行 SQL 而无需复制粘贴。数据库、部署平台等也是如此。</p>
+<p><img src="../../assets/images/shortform/04-supabase-mcp.jpeg" alt="Supabase MCP 列出表"><br><em>Supabase MCP 列出公共模式内表的示例</em></p>
+<p><strong>Claude 中的 Chrome：</strong> 是一个内置的插件 MCP，允许 Claude 自主控制你的浏览器——点击查看事物如何工作。</p>
+<p><strong>关键：上下文窗口管理</strong></p>
+<p>对 MCP 要挑剔。我将所有 MCP 保存在用户配置中，但<strong>禁用所有未使用的</strong>。导航到 <code>/plugins</code> 并向下滚动，或运行 <code>/mcp</code>。</p>
+<p><img src="../../assets/images/shortform/05-plugins-interface.jpeg" alt="/plugins 界面"><br><em>使用 /plugins 导航到 MCP 以查看当前安装了哪些插件及其状态</em></p>
+<p>在压缩之前，你的 200k 上下文窗口如果启用了太多工具，可能只有 70k。性能会显著下降。</p>
+<p><strong>经验法则：</strong> 在配置中保留 20-30 个 MCP，但保持启用状态少于 10 个 / 活动工具少于 80 个。</p>
+<pre><code class="language-bash"># Check enabled MCPs
+/mcp
+
+# Disable unused ones in ~/.claude.json under projects.disabledMcpServers
+</code></pre>
+<hr>
+<h2>插件</h2>
+<p>插件将工具打包以便于安装，而不是繁琐的手动设置。一个插件可以是技能和 MCP 的组合，或者是捆绑在一起的钩子/工具。</p>
+<p><strong>安装插件：</strong></p>
+<pre><code class="language-bash"># Add a marketplace
+# mgrep plugin by @mixedbread-ai
+claude plugin marketplace add https://github.com/mixedbread-ai/mgrep
+
+# Open Claude, run /plugins, find new marketplace, install from there
+</code></pre>
+<p><img src="../../assets/images/shortform/06-marketplaces-mgrep.jpeg" alt="显示 mgrep 的市场选项卡"><br><em>显示新安装的 Mixedbread-Grep 市场</em></p>
+<p><strong>LSP 插件</strong> 如果你经常在编辑器之外运行 Claude Code，则特别有用。语言服务器协议为 Claude 提供实时类型检查、跳转到定义和智能补全，而无需打开 IDE。</p>
+<pre><code class="language-bash"># Enabled plugins example
+typescript-lsp@claude-plugins-official  # TypeScript intelligence
+pyright-lsp@claude-plugins-official     # Python type checking
+hookify@claude-plugins-official         # Create hooks conversationally
+mgrep@Mixedbread-Grep                   # Better search than ripgrep
+</code></pre>
+<p>与 MCP 相同的警告——注意你的上下文窗口。</p>
+<hr>
+<h2>技巧和窍门</h2>
+<h3>键盘快捷键</h3>
+<ul>
+<li><code>Ctrl+U</code> - 删除整行（比反复按退格键快）</li>
+<li><code>!</code> - 快速 bash 命令前缀</li>
+<li><code>@</code> - 搜索文件</li>
+<li><code>/</code> - 发起斜杠命令</li>
+<li><code>Shift+Enter</code> - 多行输入</li>
+<li><code>Tab</code> - 切换思考显示</li>
+<li><code>Esc Esc</code> - 中断 Claude / 恢复代码</li>
+</ul>
+<h3>并行工作流</h3>
+<ul>
+<li><strong>分叉</strong> (<code>/fork</code>) - 分叉对话以并行执行不重叠的任务，而不是在队列中堆积消息</li>
+<li><strong>Git Worktrees</strong> - 用于重叠的并行 Claude 而不产生冲突。每个工作树都是一个独立的检出</li>
+</ul>
+<pre><code class="language-bash">git worktree add ../feature-branch feature-branch
+# Now run separate Claude instances in each worktree
+</code></pre>
+<h3>用于长时间运行命令的 tmux</h3>
+<p>流式传输和监视 Claude 运行的日志/bash 进程：</p>
+<p><a href="https://github.com/user-attachments/assets/shortform/07-tmux-video.mp4">https://github.com/user-attachments/assets/shortform/07-tmux-video.mp4</a></p>
+<pre><code class="language-bash">tmux new -s dev
+# Claude runs commands here, you can detach and reattach
+tmux attach -t dev
+</code></pre>
+<h3>mgrep &gt; grep</h3>
+<p><code>mgrep</code> 是对 ripgrep/grep 的显著改进。通过插件市场安装，然后使用 <code>/mgrep</code> 技能。适用于本地搜索和网络搜索。</p>
+<pre><code class="language-bash">mgrep &quot;function handleSubmit&quot;  # Local search
+mgrep --web &quot;Next.js 15 app router changes&quot;  # Web search
+</code></pre>
+<h3>其他有用的命令</h3>
+<ul>
+<li><code>/rewind</code> - 回到之前的状态</li>
+<li><code>/statusline</code> - 用分支、上下文百分比、待办事项进行自定义</li>
+<li><code>/checkpoints</code> - 文件级别的撤销点</li>
+<li><code>/compact</code> - 手动触发上下文压缩</li>
+</ul>
+<h3>GitHub Actions CI/CD</h3>
+<p>使用 GitHub Actions 在你的 PR 上设置代码审查。配置后，Claude 可以自动审查 PR。</p>
+<p><img src="../../assets/images/shortform/08-github-pr-review.jpeg" alt="Claude 机器人批准 PR"><br><em>Claude 批准一个错误修复 PR</em></p>
+<h3>沙盒化</h3>
+<p>对风险操作使用沙盒模式——Claude 在受限环境中运行，不影响你的实际系统。</p>
+<hr>
+<h2>关于编辑器</h2>
+<p>你的编辑器选择显著影响 Claude Code 的工作流。虽然 Claude Code 可以在任何终端中工作，但将其与功能强大的编辑器配对可以解锁实时文件跟踪、快速导航和集成命令执行。</p>
+<h3>Zed（我的偏好）</h3>
+<p>我使用 <a href="https://zed.dev">Zed</a> —— 用 Rust 编写，所以它真的很快。立即打开，轻松处理大型代码库，几乎不占用系统资源。</p>
+<p><strong>为什么 Zed + Claude Code 是绝佳组合：</strong></p>
+<ul>
+<li><strong>速度</strong> - 基于 Rust 的性能意味着当 Claude 快速编辑文件时没有延迟。你的编辑器能跟上</li>
+<li><strong>代理面板集成</strong> - Zed 的 Claude 集成允许你在 Claude 编辑时实时跟踪文件变化。无需离开编辑器即可跳转到 Claude 引用的文件</li>
+<li><strong>CMD+Shift+R 命令面板</strong> - 快速访问所有自定义斜杠命令、调试器、构建脚本，在可搜索的 UI 中</li>
+<li><strong>最小的资源使用</strong> - 在繁重操作期间不会与 Claude 竞争 RAM/CPU。运行 Opus 时很重要</li>
+<li><strong>Vim 模式</strong> - 完整的 vim 键绑定，如果你喜欢的话</li>
+</ul>
+<p><img src="../../assets/images/shortform/09-zed-editor.jpeg" alt="带有自定义命令的 Zed 编辑器"><br><em>使用 CMD+Shift+R 调出带有自定义命令下拉菜单的 Zed 编辑器。右下角的靶心图标表示跟随模式已启用。</em></p>
+<p><strong>编辑器无关提示：</strong></p>
+<ol>
+<li><strong>分割你的屏幕</strong> - 一侧是带 Claude Code 的终端，另一侧是编辑器</li>
+<li><strong>Ctrl + G</strong> - 在 Zed 中快速打开 Claude 当前正在处理的文件</li>
+<li><strong>自动保存</strong> - 启用自动保存，以便 Claude 的文件读取始终是最新的</li>
+<li><strong>Git 集成</strong> - 使用编辑器的 git 功能在提交前审查 Claude 的更改</li>
+<li><strong>文件监视器</strong> - 大多数编辑器自动重新加载更改的文件，请验证是否已启用</li>
+</ol>
+<h3>VSCode / Cursor</h3>
+<p>这也是一个可行的选择，并且与 Claude Code 配合良好。你可以使用终端格式，通过 <code>\ide</code> 与你的编辑器自动同步以启用 LSP 功能（现在与插件有些冗余）。或者你可以选择扩展，它更集成于编辑器并具有匹配的 UI。</p>
+<p><img src="../../assets/images/shortform/10-vscode-extension.jpeg" alt="VS Code Claude Code 扩展"><br><em>VS Code 扩展为 Claude Code 提供了原生图形界面，直接集成到你的 IDE 中。</em></p>
+<hr>
+<h2>我的设置</h2>
+<h3>插件</h3>
+<p><strong>已安装：</strong>（我通常一次只启用其中的 4-5 个）</p>
+<pre><code class="language-markdown">ralph-wiggum@claude-code-plugins       # 循环自动化
+frontend-design@claude-code-plugins    # UI/UX 模式
+commit-commands@claude-code-plugins    # Git 工作流
+security-guidance@claude-code-plugins  # 安全检查
+pr-review-toolkit@claude-code-plugins  # PR 自动化
+typescript-lsp@claude-plugins-official # TS 智能
+hookify@claude-plugins-official        # Hook 创建
+code-simplifier@claude-plugins-official
+feature-dev@claude-code-plugins
+explanatory-output-style@claude-code-plugins
+code-review@claude-code-plugins
+context7@claude-plugins-official       # 实时文档
+pyright-lsp@claude-plugins-official    # Python 类型
+mgrep@Mixedbread-Grep                  # 更好的搜索
+</code></pre>
+<h3>MCP 服务器</h3>
+<p><strong>已配置（用户级别）：</strong></p>
+<pre><code class="language-json">{
+  &quot;github&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-github&quot;] },
+  &quot;firecrawl&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;firecrawl-mcp&quot;] },
+  &quot;supabase&quot;: {
+    &quot;command&quot;: &quot;npx&quot;,
+    &quot;args&quot;: [&quot;-y&quot;, &quot;@supabase/mcp-server-supabase@latest&quot;, &quot;--project-ref=YOUR_REF&quot;]
+  },
+  &quot;memory&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-memory&quot;] },
+  &quot;sequential-thinking&quot;: {
+    &quot;command&quot;: &quot;npx&quot;,
+    &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-sequential-thinking&quot;]
+  },
+  &quot;vercel&quot;: { &quot;type&quot;: &quot;http&quot;, &quot;url&quot;: &quot;https://mcp.vercel.com&quot; },
+  &quot;railway&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@railway/mcp-server&quot;] },
+  &quot;cloudflare-docs&quot;: { &quot;type&quot;: &quot;http&quot;, &quot;url&quot;: &quot;https://docs.mcp.cloudflare.com/mcp&quot; },
+  &quot;cloudflare-workers-bindings&quot;: {
+    &quot;type&quot;: &quot;http&quot;,
+    &quot;url&quot;: &quot;https://bindings.mcp.cloudflare.com/mcp&quot;
+  },
+  &quot;clickhouse&quot;: { &quot;type&quot;: &quot;http&quot;, &quot;url&quot;: &quot;https://mcp.clickhouse.cloud/mcp&quot; },
+  &quot;AbletonMCP&quot;: { &quot;command&quot;: &quot;uvx&quot;, &quot;args&quot;: [&quot;ableton-mcp&quot;] },
+  &quot;magic&quot;: { &quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;@magicuidesign/mcp@latest&quot;] }
+}
+</code></pre>
+<p>这是关键——我配置了 14 个 MCP，但每个项目只启用约 5-6 个。保持上下文窗口健康。</p>
+<h3>关键钩子</h3>
+<pre><code class="language-json">{
+  &quot;PreToolUse&quot;: [
+    { &quot;matcher&quot;: &quot;npm|pnpm|yarn|cargo|pytest&quot;, &quot;hooks&quot;: [&quot;tmux reminder&quot;] },
+    { &quot;matcher&quot;: &quot;Write &amp;&amp; .md file&quot;, &quot;hooks&quot;: [&quot;block unless README/CLAUDE&quot;] },
+    { &quot;matcher&quot;: &quot;git push&quot;, &quot;hooks&quot;: [&quot;open editor for review&quot;] }
+  ],
+  &quot;PostToolUse&quot;: [
+    { &quot;matcher&quot;: &quot;Edit &amp;&amp; .ts/.tsx/.js/.jsx&quot;, &quot;hooks&quot;: [&quot;prettier --write&quot;] },
+    { &quot;matcher&quot;: &quot;Edit &amp;&amp; .ts/.tsx&quot;, &quot;hooks&quot;: [&quot;tsc --noEmit&quot;] },
+    { &quot;matcher&quot;: &quot;Edit&quot;, &quot;hooks&quot;: [&quot;grep console.log warning&quot;] }
+  ],
+  &quot;Stop&quot;: [
+    { &quot;matcher&quot;: &quot;*&quot;, &quot;hooks&quot;: [&quot;check modified files for console.log&quot;] }
+  ]
+}
+</code></pre>
+<h3>自定义状态行</h3>
+<p>显示用户、目录、带脏标记的 git 分支、剩余上下文百分比、模型、时间和待办事项计数：</p>
+<p><img src="../../assets/images/shortform/11-statusline.jpeg" alt="自定义状态行"><br><em>我的 Mac 根目录下的状态行示例</em></p>
+<pre><code>affoon:~ ctx:65% Opus 4.5 19:52
+▌▌ plan mode on (shift+tab to cycle)
+</code></pre>
+<h3>规则结构</h3>
+<pre><code>~/.claude/rules/
+  security.md      # Mandatory security checks
+  coding-style.md  # Immutability, file size limits
+  testing.md       # TDD, 80% coverage
+  git-workflow.md  # Conventional commits
+  agents.md        # Subagent delegation rules
+  patterns.md      # API response formats
+  performance.md   # Model selection (Haiku vs Sonnet vs Opus)
+  hooks.md         # Hook documentation
+</code></pre>
+<h3>子代理</h3>
+<pre><code>~/.claude/agents/
+  planner.md           # Break down features
+  architect.md         # System design
+  tdd-guide.md         # Write tests first
+  code-reviewer.md     # Quality review
+  security-reviewer.md # Vulnerability scan
+  build-error-resolver.md
+  e2e-runner.md        # Playwright tests
+  refactor-cleaner.md  # Dead code removal
+  doc-updater.md       # Keep docs synced
+</code></pre>
+<hr>
+<h2>关键要点</h2>
+<ol>
+<li><strong>不要过度复杂化</strong> - 将配置视为微调，而非架构</li>
+<li><strong>上下文窗口很宝贵</strong> - 禁用未使用的 MCP 和插件</li>
+<li><strong>并行执行</strong> - 分叉对话，使用 git worktrees</li>
+<li><strong>自动化重复性工作</strong> - 用于格式化、代码检查、提醒的钩子</li>
+<li><strong>界定子代理范围</strong> - 有限的工具 = 专注的执行</li>
+</ol>
+<hr>
+<h2>参考资料</h2>
+<ul>
+<li><a href="https://code.claude.com/docs/en/plugins-reference">插件参考</a></li>
+<li><a href="https://code.claude.com/docs/en/hooks">钩子文档</a></li>
+<li><a href="https://code.claude.com/docs/en/checkpointing">检查点</a></li>
+<li><a href="https://code.claude.com/docs/en/interactive-mode">交互模式</a></li>
+<li><a href="https://code.claude.com/docs/en/memory">记忆系统</a></li>
+<li><a href="https://code.claude.com/docs/en/sub-agents">子代理</a></li>
+<li><a href="https://code.claude.com/docs/en/mcp-overview">MCP 概述</a></li>
+</ul>
+<hr>
+<p><strong>注意：</strong> 这是细节的一个子集。关于高级模式，请参阅 <a href="the-longform-guide.md">长篇指南</a>。</p>
+<hr>
+<p><em>在纽约与 <a href="https://x.com/DRodriguezFX">@DRodriguezFX</a> 一起构建 <a href="https://zenith.chat">zenith.chat</a> 赢得了 Anthropic x Forum Ventures 黑客马拉松</em></p>
+
+</body>
+</html>

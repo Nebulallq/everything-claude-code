@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>learn</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>/learn - Extract Reusable Patterns</h1>
+<p>Analyze the current session and extract any patterns worth saving as skills.</p>
+<h2>Trigger</h2>
+<p>Run <code>/learn</code> at any point during a session when you&#39;ve solved a non-trivial problem.</p>
+<h2>What to Extract</h2>
+<p>Look for:</p>
+<ol>
+<li><p><strong>Error Resolution Patterns</strong></p>
+<ul>
+<li>What error occurred?</li>
+<li>What was the root cause?</li>
+<li>What fixed it?</li>
+<li>Is this reusable for similar errors?</li>
+</ul>
+</li>
+<li><p><strong>Debugging Techniques</strong></p>
+<ul>
+<li>Non-obvious debugging steps</li>
+<li>Tool combinations that worked</li>
+<li>Diagnostic patterns</li>
+</ul>
+</li>
+<li><p><strong>Workarounds</strong></p>
+<ul>
+<li>Library quirks</li>
+<li>API limitations</li>
+<li>Version-specific fixes</li>
+</ul>
+</li>
+<li><p><strong>Project-Specific Patterns</strong></p>
+<ul>
+<li>Codebase conventions discovered</li>
+<li>Architecture decisions made</li>
+<li>Integration patterns</li>
+</ul>
+</li>
+</ol>
+<h2>Output Format</h2>
+<p>Create a skill file at <code>~/.claude/skills/learned/[pattern-name].md</code>:</p>
+<pre><code class="language-markdown"># [Descriptive Pattern Name]
+
+**Extracted:** [Date]
+**Context:** [Brief description of when this applies]
+
+## Problem
+[What problem this solves - be specific]
+
+## Solution
+[The pattern/technique/workaround]
+
+## Example
+[Code example if applicable]
+
+## When to Use
+[Trigger conditions - what should activate this skill]
+</code></pre>
+<h2>Process</h2>
+<ol>
+<li>Review the session for extractable patterns</li>
+<li>Identify the most valuable/reusable insight</li>
+<li>Draft the skill file</li>
+<li>Ask user to confirm before saving</li>
+<li>Save to <code>~/.claude/skills/learned/</code></li>
+</ol>
+<h2>Notes</h2>
+<ul>
+<li>Don&#39;t extract trivial fixes (typos, simple syntax errors)</li>
+<li>Don&#39;t extract one-time issues (specific API outages, etc.)</li>
+<li>Focus on patterns that will save time in future sessions</li>
+<li>Keep skills focused - one pattern per skill</li>
+</ul>
+
+</body>
+</html>

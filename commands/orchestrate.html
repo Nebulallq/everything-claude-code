@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>orchestrate</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Orchestrate Command</h1>
+<p>Sequential agent workflow for complex tasks.</p>
+<h2>Usage</h2>
+<p><code>/orchestrate [workflow-type] [task-description]</code></p>
+<h2>Workflow Types</h2>
+<h3>feature</h3>
+<p>Full feature implementation workflow:</p>
+<pre><code>planner -&gt; tdd-guide -&gt; code-reviewer -&gt; security-reviewer
+</code></pre>
+<h3>bugfix</h3>
+<p>Bug investigation and fix workflow:</p>
+<pre><code>planner -&gt; tdd-guide -&gt; code-reviewer
+</code></pre>
+<h3>refactor</h3>
+<p>Safe refactoring workflow:</p>
+<pre><code>architect -&gt; code-reviewer -&gt; tdd-guide
+</code></pre>
+<h3>security</h3>
+<p>Security-focused review:</p>
+<pre><code>security-reviewer -&gt; code-reviewer -&gt; architect
+</code></pre>
+<h2>Execution Pattern</h2>
+<p>For each agent in the workflow:</p>
+<ol>
+<li><strong>Invoke agent</strong> with context from previous agent</li>
+<li><strong>Collect output</strong> as structured handoff document</li>
+<li><strong>Pass to next agent</strong> in chain</li>
+<li><strong>Aggregate results</strong> into final report</li>
+</ol>
+<h2>Handoff Document Format</h2>
+<p>Between agents, create handoff document:</p>
+<pre><code class="language-markdown">## HANDOFF: [previous-agent] -&gt; [next-agent]
+
+### Context
+[Summary of what was done]
+
+### Findings
+[Key discoveries or decisions]
+
+### Files Modified
+[List of files touched]
+
+### Open Questions
+[Unresolved items for next agent]
+
+### Recommendations
+[Suggested next steps]
+</code></pre>
+<h2>Example: Feature Workflow</h2>
+<pre><code>/orchestrate feature &quot;Add user authentication&quot;
+</code></pre>
+<p>Executes:</p>
+<ol>
+<li><p><strong>Planner Agent</strong></p>
+<ul>
+<li>Analyzes requirements</li>
+<li>Creates implementation plan</li>
+<li>Identifies dependencies</li>
+<li>Output: <code>HANDOFF: planner -&gt; tdd-guide</code></li>
+</ul>
+</li>
+<li><p><strong>TDD Guide Agent</strong></p>
+<ul>
+<li>Reads planner handoff</li>
+<li>Writes tests first</li>
+<li>Implements to pass tests</li>
+<li>Output: <code>HANDOFF: tdd-guide -&gt; code-reviewer</code></li>
+</ul>
+</li>
+<li><p><strong>Code Reviewer Agent</strong></p>
+<ul>
+<li>Reviews implementation</li>
+<li>Checks for issues</li>
+<li>Suggests improvements</li>
+<li>Output: <code>HANDOFF: code-reviewer -&gt; security-reviewer</code></li>
+</ul>
+</li>
+<li><p><strong>Security Reviewer Agent</strong></p>
+<ul>
+<li>Security audit</li>
+<li>Vulnerability check</li>
+<li>Final approval</li>
+<li>Output: Final Report</li>
+</ul>
+</li>
+</ol>
+<h2>Final Report Format</h2>
+<pre><code>ORCHESTRATION REPORT
+====================
+Workflow: feature
+Task: Add user authentication
+Agents: planner -&gt; tdd-guide -&gt; code-reviewer -&gt; security-reviewer
+
+SUMMARY
+-------
+[One paragraph summary]
+
+AGENT OUTPUTS
+-------------
+Planner: [summary]
+TDD Guide: [summary]
+Code Reviewer: [summary]
+Security Reviewer: [summary]
+
+FILES CHANGED
+-------------
+[List all files modified]
+
+TEST RESULTS
+------------
+[Test pass/fail summary]
+
+SECURITY STATUS
+---------------
+[Security findings]
+
+RECOMMENDATION
+--------------
+[SHIP / NEEDS WORK / BLOCKED]
+</code></pre>
+<h2>Parallel Execution</h2>
+<p>For independent checks, run agents in parallel:</p>
+<pre><code class="language-markdown">### Parallel Phase
+Run simultaneously:
+- code-reviewer (quality)
+- security-reviewer (security)
+- architect (design)
+
+### Merge Results
+Combine outputs into single report
+</code></pre>
+<h2>Arguments</h2>
+<p>$ARGUMENTS:</p>
+<ul>
+<li><code>feature &lt;description&gt;</code> - Full feature workflow</li>
+<li><code>bugfix &lt;description&gt;</code> - Bug fix workflow</li>
+<li><code>refactor &lt;description&gt;</code> - Refactoring workflow</li>
+<li><code>security &lt;description&gt;</code> - Security review workflow</li>
+<li><code>custom &lt;agents&gt; &lt;description&gt;</code> - Custom agent sequence</li>
+</ul>
+<h2>Custom Workflow Example</h2>
+<pre><code>/orchestrate custom &quot;architect,tdd-guide,code-reviewer&quot; &quot;Redesign caching layer&quot;
+</code></pre>
+<h2>Tips</h2>
+<ol>
+<li><strong>Start with planner</strong> for complex features</li>
+<li><strong>Always include code-reviewer</strong> before merge</li>
+<li><strong>Use security-reviewer</strong> for auth/payment/PII</li>
+<li><strong>Keep handoffs concise</strong> - focus on what next agent needs</li>
+<li><strong>Run verification</strong> between agents if needed</li>
+</ol>
+
+</body>
+</html>

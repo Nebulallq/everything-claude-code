@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CONTRIBUTING</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Contributing to Everything Claude Code</h1>
+<p>Thanks for wanting to contribute! This repo is a community resource for Claude Code users.</p>
+<h2>Table of Contents</h2>
+<ul>
+<li><a href="#what-were-looking-for">What We&#39;re Looking For</a></li>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#contributing-skills">Contributing Skills</a></li>
+<li><a href="#contributing-agents">Contributing Agents</a></li>
+<li><a href="#contributing-hooks">Contributing Hooks</a></li>
+<li><a href="#contributing-commands">Contributing Commands</a></li>
+<li><a href="#pull-request-process">Pull Request Process</a></li>
+</ul>
+<hr>
+<h2>What We&#39;re Looking For</h2>
+<h3>Agents</h3>
+<p>New agents that handle specific tasks well:</p>
+<ul>
+<li>Language-specific reviewers (Python, Go, Rust)</li>
+<li>Framework experts (Django, Rails, Laravel, Spring)</li>
+<li>DevOps specialists (Kubernetes, Terraform, CI/CD)</li>
+<li>Domain experts (ML pipelines, data engineering, mobile)</li>
+</ul>
+<h3>Skills</h3>
+<p>Workflow definitions and domain knowledge:</p>
+<ul>
+<li>Language best practices</li>
+<li>Framework patterns</li>
+<li>Testing strategies</li>
+<li>Architecture guides</li>
+</ul>
+<h3>Hooks</h3>
+<p>Useful automations:</p>
+<ul>
+<li>Linting/formatting hooks</li>
+<li>Security checks</li>
+<li>Validation hooks</li>
+<li>Notification hooks</li>
+</ul>
+<h3>Commands</h3>
+<p>Slash commands that invoke useful workflows:</p>
+<ul>
+<li>Deployment commands</li>
+<li>Testing commands</li>
+<li>Code generation commands</li>
+</ul>
+<hr>
+<h2>Quick Start</h2>
+<pre><code class="language-bash"># 1. Fork and clone
+gh repo fork affaan-m/everything-claude-code --clone
+cd everything-claude-code
+
+# 2. Create a branch
+git checkout -b feat/my-contribution
+
+# 3. Add your contribution (see sections below)
+
+# 4. Test locally
+cp -r skills/my-skill ~/.claude/skills/  # for skills
+# Then test with Claude Code
+
+# 5. Submit PR
+git add . &amp;&amp; git commit -m &quot;feat: add my-skill&quot; &amp;&amp; git push -u origin feat/my-contribution
+</code></pre>
+<hr>
+<h2>Contributing Skills</h2>
+<p>Skills are knowledge modules that Claude Code loads based on context.</p>
+<h3>Directory Structure</h3>
+<pre><code>skills/
+└── your-skill-name/
+    └── SKILL.md
+</code></pre>
+<h3>SKILL.md Template</h3>
+<pre><code class="language-markdown">---
+name: your-skill-name
+description: Brief description shown in skill list
+origin: ECC
+---
+
+# Your Skill Title
+
+Brief overview of what this skill covers.
+
+## Core Concepts
+
+Explain key patterns and guidelines.
+
+## Code Examples
+
+\`\`\`typescript
+// Include practical, tested examples
+function example() {
+  // Well-commented code
+}
+\`\`\`
+
+## Best Practices
+
+- Actionable guidelines
+- Do&#39;s and don&#39;ts
+- Common pitfalls to avoid
+
+## When to Use
+
+Describe scenarios where this skill applies.
+</code></pre>
+<h3>Skill Checklist</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Focused on one domain/technology</li>
+<li><input disabled="" type="checkbox"> Includes practical code examples</li>
+<li><input disabled="" type="checkbox"> Under 500 lines</li>
+<li><input disabled="" type="checkbox"> Uses clear section headers</li>
+<li><input disabled="" type="checkbox"> Tested with Claude Code</li>
+</ul>
+<h3>Example Skills</h3>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>coding-standards/</code></td>
+<td>TypeScript/JavaScript patterns</td>
+</tr>
+<tr>
+<td><code>frontend-patterns/</code></td>
+<td>React and Next.js best practices</td>
+</tr>
+<tr>
+<td><code>backend-patterns/</code></td>
+<td>API and database patterns</td>
+</tr>
+<tr>
+<td><code>security-review/</code></td>
+<td>Security checklist</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Contributing Agents</h2>
+<p>Agents are specialized assistants invoked via the Task tool.</p>
+<h3>File Location</h3>
+<pre><code>agents/your-agent-name.md
+</code></pre>
+<h3>Agent Template</h3>
+<pre><code class="language-markdown">---
+name: your-agent-name
+description: What this agent does and when Claude should invoke it. Be specific!
+tools: [&quot;Read&quot;, &quot;Write&quot;, &quot;Edit&quot;, &quot;Bash&quot;, &quot;Grep&quot;, &quot;Glob&quot;]
+model: sonnet
+---
+
+You are a [role] specialist.
+
+## Your Role
+
+- Primary responsibility
+- Secondary responsibility
+- What you DO NOT do (boundaries)
+
+## Workflow
+
+### Step 1: Understand
+How you approach the task.
+
+### Step 2: Execute
+How you perform the work.
+
+### Step 3: Verify
+How you validate results.
+
+## Output Format
+
+What you return to the user.
+
+## Examples
+
+### Example: [Scenario]
+Input: [what user provides]
+Action: [what you do]
+Output: [what you return]
+</code></pre>
+<h3>Agent Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Options</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>Lowercase, hyphenated</td>
+<td><code>code-reviewer</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Used to decide when to invoke</td>
+<td>Be specific!</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>Only what&#39;s needed</td>
+<td><code>Read, Write, Edit, Bash, Grep, Glob, WebFetch, Task</code></td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>Complexity level</td>
+<td><code>haiku</code> (simple), <code>sonnet</code> (coding), <code>opus</code> (complex)</td>
+</tr>
+</tbody></table>
+<h3>Example Agents</h3>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tdd-guide.md</code></td>
+<td>Test-driven development</td>
+</tr>
+<tr>
+<td><code>code-reviewer.md</code></td>
+<td>Code review</td>
+</tr>
+<tr>
+<td><code>security-reviewer.md</code></td>
+<td>Security scanning</td>
+</tr>
+<tr>
+<td><code>build-error-resolver.md</code></td>
+<td>Fix build errors</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Contributing Hooks</h2>
+<p>Hooks are automatic behaviors triggered by Claude Code events.</p>
+<h3>File Location</h3>
+<pre><code>hooks/hooks.json
+</code></pre>
+<h3>Hook Types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Trigger</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PreToolUse</code></td>
+<td>Before tool runs</td>
+<td>Validate, warn, block</td>
+</tr>
+<tr>
+<td><code>PostToolUse</code></td>
+<td>After tool runs</td>
+<td>Format, check, notify</td>
+</tr>
+<tr>
+<td><code>SessionStart</code></td>
+<td>Session begins</td>
+<td>Load context</td>
+</tr>
+<tr>
+<td><code>Stop</code></td>
+<td>Session ends</td>
+<td>Cleanup, audit</td>
+</tr>
+</tbody></table>
+<h3>Hook Format</h3>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [
+      {
+        &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;rm -rf /\&quot;&quot;,
+        &quot;hooks&quot;: [
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;echo &#39;[Hook] BLOCKED: Dangerous command&#39; &amp;&amp; exit 1&quot;
+          }
+        ],
+        &quot;description&quot;: &quot;Block dangerous rm commands&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<h3>Matcher Syntax</h3>
+<pre><code class="language-javascript">// Match specific tools
+tool == &quot;Bash&quot;
+tool == &quot;Edit&quot;
+tool == &quot;Write&quot;
+
+// Match input patterns
+tool_input.command matches &quot;npm install&quot;
+tool_input.file_path matches &quot;\\.tsx?$&quot;
+
+// Combine conditions
+tool == &quot;Bash&quot; &amp;&amp; tool_input.command matches &quot;git push&quot;
+</code></pre>
+<h3>Hook Examples</h3>
+<pre><code class="language-json">// Block dev servers outside tmux
+{
+  &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;npm run dev\&quot;&quot;,
+  &quot;hooks&quot;: [{&quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;echo &#39;Use tmux for dev servers&#39; &amp;&amp; exit 1&quot;}],
+  &quot;description&quot;: &quot;Ensure dev servers run in tmux&quot;
+}
+
+// Auto-format after editing TypeScript
+{
+  &quot;matcher&quot;: &quot;tool == \&quot;Edit\&quot; &amp;&amp; tool_input.file_path matches \&quot;\\.tsx?$\&quot;&quot;,
+  &quot;hooks&quot;: [{&quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;npx prettier --write \&quot;$file_path\&quot;&quot;}],
+  &quot;description&quot;: &quot;Format TypeScript files after edit&quot;
+}
+
+// Warn before git push
+{
+  &quot;matcher&quot;: &quot;tool == \&quot;Bash\&quot; &amp;&amp; tool_input.command matches \&quot;git push\&quot;&quot;,
+  &quot;hooks&quot;: [{&quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;echo &#39;[Hook] Review changes before pushing&#39;&quot;}],
+  &quot;description&quot;: &quot;Reminder to review before push&quot;
+}
+</code></pre>
+<h3>Hook Checklist</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Matcher is specific (not overly broad)</li>
+<li><input disabled="" type="checkbox"> Includes clear error/info messages</li>
+<li><input disabled="" type="checkbox"> Uses correct exit codes (<code>exit 1</code> blocks, <code>exit 0</code> allows)</li>
+<li><input disabled="" type="checkbox"> Tested thoroughly</li>
+<li><input disabled="" type="checkbox"> Has description</li>
+</ul>
+<hr>
+<h2>Contributing Commands</h2>
+<p>Commands are user-invoked actions with <code>/command-name</code>.</p>
+<h3>File Location</h3>
+<pre><code>commands/your-command.md
+</code></pre>
+<h3>Command Template</h3>
+<pre><code class="language-markdown">---
+description: Brief description shown in /help
+---
+
+# Command Name
+
+## Purpose
+
+What this command does.
+
+## Usage
+
+\`\`\`
+/your-command [args]
+\`\`\`
+
+## Workflow
+
+1. First step
+2. Second step
+3. Final step
+
+## Output
+
+What the user receives.
+</code></pre>
+<h3>Example Commands</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>commit.md</code></td>
+<td>Create git commits</td>
+</tr>
+<tr>
+<td><code>code-review.md</code></td>
+<td>Review code changes</td>
+</tr>
+<tr>
+<td><code>tdd.md</code></td>
+<td>TDD workflow</td>
+</tr>
+<tr>
+<td><code>e2e.md</code></td>
+<td>E2E testing</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pull Request Process</h2>
+<h3>1. PR Title Format</h3>
+<pre><code>feat(skills): add rust-patterns skill
+feat(agents): add api-designer agent
+feat(hooks): add auto-format hook
+fix(skills): update React patterns
+docs: improve contributing guide
+</code></pre>
+<h3>2. PR Description</h3>
+<pre><code class="language-markdown">## Summary
+What you&#39;re adding and why.
+
+## Type
+- [ ] Skill
+- [ ] Agent
+- [ ] Hook
+- [ ] Command
+
+## Testing
+How you tested this.
+
+## Checklist
+- [ ] Follows format guidelines
+- [ ] Tested with Claude Code
+- [ ] No sensitive info (API keys, paths)
+- [ ] Clear descriptions
+</code></pre>
+<h3>3. Review Process</h3>
+<ol>
+<li>Maintainers review within 48 hours</li>
+<li>Address feedback if requested</li>
+<li>Once approved, merged to main</li>
+</ol>
+<hr>
+<h2>Guidelines</h2>
+<h3>Do</h3>
+<ul>
+<li>Keep contributions focused and modular</li>
+<li>Include clear descriptions</li>
+<li>Test before submitting</li>
+<li>Follow existing patterns</li>
+<li>Document dependencies</li>
+</ul>
+<h3>Don&#39;t</h3>
+<ul>
+<li>Include sensitive data (API keys, tokens, paths)</li>
+<li>Add overly complex or niche configs</li>
+<li>Submit untested contributions</li>
+<li>Create duplicates of existing functionality</li>
+</ul>
+<hr>
+<h2>File Naming</h2>
+<ul>
+<li>Use lowercase with hyphens: <code>python-reviewer.md</code></li>
+<li>Be descriptive: <code>tdd-workflow.md</code> not <code>workflow.md</code></li>
+<li>Match name to filename</li>
+</ul>
+<hr>
+<h2>Questions?</h2>
+<ul>
+<li><strong>Issues:</strong> <a href="https://github.com/affaan-m/everything-claude-code/issues">github.com/affaan-m/everything-claude-code/issues</a></li>
+<li><strong>X/Twitter:</strong> <a href="https://x.com/affaanmustafa">@affaanmustafa</a></li>
+</ul>
+<hr>
+<p>Thanks for contributing! Let&#39;s build a great resource together.</p>
+
+</body>
+</html>

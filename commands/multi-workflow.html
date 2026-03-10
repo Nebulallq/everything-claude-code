@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>multi-workflow</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Workflow - Multi-Model Collaborative Development</h1>
+<p>Multi-model collaborative development workflow (Research → Ideation → Plan → Execute → Optimize → Review), with intelligent routing: Frontend → Gemini, Backend → Codex.</p>
+<p>Structured development workflow with quality gates, MCP services, and multi-model collaboration.</p>
+<h2>Usage</h2>
+<pre><code class="language-bash">/workflow &lt;task description&gt;
+</code></pre>
+<h2>Context</h2>
+<ul>
+<li>Task to develop: $ARGUMENTS</li>
+<li>Structured 6-phase workflow with quality gates</li>
+<li>Multi-model collaboration: Codex (backend) + Gemini (frontend) + Claude (orchestration)</li>
+<li>MCP service integration (ace-tool, optional) for enhanced capabilities</li>
+</ul>
+<h2>Your Role</h2>
+<p>You are the <strong>Orchestrator</strong>, coordinating a multi-model collaborative system (Research → Ideation → Plan → Execute → Optimize → Review). Communicate concisely and professionally for experienced developers.</p>
+<p><strong>Collaborative Models</strong>:</p>
+<ul>
+<li><strong>ace-tool MCP</strong> (optional) – Code retrieval + Prompt enhancement</li>
+<li><strong>Codex</strong> – Backend logic, algorithms, debugging (<strong>Backend authority, trustworthy</strong>)</li>
+<li><strong>Gemini</strong> – Frontend UI/UX, visual design (<strong>Frontend expert, backend opinions for reference only</strong>)</li>
+<li><strong>Claude (self)</strong> – Orchestration, planning, execution, delivery</li>
+</ul>
+<hr>
+<h2>Multi-Model Call Specification</h2>
+<p><strong>Call syntax</strong> (parallel: <code>run_in_background: true</code>, sequential: <code>false</code>):</p>
+<pre><code># New session call
+Bash({
+  command: &quot;~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend &lt;codex|gemini&gt; {{GEMINI_MODEL_FLAG}}- \&quot;$PWD\&quot; &lt;&lt;&#39;EOF&#39;
+ROLE_FILE: &lt;role prompt path&gt;
+&lt;TASK&gt;
+Requirement: &lt;enhanced requirement (or $ARGUMENTS if not enhanced)&gt;
+Context: &lt;project context and analysis from previous phases&gt;
+&lt;/TASK&gt;
+OUTPUT: Expected output format
+EOF&quot;,
+  run_in_background: true,
+  timeout: 3600000,
+  description: &quot;Brief description&quot;
+})
+
+# Resume session call
+Bash({
+  command: &quot;~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend &lt;codex|gemini&gt; {{GEMINI_MODEL_FLAG}}resume &lt;SESSION_ID&gt; - \&quot;$PWD\&quot; &lt;&lt;&#39;EOF&#39;
+ROLE_FILE: &lt;role prompt path&gt;
+&lt;TASK&gt;
+Requirement: &lt;enhanced requirement (or $ARGUMENTS if not enhanced)&gt;
+Context: &lt;project context and analysis from previous phases&gt;
+&lt;/TASK&gt;
+OUTPUT: Expected output format
+EOF&quot;,
+  run_in_background: true,
+  timeout: 3600000,
+  description: &quot;Brief description&quot;
+})
+</code></pre>
+<p><strong>Model Parameter Notes</strong>:</p>
+<ul>
+<li><code>{{GEMINI_MODEL_FLAG}}</code>: When using <code>--backend gemini</code>, replace with <code>--gemini-model gemini-3-pro-preview</code> (note trailing space); use empty string for codex</li>
+</ul>
+<p><strong>Role Prompts</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Codex</th>
+<th>Gemini</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Analysis</td>
+<td><code>~/.claude/.ccg/prompts/codex/analyzer.md</code></td>
+<td><code>~/.claude/.ccg/prompts/gemini/analyzer.md</code></td>
+</tr>
+<tr>
+<td>Planning</td>
+<td><code>~/.claude/.ccg/prompts/codex/architect.md</code></td>
+<td><code>~/.claude/.ccg/prompts/gemini/architect.md</code></td>
+</tr>
+<tr>
+<td>Review</td>
+<td><code>~/.claude/.ccg/prompts/codex/reviewer.md</code></td>
+<td><code>~/.claude/.ccg/prompts/gemini/reviewer.md</code></td>
+</tr>
+</tbody></table>
+<p><strong>Session Reuse</strong>: Each call returns <code>SESSION_ID: xxx</code>, use <code>resume xxx</code> subcommand for subsequent phases (note: <code>resume</code>, not <code>--resume</code>).</p>
+<p><strong>Parallel Calls</strong>: Use <code>run_in_background: true</code> to start, wait for results with <code>TaskOutput</code>. <strong>Must wait for all models to return before proceeding to next phase</strong>.</p>
+<p><strong>Wait for Background Tasks</strong> (use max timeout 600000ms = 10 minutes):</p>
+<pre><code>TaskOutput({ task_id: &quot;&lt;task_id&gt;&quot;, block: true, timeout: 600000 })
+</code></pre>
+<p><strong>IMPORTANT</strong>:</p>
+<ul>
+<li>Must specify <code>timeout: 600000</code>, otherwise default 30 seconds will cause premature timeout.</li>
+<li>If still incomplete after 10 minutes, continue polling with <code>TaskOutput</code>, <strong>NEVER kill the process</strong>.</li>
+<li>If waiting is skipped due to timeout, <strong>MUST call <code>AskUserQuestion</code> to ask user whether to continue waiting or kill task. Never kill directly.</strong></li>
+</ul>
+<hr>
+<h2>Communication Guidelines</h2>
+<ol>
+<li>Start responses with mode label <code>[Mode: X]</code>, initial is <code>[Mode: Research]</code>.</li>
+<li>Follow strict sequence: <code>Research → Ideation → Plan → Execute → Optimize → Review</code>.</li>
+<li>Request user confirmation after each phase completion.</li>
+<li>Force stop when score &lt; 7 or user does not approve.</li>
+<li>Use <code>AskUserQuestion</code> tool for user interaction when needed (e.g., confirmation/selection/approval).</li>
+</ol>
+<hr>
+<h2>Execution Workflow</h2>
+<p><strong>Task Description</strong>: $ARGUMENTS</p>
+<h3>Phase 1: Research &amp; Analysis</h3>
+<p><code>[Mode: Research]</code> - Understand requirements and gather context:</p>
+<ol>
+<li><strong>Prompt Enhancement</strong> (if ace-tool MCP available): Call <code>mcp__ace-tool__enhance_prompt</code>, <strong>replace original $ARGUMENTS with enhanced result for all subsequent Codex/Gemini calls</strong>. If unavailable, use <code>$ARGUMENTS</code> as-is.</li>
+<li><strong>Context Retrieval</strong> (if ace-tool MCP available): Call <code>mcp__ace-tool__search_context</code>. If unavailable, use built-in tools: <code>Glob</code> for file discovery, <code>Grep</code> for symbol search, <code>Read</code> for context gathering, <code>Task</code> (Explore agent) for deeper exploration.</li>
+<li><strong>Requirement Completeness Score</strong> (0-10):<ul>
+<li>Goal clarity (0-3), Expected outcome (0-3), Scope boundaries (0-2), Constraints (0-2)</li>
+<li>≥7: Continue | &lt;7: Stop, ask clarifying questions</li>
+</ul>
+</li>
+</ol>
+<h3>Phase 2: Solution Ideation</h3>
+<p><code>[Mode: Ideation]</code> - Multi-model parallel analysis:</p>
+<p><strong>Parallel Calls</strong> (<code>run_in_background: true</code>):</p>
+<ul>
+<li>Codex: Use analyzer prompt, output technical feasibility, solutions, risks</li>
+<li>Gemini: Use analyzer prompt, output UI feasibility, solutions, UX evaluation</li>
+</ul>
+<p>Wait for results with <code>TaskOutput</code>. <strong>Save SESSION_ID</strong> (<code>CODEX_SESSION</code> and <code>GEMINI_SESSION</code>).</p>
+<p><strong>Follow the <code>IMPORTANT</code> instructions in <code>Multi-Model Call Specification</code> above</strong></p>
+<p>Synthesize both analyses, output solution comparison (at least 2 options), wait for user selection.</p>
+<h3>Phase 3: Detailed Planning</h3>
+<p><code>[Mode: Plan]</code> - Multi-model collaborative planning:</p>
+<p><strong>Parallel Calls</strong> (resume session with <code>resume &lt;SESSION_ID&gt;</code>):</p>
+<ul>
+<li>Codex: Use architect prompt + <code>resume $CODEX_SESSION</code>, output backend architecture</li>
+<li>Gemini: Use architect prompt + <code>resume $GEMINI_SESSION</code>, output frontend architecture</li>
+</ul>
+<p>Wait for results with <code>TaskOutput</code>.</p>
+<p><strong>Follow the <code>IMPORTANT</code> instructions in <code>Multi-Model Call Specification</code> above</strong></p>
+<p><strong>Claude Synthesis</strong>: Adopt Codex backend plan + Gemini frontend plan, save to <code>.claude/plan/task-name.md</code> after user approval.</p>
+<h3>Phase 4: Implementation</h3>
+<p><code>[Mode: Execute]</code> - Code development:</p>
+<ul>
+<li>Strictly follow approved plan</li>
+<li>Follow existing project code standards</li>
+<li>Request feedback at key milestones</li>
+</ul>
+<h3>Phase 5: Code Optimization</h3>
+<p><code>[Mode: Optimize]</code> - Multi-model parallel review:</p>
+<p><strong>Parallel Calls</strong>:</p>
+<ul>
+<li>Codex: Use reviewer prompt, focus on security, performance, error handling</li>
+<li>Gemini: Use reviewer prompt, focus on accessibility, design consistency</li>
+</ul>
+<p>Wait for results with <code>TaskOutput</code>. Integrate review feedback, execute optimization after user confirmation.</p>
+<p><strong>Follow the <code>IMPORTANT</code> instructions in <code>Multi-Model Call Specification</code> above</strong></p>
+<h3>Phase 6: Quality Review</h3>
+<p><code>[Mode: Review]</code> - Final evaluation:</p>
+<ul>
+<li>Check completion against plan</li>
+<li>Run tests to verify functionality</li>
+<li>Report issues and recommendations</li>
+<li>Request final user confirmation</li>
+</ul>
+<hr>
+<h2>Key Rules</h2>
+<ol>
+<li>Phase sequence cannot be skipped (unless user explicitly instructs)</li>
+<li>External models have <strong>zero filesystem write access</strong>, all modifications by Claude</li>
+<li><strong>Force stop</strong> when score &lt; 7 or user does not approve</li>
+</ol>
+
+</body>
+</html>

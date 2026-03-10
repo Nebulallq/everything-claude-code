@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>projects</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: projects<br>description: List known projects and their instinct statistics<br>command: true</h2>
+<h1>Projects Command</h1>
+<p>List project registry entries and per-project instinct/observation counts for continuous-learning-v2.</p>
+<h2>Implementation</h2>
+<p>Run the instinct CLI using the plugin root path:</p>
+<pre><code class="language-bash">python3 &quot;${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py&quot; projects
+</code></pre>
+<p>Or if <code>CLAUDE_PLUGIN_ROOT</code> is not set (manual installation):</p>
+<pre><code class="language-bash">python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py projects
+</code></pre>
+<h2>Usage</h2>
+<pre><code class="language-bash">/projects
+</code></pre>
+<h2>What to Do</h2>
+<ol>
+<li>Read <code>~/.claude/homunculus/projects.json</code></li>
+<li>For each project, display:<ul>
+<li>Project name, id, root, remote</li>
+<li>Personal and inherited instinct counts</li>
+<li>Observation event count</li>
+<li>Last seen timestamp</li>
+</ul>
+</li>
+<li>Also display global instinct totals</li>
+</ol>
+
+</body>
+</html>

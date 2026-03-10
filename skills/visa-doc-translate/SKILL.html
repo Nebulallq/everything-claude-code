@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: visa-doc-translate<br>description: Translate visa application documents (images) to English and create a bilingual PDF with original and translation</h2>
+<p>You are helping translate visa application documents for visa applications.</p>
+<h2>Instructions</h2>
+<p>When the user provides an image file path, AUTOMATICALLY execute the following steps WITHOUT asking for confirmation:</p>
+<ol>
+<li><p><strong>Image Conversion</strong>: If the file is HEIC, convert it to PNG using <code>sips -s format png &lt;input&gt; --out &lt;output&gt;</code></p>
+</li>
+<li><p><strong>Image Rotation</strong>:</p>
+<ul>
+<li>Check EXIF orientation data</li>
+<li>Automatically rotate the image based on EXIF data</li>
+<li>If EXIF orientation is 6, rotate 90 degrees counterclockwise</li>
+<li>Apply additional rotation as needed (test 180 degrees if document appears upside down)</li>
+</ul>
+</li>
+<li><p><strong>OCR Text Extraction</strong>:</p>
+<ul>
+<li>Try multiple OCR methods automatically:<ul>
+<li>macOS Vision framework (preferred for macOS)</li>
+<li>EasyOCR (cross-platform, no tesseract required)</li>
+<li>Tesseract OCR (if available)</li>
+</ul>
+</li>
+<li>Extract all text information from the document</li>
+<li>Identify document type (deposit certificate, employment certificate, retirement certificate, etc.)</li>
+</ul>
+</li>
+<li><p><strong>Translation</strong>:</p>
+<ul>
+<li>Translate all text content to English professionally</li>
+<li>Maintain the original document structure and format</li>
+<li>Use professional terminology appropriate for visa applications</li>
+<li>Keep proper names in original language with English in parentheses</li>
+<li>For Chinese names, use pinyin format (e.g., WU Zhengye)</li>
+<li>Preserve all numbers, dates, and amounts accurately</li>
+</ul>
+</li>
+<li><p><strong>PDF Generation</strong>:</p>
+<ul>
+<li>Create a Python script using PIL and reportlab libraries</li>
+<li>Page 1: Display the rotated original image, centered and scaled to fit A4 page</li>
+<li>Page 2: Display the English translation with proper formatting:<ul>
+<li>Title centered and bold</li>
+<li>Content left-aligned with appropriate spacing</li>
+<li>Professional layout suitable for official documents</li>
+</ul>
+</li>
+<li>Add a note at the bottom: &quot;This is a certified English translation of the original document&quot;</li>
+<li>Execute the script to generate the PDF</li>
+</ul>
+</li>
+<li><p><strong>Output</strong>: Create a PDF file named <code>&lt;original_filename&gt;_Translated.pdf</code> in the same directory</p>
+</li>
+</ol>
+<h2>Supported Documents</h2>
+<ul>
+<li>Bank deposit certificates (存款证明)</li>
+<li>Income certificates (收入证明)</li>
+<li>Employment certificates (在职证明)</li>
+<li>Retirement certificates (退休证明)</li>
+<li>Property certificates (房产证明)</li>
+<li>Business licenses (营业执照)</li>
+<li>ID cards and passports</li>
+<li>Other official documents</li>
+</ul>
+<h2>Technical Implementation</h2>
+<h3>OCR Methods (tried in order)</h3>
+<ol>
+<li><p><strong>macOS Vision Framework</strong> (macOS only):</p>
+<pre><code class="language-python">import Vision
+from Foundation import NSURL
+</code></pre>
+</li>
+<li><p><strong>EasyOCR</strong> (cross-platform):</p>
+<pre><code class="language-bash">pip install easyocr
+</code></pre>
+</li>
+<li><p><strong>Tesseract OCR</strong> (if available):</p>
+<pre><code class="language-bash">brew install tesseract tesseract-lang
+pip install pytesseract
+</code></pre>
+</li>
+</ol>
+<h3>Required Python Libraries</h3>
+<pre><code class="language-bash">pip install pillow reportlab
+</code></pre>
+<p>For macOS Vision framework:</p>
+<pre><code class="language-bash">pip install pyobjc-framework-Vision pyobjc-framework-Quartz
+</code></pre>
+<h2>Important Guidelines</h2>
+<ul>
+<li>DO NOT ask for user confirmation at each step</li>
+<li>Automatically determine the best rotation angle</li>
+<li>Try multiple OCR methods if one fails</li>
+<li>Ensure all numbers, dates, and amounts are accurately translated</li>
+<li>Use clean, professional formatting</li>
+<li>Complete the entire process and report the final PDF location</li>
+</ul>
+<h2>Example Usage</h2>
+<pre><code class="language-bash">/visa-doc-translate RetirementCertificate.PNG
+/visa-doc-translate BankStatement.HEIC
+/visa-doc-translate EmploymentLetter.jpg
+</code></pre>
+<h2>Output Example</h2>
+<p>The skill will:</p>
+<ol>
+<li>Extract text using available OCR method</li>
+<li>Translate to professional English</li>
+<li>Generate <code>&lt;filename&gt;_Translated.pdf</code> with:<ul>
+<li>Page 1: Original document image</li>
+<li>Page 2: Professional English translation</li>
+</ul>
+</li>
+</ol>
+<p>Perfect for visa applications to Australia, USA, Canada, UK, and other countries requiring translated documents.</p>
+
+</body>
+</html>

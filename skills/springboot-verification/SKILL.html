@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: springboot-verification<br>description: &quot;Verification loop for Spring Boot projects: build, static analysis, tests with coverage, security scans, and diff review before release or PR.&quot;<br>origin: ECC</h2>
+<h1>Spring Boot Verification Loop</h1>
+<p>Run before PRs, after major changes, and pre-deploy.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Before opening a pull request for a Spring Boot service</li>
+<li>After major refactoring or dependency upgrades</li>
+<li>Pre-deployment verification for staging or production</li>
+<li>Running full build → lint → test → security scan pipeline</li>
+<li>Validating test coverage meets thresholds</li>
+</ul>
+<h2>Phase 1: Build</h2>
+<pre><code class="language-bash">mvn -T 4 clean verify -DskipTests
+# or
+./gradlew clean assemble -x test
+</code></pre>
+<p>If build fails, stop and fix.</p>
+<h2>Phase 2: Static Analysis</h2>
+<p>Maven (common plugins):</p>
+<pre><code class="language-bash">mvn -T 4 spotbugs:check pmd:check checkstyle:check
+</code></pre>
+<p>Gradle (if configured):</p>
+<pre><code class="language-bash">./gradlew checkstyleMain pmdMain spotbugsMain
+</code></pre>
+<h2>Phase 3: Tests + Coverage</h2>
+<pre><code class="language-bash">mvn -T 4 test
+mvn jacoco:report   # verify 80%+ coverage
+# or
+./gradlew test jacocoTestReport
+</code></pre>
+<p>Report:</p>
+<ul>
+<li>Total tests, passed/failed</li>
+<li>Coverage % (lines/branches)</li>
+</ul>
+<h3>Unit Tests</h3>
+<p>Test service logic in isolation with mocked dependencies:</p>
+<pre><code class="language-java">@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+  @Mock private UserRepository userRepository;
+  @InjectMocks private UserService userService;
+
+  @Test
+  void createUser_validInput_returnsUser() {
+    var dto = new CreateUserDto(&quot;Alice&quot;, &quot;alice@example.com&quot;);
+    var expected = new User(1L, &quot;Alice&quot;, &quot;alice@example.com&quot;);
+    when(userRepository.save(any(User.class))).thenReturn(expected);
+
+    var result = userService.create(dto);
+
+    assertThat(result.name()).isEqualTo(&quot;Alice&quot;);
+    verify(userRepository).save(any(User.class));
+  }
+
+  @Test
+  void createUser_duplicateEmail_throwsException() {
+    var dto = new CreateUserDto(&quot;Alice&quot;, &quot;existing@example.com&quot;);
+    when(userRepository.existsByEmail(dto.email())).thenReturn(true);
+
+    assertThatThrownBy(() -&gt; userService.create(dto))
+        .isInstanceOf(DuplicateEmailException.class);
+  }
+}
+</code></pre>
+<h3>Integration Tests with Testcontainers</h3>
+<p>Test against a real database instead of H2:</p>
+<pre><code class="language-java">@SpringBootTest
+@Testcontainers
+class UserRepositoryIntegrationTest {
+
+  @Container
+  static PostgreSQLContainer&lt;?&gt; postgres = new PostgreSQLContainer&lt;&gt;(&quot;postgres:16-alpine&quot;)
+      .withDatabaseName(&quot;testdb&quot;);
+
+  @DynamicPropertySource
+  static void configureProperties(DynamicPropertyRegistry registry) {
+    registry.add(&quot;spring.datasource.url&quot;, postgres::getJdbcUrl);
+    registry.add(&quot;spring.datasource.username&quot;, postgres::getUsername);
+    registry.add(&quot;spring.datasource.password&quot;, postgres::getPassword);
+  }
+
+  @Autowired private UserRepository userRepository;
+
+  @Test
+  void findByEmail_existingUser_returnsUser() {
+    userRepository.save(new User(&quot;Alice&quot;, &quot;alice@example.com&quot;));
+
+    var found = userRepository.findByEmail(&quot;alice@example.com&quot;);
+
+    assertThat(found).isPresent();
+    assertThat(found.get().getName()).isEqualTo(&quot;Alice&quot;);
+  }
+}
+</code></pre>
+<h3>API Tests with MockMvc</h3>
+<p>Test controller layer with full Spring context:</p>
+<pre><code class="language-java">@WebMvcTest(UserController.class)
+class UserControllerTest {
+
+  @Autowired private MockMvc mockMvc;
+  @MockBean private UserService userService;
+
+  @Test
+  void createUser_validInput_returns201() throws Exception {
+    var user = new UserDto(1L, &quot;Alice&quot;, &quot;alice@example.com&quot;);
+    when(userService.create(any())).thenReturn(user);
+
+    mockMvc.perform(post(&quot;/api/users&quot;)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(&quot;&quot;&quot;
+                {&quot;name&quot;: &quot;Alice&quot;, &quot;email&quot;: &quot;alice@example.com&quot;}
+                &quot;&quot;&quot;))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath(&quot;$.name&quot;).value(&quot;Alice&quot;));
+  }
+
+  @Test
+  void createUser_invalidEmail_returns400() throws Exception {
+    mockMvc.perform(post(&quot;/api/users&quot;)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(&quot;&quot;&quot;
+                {&quot;name&quot;: &quot;Alice&quot;, &quot;email&quot;: &quot;not-an-email&quot;}
+                &quot;&quot;&quot;))
+        .andExpect(status().isBadRequest());
+  }
+}
+</code></pre>
+<h2>Phase 4: Security Scan</h2>
+<pre><code class="language-bash"># Dependency CVEs
+mvn org.owasp:dependency-check-maven:check
+# or
+./gradlew dependencyCheckAnalyze
+
+# Secrets in source
+grep -rn &quot;password\s*=\s*\&quot;&quot; src/ --include=&quot;*.java&quot; --include=&quot;*.yml&quot; --include=&quot;*.properties&quot;
+grep -rn &quot;sk-\|api_key\|secret&quot; src/ --include=&quot;*.java&quot; --include=&quot;*.yml&quot;
+
+# Secrets (git history)
+git secrets --scan  # if configured
+</code></pre>
+<h3>Common Security Findings</h3>
+<pre><code># Check for System.out.println (use logger instead)
+grep -rn &quot;System\.out\.print&quot; src/main/ --include=&quot;*.java&quot;
+
+# Check for raw exception messages in responses
+grep -rn &quot;e\.getMessage()&quot; src/main/ --include=&quot;*.java&quot;
+
+# Check for wildcard CORS
+grep -rn &quot;allowedOrigins.*\*&quot; src/main/ --include=&quot;*.java&quot;
+</code></pre>
+<h2>Phase 5: Lint/Format (optional gate)</h2>
+<pre><code class="language-bash">mvn spotless:apply   # if using Spotless plugin
+./gradlew spotlessApply
+</code></pre>
+<h2>Phase 6: Diff Review</h2>
+<pre><code class="language-bash">git diff --stat
+git diff
+</code></pre>
+<p>Checklist:</p>
+<ul>
+<li>No debugging logs left (<code>System.out</code>, <code>log.debug</code> without guards)</li>
+<li>Meaningful errors and HTTP statuses</li>
+<li>Transactions and validation present where needed</li>
+<li>Config changes documented</li>
+</ul>
+<h2>Output Template</h2>
+<pre><code>VERIFICATION REPORT
+===================
+Build:     [PASS/FAIL]
+Static:    [PASS/FAIL] (spotbugs/pmd/checkstyle)
+Tests:     [PASS/FAIL] (X/Y passed, Z% coverage)
+Security:  [PASS/FAIL] (CVE findings: N)
+Diff:      [X files changed]
+
+Overall:   [READY / NOT READY]
+
+Issues to Fix:
+1. ...
+2. ...
+</code></pre>
+<h2>Continuous Mode</h2>
+<ul>
+<li>Re-run phases on significant changes or every 30–60 minutes in long sessions</li>
+<li>Keep a short loop: <code>mvn -T 4 test</code> + spotbugs for quick feedback</li>
+</ul>
+<p><strong>Remember</strong>: Fast feedback beats late surprises. Keep the gate strict—treat warnings as defects in production systems.</p>
+
+</body>
+</html>

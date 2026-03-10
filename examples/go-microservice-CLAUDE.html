@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>go-microservice-CLAUDE</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Go Microservice — Project CLAUDE.md</h1>
+<blockquote>
+<p>Real-world example for a Go microservice with PostgreSQL, gRPC, and Docker.<br>Copy this to your project root and customize for your service.</p>
+</blockquote>
+<h2>Project Overview</h2>
+<p><strong>Stack:</strong> Go 1.22+, PostgreSQL, gRPC + REST (grpc-gateway), Docker, sqlc (type-safe SQL), Wire (dependency injection)</p>
+<p><strong>Architecture:</strong> Clean architecture with domain, repository, service, and handler layers. gRPC as primary transport with REST gateway for external clients.</p>
+<h2>Critical Rules</h2>
+<h3>Go Conventions</h3>
+<ul>
+<li>Follow Effective Go and the Go Code Review Comments guide</li>
+<li>Use <code>errors.New</code> / <code>fmt.Errorf</code> with <code>%w</code> for wrapping — never string matching on errors</li>
+<li>No <code>init()</code> functions — explicit initialization in <code>main()</code> or constructors</li>
+<li>No global mutable state — pass dependencies via constructors</li>
+<li>Context must be the first parameter and propagated through all layers</li>
+</ul>
+<h3>Database</h3>
+<ul>
+<li>All queries in <code>queries/</code> as plain SQL — sqlc generates type-safe Go code</li>
+<li>Migrations in <code>migrations/</code> using golang-migrate — never alter the database directly</li>
+<li>Use transactions for multi-step operations via <code>pgx.Tx</code></li>
+<li>All queries must use parameterized placeholders (<code>$1</code>, <code>$2</code>) — never string formatting</li>
+</ul>
+<h3>Error Handling</h3>
+<ul>
+<li>Return errors, don&#39;t panic — panics are only for truly unrecoverable situations</li>
+<li>Wrap errors with context: <code>fmt.Errorf(&quot;creating user: %w&quot;, err)</code></li>
+<li>Define sentinel errors in <code>domain/errors.go</code> for business logic</li>
+<li>Map domain errors to gRPC status codes in the handler layer</li>
+</ul>
+<pre><code class="language-go">// Domain layer — sentinel errors
+var (
+    ErrUserNotFound  = errors.New(&quot;user not found&quot;)
+    ErrEmailTaken    = errors.New(&quot;email already registered&quot;)
+)
+
+// Handler layer — map to gRPC status
+func toGRPCError(err error) error {
+    switch {
+    case errors.Is(err, domain.ErrUserNotFound):
+        return status.Error(codes.NotFound, err.Error())
+    case errors.Is(err, domain.ErrEmailTaken):
+        return status.Error(codes.AlreadyExists, err.Error())
+    default:
+        return status.Error(codes.Internal, &quot;internal error&quot;)
+    }
+}
+</code></pre>
+<h3>Code Style</h3>
+<ul>
+<li>No emojis in code or comments</li>
+<li>Exported types and functions must have doc comments</li>
+<li>Keep functions under 50 lines — extract helpers</li>
+<li>Use table-driven tests for all logic with multiple cases</li>
+<li>Prefer <code>struct{}</code> for signal channels, not <code>bool</code></li>
+</ul>
+<h2>File Structure</h2>
+<pre><code>cmd/
+  server/
+    main.go              # Entrypoint, Wire injection, graceful shutdown
+internal/
+  domain/                # Business types and interfaces
+    user.go              # User entity and repository interface
+    errors.go            # Sentinel errors
+  service/               # Business logic
+    user_service.go
+    user_service_test.go
+  repository/            # Data access (sqlc-generated + custom)
+    postgres/
+      user_repo.go
+      user_repo_test.go  # Integration tests with testcontainers
+  handler/               # gRPC + REST handlers
+    grpc/
+      user_handler.go
+    rest/
+      user_handler.go
+  config/                # Configuration loading
+    config.go
+proto/                   # Protobuf definitions
+  user/v1/
+    user.proto
+queries/                 # SQL queries for sqlc
+  user.sql
+migrations/              # Database migrations
+  001_create_users.up.sql
+  001_create_users.down.sql
+</code></pre>
+<h2>Key Patterns</h2>
+<h3>Repository Interface</h3>
+<pre><code class="language-go">type UserRepository interface {
+    Create(ctx context.Context, user *User) error
+    FindByID(ctx context.Context, id uuid.UUID) (*User, error)
+    FindByEmail(ctx context.Context, email string) (*User, error)
+    Update(ctx context.Context, user *User) error
+    Delete(ctx context.Context, id uuid.UUID) error
+}
+</code></pre>
+<h3>Service with Dependency Injection</h3>
+<pre><code class="language-go">type UserService struct {
+    repo   domain.UserRepository
+    hasher PasswordHasher
+    logger *slog.Logger
+}
+
+func NewUserService(repo domain.UserRepository, hasher PasswordHasher, logger *slog.Logger) *UserService {
+    return &amp;UserService{repo: repo, hasher: hasher, logger: logger}
+}
+
+func (s *UserService) Create(ctx context.Context, req CreateUserRequest) (*domain.User, error) {
+    existing, err := s.repo.FindByEmail(ctx, req.Email)
+    if err != nil &amp;&amp; !errors.Is(err, domain.ErrUserNotFound) {
+        return nil, fmt.Errorf(&quot;checking email: %w&quot;, err)
+    }
+    if existing != nil {
+        return nil, domain.ErrEmailTaken
+    }
+
+    hashed, err := s.hasher.Hash(req.Password)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;hashing password: %w&quot;, err)
+    }
+
+    user := &amp;domain.User{
+        ID:       uuid.New(),
+        Name:     req.Name,
+        Email:    req.Email,
+        Password: hashed,
+    }
+    if err := s.repo.Create(ctx, user); err != nil {
+        return nil, fmt.Errorf(&quot;creating user: %w&quot;, err)
+    }
+    return user, nil
+}
+</code></pre>
+<h3>Table-Driven Tests</h3>
+<pre><code class="language-go">func TestUserService_Create(t *testing.T) {
+    tests := []struct {
+        name    string
+        req     CreateUserRequest
+        setup   func(*MockUserRepo)
+        wantErr error
+    }{
+        {
+            name: &quot;valid user&quot;,
+            req:  CreateUserRequest{Name: &quot;Alice&quot;, Email: &quot;alice@example.com&quot;, Password: &quot;secure123&quot;},
+            setup: func(m *MockUserRepo) {
+                m.On(&quot;FindByEmail&quot;, mock.Anything, &quot;alice@example.com&quot;).Return(nil, domain.ErrUserNotFound)
+                m.On(&quot;Create&quot;, mock.Anything, mock.Anything).Return(nil)
+            },
+            wantErr: nil,
+        },
+        {
+            name: &quot;duplicate email&quot;,
+            req:  CreateUserRequest{Name: &quot;Alice&quot;, Email: &quot;taken@example.com&quot;, Password: &quot;secure123&quot;},
+            setup: func(m *MockUserRepo) {
+                m.On(&quot;FindByEmail&quot;, mock.Anything, &quot;taken@example.com&quot;).Return(&amp;domain.User{}, nil)
+            },
+            wantErr: domain.ErrEmailTaken,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            repo := new(MockUserRepo)
+            tt.setup(repo)
+            svc := NewUserService(repo, &amp;bcryptHasher{}, slog.Default())
+
+            _, err := svc.Create(context.Background(), tt.req)
+
+            if tt.wantErr != nil {
+                assert.ErrorIs(t, err, tt.wantErr)
+            } else {
+                assert.NoError(t, err)
+            }
+        })
+    }
+}
+</code></pre>
+<h2>Environment Variables</h2>
+<pre><code class="language-bash"># Database
+DATABASE_URL=postgres://user:pass@localhost:5432/myservice?sslmode=disable
+
+# gRPC
+GRPC_PORT=50051
+REST_PORT=8080
+
+# Auth
+JWT_SECRET=           # Load from vault in production
+TOKEN_EXPIRY=24h
+
+# Observability
+LOG_LEVEL=info        # debug, info, warn, error
+OTEL_ENDPOINT=        # OpenTelemetry collector
+</code></pre>
+<h2>Testing Strategy</h2>
+<pre><code class="language-bash">/go-test             # TDD workflow for Go
+/go-review           # Go-specific code review
+/go-build            # Fix build errors
+</code></pre>
+<h3>Test Commands</h3>
+<pre><code class="language-bash"># Unit tests (fast, no external deps)
+go test ./internal/... -short -count=1
+
+# Integration tests (requires Docker for testcontainers)
+go test ./internal/repository/... -count=1 -timeout 120s
+
+# All tests with coverage
+go test ./... -coverprofile=coverage.out -count=1
+go tool cover -func=coverage.out  # summary
+go tool cover -html=coverage.out  # browser
+
+# Race detector
+go test ./... -race -count=1
+</code></pre>
+<h2>ECC Workflow</h2>
+<pre><code class="language-bash"># Planning
+/plan &quot;Add rate limiting to user endpoints&quot;
+
+# Development
+/go-test                  # TDD with Go-specific patterns
+
+# Review
+/go-review                # Go idioms, error handling, concurrency
+/security-scan            # Secrets and vulnerabilities
+
+# Before merge
+go vet ./...
+staticcheck ./...
+</code></pre>
+<h2>Git Workflow</h2>
+<ul>
+<li><code>feat:</code> new features, <code>fix:</code> bug fixes, <code>refactor:</code> code changes</li>
+<li>Feature branches from <code>main</code>, PRs required</li>
+<li>CI: <code>go vet</code>, <code>staticcheck</code>, <code>go test -race</code>, <code>golangci-lint</code></li>
+<li>Deploy: Docker image built in CI, deployed to Kubernetes</li>
+</ul>
+
+</body>
+</html>

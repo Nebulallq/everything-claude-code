@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: ai-first-engineering<br>description: Engineering operating model for teams where AI agents generate a large share of implementation output.<br>origin: ECC</h2>
+<h1>AI-First Engineering</h1>
+<p>Use this skill when designing process, reviews, and architecture for teams shipping with AI-assisted code generation.</p>
+<h2>Process Shifts</h2>
+<ol>
+<li>Planning quality matters more than typing speed.</li>
+<li>Eval coverage matters more than anecdotal confidence.</li>
+<li>Review focus shifts from syntax to system behavior.</li>
+</ol>
+<h2>Architecture Requirements</h2>
+<p>Prefer architectures that are agent-friendly:</p>
+<ul>
+<li>explicit boundaries</li>
+<li>stable contracts</li>
+<li>typed interfaces</li>
+<li>deterministic tests</li>
+</ul>
+<p>Avoid implicit behavior spread across hidden conventions.</p>
+<h2>Code Review in AI-First Teams</h2>
+<p>Review for:</p>
+<ul>
+<li>behavior regressions</li>
+<li>security assumptions</li>
+<li>data integrity</li>
+<li>failure handling</li>
+<li>rollout safety</li>
+</ul>
+<p>Minimize time spent on style issues already covered by automation.</p>
+<h2>Hiring and Evaluation Signals</h2>
+<p>Strong AI-first engineers:</p>
+<ul>
+<li>decompose ambiguous work cleanly</li>
+<li>define measurable acceptance criteria</li>
+<li>produce high-signal prompts and evals</li>
+<li>enforce risk controls under delivery pressure</li>
+</ul>
+<h2>Testing Standard</h2>
+<p>Raise testing bar for generated code:</p>
+<ul>
+<li>required regression coverage for touched domains</li>
+<li>explicit edge-case assertions</li>
+<li>integration checks for interface boundaries</li>
+</ul>
+
+</body>
+</html>

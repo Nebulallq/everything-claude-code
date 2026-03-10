@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>metrics-and-sponsorship</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Metrics and Sponsorship Playbook</h1>
+<p>This file is a practical script for sponsor calls and ecosystem partner reviews.</p>
+<h2>What to Track</h2>
+<p>Use four categories in every update:</p>
+<ol>
+<li><strong>Distribution</strong> — npm packages and GitHub App installs</li>
+<li><strong>Adoption</strong> — stars, forks, contributors, release cadence</li>
+<li><strong>Product surface</strong> — commands/skills/agents and cross-platform support</li>
+<li><strong>Reliability</strong> — test pass counts and production bug turnaround</li>
+</ol>
+<h2>Pull Live Metrics</h2>
+<h3>npm downloads</h3>
+<pre><code class="language-bash"># Weekly downloads
+curl -s https://api.npmjs.org/downloads/point/last-week/ecc-universal
+curl -s https://api.npmjs.org/downloads/point/last-week/ecc-agentshield
+
+# Last 30 days
+curl -s https://api.npmjs.org/downloads/point/last-month/ecc-universal
+curl -s https://api.npmjs.org/downloads/point/last-month/ecc-agentshield
+</code></pre>
+<h3>GitHub repository adoption</h3>
+<pre><code class="language-bash">gh api repos/affaan-m/everything-claude-code \
+  --jq &#39;{stars:.stargazers_count,forks:.forks_count,contributors_url:.contributors_url,open_issues:.open_issues_count}&#39;
+</code></pre>
+<h3>GitHub traffic (maintainer access required)</h3>
+<pre><code class="language-bash">gh api repos/affaan-m/everything-claude-code/traffic/views
+gh api repos/affaan-m/everything-claude-code/traffic/clones
+</code></pre>
+<h3>GitHub App installs</h3>
+<p>GitHub App install count is currently most reliable in the Marketplace/App dashboard.<br>Use the latest value from:</p>
+<ul>
+<li><a href="https://github.com/marketplace/ecc-tools">ECC Tools Marketplace</a></li>
+</ul>
+<h2>What Cannot Be Measured Publicly (Yet)</h2>
+<ul>
+<li>Claude plugin install/download counts are not currently exposed via a public API.</li>
+<li>For partner conversations, use npm metrics + GitHub App installs + repo traffic as the proxy bundle.</li>
+</ul>
+<h2>Suggested Sponsor Packaging</h2>
+<p>Use these as starting points in negotiation:</p>
+<ul>
+<li><strong>Pilot Partner:</strong> <code>$200/month</code><ul>
+<li>Best for first partnership validation and simple monthly sponsor updates.</li>
+</ul>
+</li>
+<li><strong>Growth Partner:</strong> <code>$500/month</code><ul>
+<li>Includes roadmap check-ins and implementation feedback loop.</li>
+</ul>
+</li>
+<li><strong>Strategic Partner:</strong> <code>$1,000+/month</code><ul>
+<li>Multi-touch collaboration, launch support, and deeper operational alignment.</li>
+</ul>
+</li>
+</ul>
+<h2>60-Second Talking Track</h2>
+<p>Use this on calls:</p>
+<blockquote>
+<p>ECC is now positioned as an agent harness performance system, not a config repo.<br>We track adoption through npm distribution, GitHub App installs, and repository growth.<br>Claude plugin installs are structurally undercounted publicly, so we use a blended metrics model.<br>The project supports Claude Code, Cursor, OpenCode, and Codex app/CLI with production-grade hook reliability and a large passing test suite.</p>
+</blockquote>
+<p>For launch-ready social copy snippets, see <a href="./social-launch-copy.md"><code>social-launch-copy.md</code></a>.</p>
+
+</body>
+</html>

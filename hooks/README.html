@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Hooks</h1>
+<p>Hooks are event-driven automations that fire before or after Claude Code tool executions. They enforce code quality, catch mistakes early, and automate repetitive checks.</p>
+<h2>How Hooks Work</h2>
+<pre><code>User request → Claude picks a tool → PreToolUse hook runs → Tool executes → PostToolUse hook runs
+</code></pre>
+<ul>
+<li><strong>PreToolUse</strong> hooks run before the tool executes. They can <strong>block</strong> (exit code 2) or <strong>warn</strong> (stderr without blocking).</li>
+<li><strong>PostToolUse</strong> hooks run after the tool completes. They can analyze output but cannot block.</li>
+<li><strong>Stop</strong> hooks run after each Claude response.</li>
+<li><strong>SessionStart/SessionEnd</strong> hooks run at session lifecycle boundaries.</li>
+<li><strong>PreCompact</strong> hooks run before context compaction, useful for saving state.</li>
+</ul>
+<h2>Hooks in This Plugin</h2>
+<h3>PreToolUse Hooks</h3>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Matcher</th>
+<th>Behavior</th>
+<th>Exit Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Dev server blocker</strong></td>
+<td><code>Bash</code></td>
+<td>Blocks <code>npm run dev</code> etc. outside tmux — ensures log access</td>
+<td>2 (blocks)</td>
+</tr>
+<tr>
+<td><strong>Tmux reminder</strong></td>
+<td><code>Bash</code></td>
+<td>Suggests tmux for long-running commands (npm test, cargo build, docker)</td>
+<td>0 (warns)</td>
+</tr>
+<tr>
+<td><strong>Git push reminder</strong></td>
+<td><code>Bash</code></td>
+<td>Reminds to review changes before <code>git push</code></td>
+<td>0 (warns)</td>
+</tr>
+<tr>
+<td><strong>Doc file warning</strong></td>
+<td><code>Write</code></td>
+<td>Warns about non-standard <code>.md</code>/<code>.txt</code> files (allows README, CLAUDE, CONTRIBUTING, CHANGELOG, LICENSE, SKILL, docs/, skills/); cross-platform path handling</td>
+<td>0 (warns)</td>
+</tr>
+<tr>
+<td><strong>Strategic compact</strong></td>
+<td><code>Edit|Write</code></td>
+<td>Suggests manual <code>/compact</code> at logical intervals (every ~50 tool calls)</td>
+<td>0 (warns)</td>
+</tr>
+</tbody></table>
+<h3>PostToolUse Hooks</h3>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Matcher</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>PR logger</strong></td>
+<td><code>Bash</code></td>
+<td>Logs PR URL and review command after <code>gh pr create</code></td>
+</tr>
+<tr>
+<td><strong>Build analysis</strong></td>
+<td><code>Bash</code></td>
+<td>Background analysis after build commands (async, non-blocking)</td>
+</tr>
+<tr>
+<td><strong>Quality gate</strong></td>
+<td><code>Edit|Write|MultiEdit</code></td>
+<td>Runs fast quality checks after edits</td>
+</tr>
+<tr>
+<td><strong>Prettier format</strong></td>
+<td><code>Edit</code></td>
+<td>Auto-formats JS/TS files with Prettier after edits</td>
+</tr>
+<tr>
+<td><strong>TypeScript check</strong></td>
+<td><code>Edit</code></td>
+<td>Runs <code>tsc --noEmit</code> after editing <code>.ts</code>/<code>.tsx</code> files</td>
+</tr>
+<tr>
+<td><strong>console.log warning</strong></td>
+<td><code>Edit</code></td>
+<td>Warns about <code>console.log</code> statements in edited files</td>
+</tr>
+</tbody></table>
+<h3>Lifecycle Hooks</h3>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Event</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Session start</strong></td>
+<td><code>SessionStart</code></td>
+<td>Loads previous context and detects package manager</td>
+</tr>
+<tr>
+<td><strong>Pre-compact</strong></td>
+<td><code>PreCompact</code></td>
+<td>Saves state before context compaction</td>
+</tr>
+<tr>
+<td><strong>Console.log audit</strong></td>
+<td><code>Stop</code></td>
+<td>Checks all modified files for <code>console.log</code> after each response</td>
+</tr>
+<tr>
+<td><strong>Session summary</strong></td>
+<td><code>Stop</code></td>
+<td>Persists session state when transcript path is available</td>
+</tr>
+<tr>
+<td><strong>Pattern extraction</strong></td>
+<td><code>Stop</code></td>
+<td>Evaluates session for extractable patterns (continuous learning)</td>
+</tr>
+<tr>
+<td><strong>Cost tracker</strong></td>
+<td><code>Stop</code></td>
+<td>Emits lightweight run-cost telemetry markers</td>
+</tr>
+<tr>
+<td><strong>Session end marker</strong></td>
+<td><code>SessionEnd</code></td>
+<td>Lifecycle marker and cleanup log</td>
+</tr>
+</tbody></table>
+<h2>Customizing Hooks</h2>
+<h3>Disabling a Hook</h3>
+<p>Remove or comment out the hook entry in <code>hooks.json</code>. If installed as a plugin, override in your <code>~/.claude/settings.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [
+      {
+        &quot;matcher&quot;: &quot;Write&quot;,
+        &quot;hooks&quot;: [],
+        &quot;description&quot;: &quot;Override: allow all .md file creation&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<h3>Runtime Hook Controls (Recommended)</h3>
+<p>Use environment variables to control hook behavior without editing <code>hooks.json</code>:</p>
+<pre><code class="language-bash"># minimal | standard | strict (default: standard)
+export ECC_HOOK_PROFILE=standard
+
+# Disable specific hook IDs (comma-separated)
+export ECC_DISABLED_HOOKS=&quot;pre:bash:tmux-reminder,post:edit:typecheck&quot;
+</code></pre>
+<p>Profiles:</p>
+<ul>
+<li><code>minimal</code> — keep essential lifecycle and safety hooks only.</li>
+<li><code>standard</code> — default; balanced quality + safety checks.</li>
+<li><code>strict</code> — enables additional reminders and stricter guardrails.</li>
+</ul>
+<h3>Writing Your Own Hook</h3>
+<p>Hooks are shell commands that receive tool input as JSON on stdin and must output JSON on stdout.</p>
+<p><strong>Basic structure:</strong></p>
+<pre><code class="language-javascript">// my-hook.js
+let data = &#39;&#39;;
+process.stdin.on(&#39;data&#39;, chunk =&gt; data += chunk);
+process.stdin.on(&#39;end&#39;, () =&gt; {
+  const input = JSON.parse(data);
+
+  // Access tool info
+  const toolName = input.tool_name;        // &quot;Edit&quot;, &quot;Bash&quot;, &quot;Write&quot;, etc.
+  const toolInput = input.tool_input;      // Tool-specific parameters
+  const toolOutput = input.tool_output;    // Only available in PostToolUse
+
+  // Warn (non-blocking): write to stderr
+  console.error(&#39;[Hook] Warning message shown to Claude&#39;);
+
+  // Block (PreToolUse only): exit with code 2
+  // process.exit(2);
+
+  // Always output the original data to stdout
+  console.log(data);
+});
+</code></pre>
+<p><strong>Exit codes:</strong></p>
+<ul>
+<li><code>0</code> — Success (continue execution)</li>
+<li><code>2</code> — Block the tool call (PreToolUse only)</li>
+<li>Other non-zero — Error (logged but does not block)</li>
+</ul>
+<h3>Hook Input Schema</h3>
+<pre><code class="language-typescript">interface HookInput {
+  tool_name: string;          // &quot;Bash&quot;, &quot;Edit&quot;, &quot;Write&quot;, &quot;Read&quot;, etc.
+  tool_input: {
+    command?: string;         // Bash: the command being run
+    file_path?: string;       // Edit/Write/Read: target file
+    old_string?: string;      // Edit: text being replaced
+    new_string?: string;      // Edit: replacement text
+    content?: string;         // Write: file content
+  };
+  tool_output?: {             // PostToolUse only
+    output?: string;          // Command/tool output
+  };
+}
+</code></pre>
+<h3>Async Hooks</h3>
+<p>For hooks that should not block the main flow (e.g., background analysis):</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;command&quot;,
+  &quot;command&quot;: &quot;node my-slow-hook.js&quot;,
+  &quot;async&quot;: true,
+  &quot;timeout&quot;: 30
+}
+</code></pre>
+<p>Async hooks run in the background. They cannot block tool execution.</p>
+<h2>Common Hook Recipes</h2>
+<h3>Warn about TODO comments</h3>
+<pre><code class="language-json">{
+  &quot;matcher&quot;: &quot;Edit&quot;,
+  &quot;hooks&quot;: [{
+    &quot;type&quot;: &quot;command&quot;,
+    &quot;command&quot;: &quot;node -e \&quot;let d=&#39;&#39;;process.stdin.on(&#39;data&#39;,c=&gt;d+=c);process.stdin.on(&#39;end&#39;,()=&gt;{const i=JSON.parse(d);const ns=i.tool_input?.new_string||&#39;&#39;;if(/TODO|FIXME|HACK/.test(ns)){console.error(&#39;[Hook] New TODO/FIXME added - consider creating an issue&#39;)}console.log(d)})\&quot;&quot;
+  }],
+  &quot;description&quot;: &quot;Warn when adding TODO/FIXME comments&quot;
+}
+</code></pre>
+<h3>Block large file creation</h3>
+<pre><code class="language-json">{
+  &quot;matcher&quot;: &quot;Write&quot;,
+  &quot;hooks&quot;: [{
+    &quot;type&quot;: &quot;command&quot;,
+    &quot;command&quot;: &quot;node -e \&quot;let d=&#39;&#39;;process.stdin.on(&#39;data&#39;,c=&gt;d+=c);process.stdin.on(&#39;end&#39;,()=&gt;{const i=JSON.parse(d);const c=i.tool_input?.content||&#39;&#39;;const lines=c.split(&#39;\\n&#39;).length;if(lines&gt;800){console.error(&#39;[Hook] BLOCKED: File exceeds 800 lines (&#39;+lines+&#39; lines)&#39;);console.error(&#39;[Hook] Split into smaller, focused modules&#39;);process.exit(2)}console.log(d)})\&quot;&quot;
+  }],
+  &quot;description&quot;: &quot;Block creation of files larger than 800 lines&quot;
+}
+</code></pre>
+<h3>Auto-format Python files with ruff</h3>
+<pre><code class="language-json">{
+  &quot;matcher&quot;: &quot;Edit&quot;,
+  &quot;hooks&quot;: [{
+    &quot;type&quot;: &quot;command&quot;,
+    &quot;command&quot;: &quot;node -e \&quot;let d=&#39;&#39;;process.stdin.on(&#39;data&#39;,c=&gt;d+=c);process.stdin.on(&#39;end&#39;,()=&gt;{const i=JSON.parse(d);const p=i.tool_input?.file_path||&#39;&#39;;if(/\\.py$/.test(p)){const{execFileSync}=require(&#39;child_process&#39;);try{execFileSync(&#39;ruff&#39;,[&#39;format&#39;,p],{stdio:&#39;pipe&#39;})}catch(e){}}console.log(d)})\&quot;&quot;
+  }],
+  &quot;description&quot;: &quot;Auto-format Python files with ruff after edits&quot;
+}
+</code></pre>
+<h3>Require test files alongside new source files</h3>
+<pre><code class="language-json">{
+  &quot;matcher&quot;: &quot;Write&quot;,
+  &quot;hooks&quot;: [{
+    &quot;type&quot;: &quot;command&quot;,
+    &quot;command&quot;: &quot;node -e \&quot;const fs=require(&#39;fs&#39;);let d=&#39;&#39;;process.stdin.on(&#39;data&#39;,c=&gt;d+=c);process.stdin.on(&#39;end&#39;,()=&gt;{const i=JSON.parse(d);const p=i.tool_input?.file_path||&#39;&#39;;if(/src\\/.*\\.(ts|js)$/.test(p)&amp;&amp;!/\\.test\\.|\\.spec\\./.test(p)){const testPath=p.replace(/\\.(ts|js)$/,&#39;.test.$1&#39;);if(!fs.existsSync(testPath)){console.error(&#39;[Hook] No test file found for: &#39;+p);console.error(&#39;[Hook] Expected: &#39;+testPath);console.error(&#39;[Hook] Consider writing tests first (/tdd)&#39;)}}console.log(d)})\&quot;&quot;
+  }],
+  &quot;description&quot;: &quot;Remind to create tests when adding new source files&quot;
+}
+</code></pre>
+<h2>Cross-Platform Notes</h2>
+<p>Hook logic is implemented in Node.js scripts for cross-platform behavior on Windows, macOS, and Linux. A small number of shell wrappers are retained for continuous-learning observer hooks; those wrappers are profile-gated and have Windows-safe fallback behavior.</p>
+<h2>Related</h2>
+<ul>
+<li><a href="../rules/common/hooks.md">rules/common/hooks.md</a> — Hook architecture guidelines</li>
+<li><a href="../skills/strategic-compact/">skills/strategic-compact/</a> — Strategic compaction skill</li>
+<li><a href="../scripts/hooks/">scripts/hooks/</a> — Hook script implementations</li>
+</ul>
+
+</body>
+</html>

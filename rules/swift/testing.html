@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>testing</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<p>paths:</p>
+<ul>
+<li>&quot;**/*.swift&quot;</li>
+<li>&quot;**/Package.swift&quot;</li>
+</ul>
+<hr>
+<h1>Swift Testing</h1>
+<blockquote>
+<p>This file extends <a href="../common/testing.md">common/testing.md</a> with Swift specific content.</p>
+</blockquote>
+<h2>Framework</h2>
+<p>Use <strong>Swift Testing</strong> (<code>import Testing</code>) for new tests. Use <code>@Test</code> and <code>#expect</code>:</p>
+<pre><code class="language-swift">@Test(&quot;User creation validates email&quot;)
+func userCreationValidatesEmail() throws {
+    #expect(throws: ValidationError.invalidEmail) {
+        try User(email: &quot;not-an-email&quot;)
+    }
+}
+</code></pre>
+<h2>Test Isolation</h2>
+<p>Each test gets a fresh instance — set up in <code>init</code>, tear down in <code>deinit</code>. No shared mutable state between tests.</p>
+<h2>Parameterized Tests</h2>
+<pre><code class="language-swift">@Test(&quot;Validates formats&quot;, arguments: [&quot;json&quot;, &quot;xml&quot;, &quot;csv&quot;])
+func validatesFormat(format: String) throws {
+    let parser = try Parser(format: format)
+    #expect(parser.isValid)
+}
+</code></pre>
+<h2>Coverage</h2>
+<pre><code class="language-bash">swift test --enable-code-coverage
+</code></pre>
+<h2>Reference</h2>
+<p>See skill: <code>swift-protocol-di-testing</code> for protocol-based dependency injection and mock patterns with Swift Testing.</p>
+
+</body>
+</html>

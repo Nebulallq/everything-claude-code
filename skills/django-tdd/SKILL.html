@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: django-tdd<br>description: Django testing strategies with pytest-django, TDD methodology, factory_boy, mocking, coverage, and testing Django REST Framework APIs.<br>origin: ECC</h2>
+<h1>Django Testing with TDD</h1>
+<p>Test-driven development for Django applications using pytest, factory_boy, and Django REST Framework.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Writing new Django applications</li>
+<li>Implementing Django REST Framework APIs</li>
+<li>Testing Django models, views, and serializers</li>
+<li>Setting up testing infrastructure for Django projects</li>
+</ul>
+<h2>TDD Workflow for Django</h2>
+<h3>Red-Green-Refactor Cycle</h3>
+<pre><code class="language-python"># Step 1: RED - Write failing test
+def test_user_creation():
+    user = User.objects.create_user(email=&#39;test@example.com&#39;, password=&#39;testpass123&#39;)
+    assert user.email == &#39;test@example.com&#39;
+    assert user.check_password(&#39;testpass123&#39;)
+    assert not user.is_staff
+
+# Step 2: GREEN - Make test pass
+# Create User model or factory
+
+# Step 3: REFACTOR - Improve while keeping tests green
+</code></pre>
+<h2>Setup</h2>
+<h3>pytest Configuration</h3>
+<pre><code class="language-ini"># pytest.ini
+[pytest]
+DJANGO_SETTINGS_MODULE = config.settings.test
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts =
+    --reuse-db
+    --nomigrations
+    --cov=apps
+    --cov-report=html
+    --cov-report=term-missing
+    --strict-markers
+markers =
+    slow: marks tests as slow
+    integration: marks tests as integration tests
+</code></pre>
+<h3>Test Settings</h3>
+<pre><code class="language-python"># config/settings/test.py
+from .base import *
+
+DEBUG = True
+DATABASES = {
+    &#39;default&#39;: {
+        &#39;ENGINE&#39;: &#39;django.db.backends.sqlite3&#39;,
+        &#39;NAME&#39;: &#39;:memory:&#39;,
+    }
+}
+
+# Disable migrations for speed
+class DisableMigrations:
+    def __contains__(self, item):
+        return True
+
+    def __getitem__(self, item):
+        return None
+
+MIGRATION_MODULES = DisableMigrations()
+
+# Faster password hashing
+PASSWORD_HASHERS = [
+    &#39;django.contrib.auth.hashers.MD5PasswordHasher&#39;,
+]
+
+# Email backend
+EMAIL_BACKEND = &#39;django.core.mail.backends.console.EmailBackend&#39;
+
+# Celery always eager
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+</code></pre>
+<h3>conftest.py</h3>
+<pre><code class="language-python"># tests/conftest.py
+import pytest
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@pytest.fixture(autouse=True)
+def timezone_settings(settings):
+    &quot;&quot;&quot;Ensure consistent timezone.&quot;&quot;&quot;
+    settings.TIME_ZONE = &#39;UTC&#39;
+
+@pytest.fixture
+def user(db):
+    &quot;&quot;&quot;Create a test user.&quot;&quot;&quot;
+    return User.objects.create_user(
+        email=&#39;test@example.com&#39;,
+        password=&#39;testpass123&#39;,
+        username=&#39;testuser&#39;
+    )
+
+@pytest.fixture
+def admin_user(db):
+    &quot;&quot;&quot;Create an admin user.&quot;&quot;&quot;
+    return User.objects.create_superuser(
+        email=&#39;admin@example.com&#39;,
+        password=&#39;adminpass123&#39;,
+        username=&#39;admin&#39;
+    )
+
+@pytest.fixture
+def authenticated_client(client, user):
+    &quot;&quot;&quot;Return authenticated client.&quot;&quot;&quot;
+    client.force_login(user)
+    return client
+
+@pytest.fixture
+def api_client():
+    &quot;&quot;&quot;Return DRF API client.&quot;&quot;&quot;
+    from rest_framework.test import APIClient
+    return APIClient()
+
+@pytest.fixture
+def authenticated_api_client(api_client, user):
+    &quot;&quot;&quot;Return authenticated API client.&quot;&quot;&quot;
+    api_client.force_authenticate(user=user)
+    return api_client
+</code></pre>
+<h2>Factory Boy</h2>
+<h3>Factory Setup</h3>
+<pre><code class="language-python"># tests/factories.py
+import factory
+from factory import fuzzy
+from datetime import datetime, timedelta
+from django.contrib.auth import get_user_model
+from apps.products.models import Product, Category
+
+User = get_user_model()
+
+class UserFactory(factory.django.DjangoModelFactory):
+    &quot;&quot;&quot;Factory for User model.&quot;&quot;&quot;
+
+    class Meta:
+        model = User
+
+    email = factory.Sequence(lambda n: f&quot;user{n}@example.com&quot;)
+    username = factory.Sequence(lambda n: f&quot;user{n}&quot;)
+    password = factory.PostGenerationMethodCall(&#39;set_password&#39;, &#39;testpass123&#39;)
+    first_name = factory.Faker(&#39;first_name&#39;)
+    last_name = factory.Faker(&#39;last_name&#39;)
+    is_active = True
+
+class CategoryFactory(factory.django.DjangoModelFactory):
+    &quot;&quot;&quot;Factory for Category model.&quot;&quot;&quot;
+
+    class Meta:
+        model = Category
+
+    name = factory.Faker(&#39;word&#39;)
+    slug = factory.LazyAttribute(lambda obj: obj.name.lower())
+    description = factory.Faker(&#39;text&#39;)
+
+class ProductFactory(factory.django.DjangoModelFactory):
+    &quot;&quot;&quot;Factory for Product model.&quot;&quot;&quot;
+
+    class Meta:
+        model = Product
+
+    name = factory.Faker(&#39;sentence&#39;, nb_words=3)
+    slug = factory.LazyAttribute(lambda obj: obj.name.lower().replace(&#39; &#39;, &#39;-&#39;))
+    description = factory.Faker(&#39;text&#39;)
+    price = fuzzy.FuzzyDecimal(10.00, 1000.00, 2)
+    stock = fuzzy.FuzzyInteger(0, 100)
+    is_active = True
+    category = factory.SubFactory(CategoryFactory)
+    created_by = factory.SubFactory(UserFactory)
+
+    @factory.post_generation
+    def tags(self, create, extracted, **kwargs):
+        &quot;&quot;&quot;Add tags to product.&quot;&quot;&quot;
+        if not create:
+            return
+        if extracted:
+            for tag in extracted:
+                self.tags.add(tag)
+</code></pre>
+<h3>Using Factories</h3>
+<pre><code class="language-python"># tests/test_models.py
+import pytest
+from tests.factories import ProductFactory, UserFactory
+
+def test_product_creation():
+    &quot;&quot;&quot;Test product creation using factory.&quot;&quot;&quot;
+    product = ProductFactory(price=100.00, stock=50)
+    assert product.price == 100.00
+    assert product.stock == 50
+    assert product.is_active is True
+
+def test_product_with_tags():
+    &quot;&quot;&quot;Test product with tags.&quot;&quot;&quot;
+    tags = [TagFactory(name=&#39;electronics&#39;), TagFactory(name=&#39;new&#39;)]
+    product = ProductFactory(tags=tags)
+    assert product.tags.count() == 2
+
+def test_multiple_products():
+    &quot;&quot;&quot;Test creating multiple products.&quot;&quot;&quot;
+    products = ProductFactory.create_batch(10)
+    assert len(products) == 10
+</code></pre>
+<h2>Model Testing</h2>
+<h3>Model Tests</h3>
+<pre><code class="language-python"># tests/test_models.py
+import pytest
+from django.core.exceptions import ValidationError
+from tests.factories import UserFactory, ProductFactory
+
+class TestUserModel:
+    &quot;&quot;&quot;Test User model.&quot;&quot;&quot;
+
+    def test_create_user(self, db):
+        &quot;&quot;&quot;Test creating a regular user.&quot;&quot;&quot;
+        user = UserFactory(email=&#39;test@example.com&#39;)
+        assert user.email == &#39;test@example.com&#39;
+        assert user.check_password(&#39;testpass123&#39;)
+        assert not user.is_staff
+        assert not user.is_superuser
+
+    def test_create_superuser(self, db):
+        &quot;&quot;&quot;Test creating a superuser.&quot;&quot;&quot;
+        user = UserFactory(
+            email=&#39;admin@example.com&#39;,
+            is_staff=True,
+            is_superuser=True
+        )
+        assert user.is_staff
+        assert user.is_superuser
+
+    def test_user_str(self, db):
+        &quot;&quot;&quot;Test user string representation.&quot;&quot;&quot;
+        user = UserFactory(email=&#39;test@example.com&#39;)
+        assert str(user) == &#39;test@example.com&#39;
+
+class TestProductModel:
+    &quot;&quot;&quot;Test Product model.&quot;&quot;&quot;
+
+    def test_product_creation(self, db):
+        &quot;&quot;&quot;Test creating a product.&quot;&quot;&quot;
+        product = ProductFactory()
+        assert product.id is not None
+        assert product.is_active is True
+        assert product.created_at is not None
+
+    def test_product_slug_generation(self, db):
+        &quot;&quot;&quot;Test automatic slug generation.&quot;&quot;&quot;
+        product = ProductFactory(name=&#39;Test Product&#39;)
+        assert product.slug == &#39;test-product&#39;
+
+    def test_product_price_validation(self, db):
+        &quot;&quot;&quot;Test price cannot be negative.&quot;&quot;&quot;
+        product = ProductFactory(price=-10)
+        with pytest.raises(ValidationError):
+            product.full_clean()
+
+    def test_product_manager_active(self, db):
+        &quot;&quot;&quot;Test active manager method.&quot;&quot;&quot;
+        ProductFactory.create_batch(5, is_active=True)
+        ProductFactory.create_batch(3, is_active=False)
+
+        active_count = Product.objects.active().count()
+        assert active_count == 5
+
+    def test_product_stock_management(self, db):
+        &quot;&quot;&quot;Test stock management.&quot;&quot;&quot;
+        product = ProductFactory(stock=10)
+        product.reduce_stock(5)
+        product.refresh_from_db()
+        assert product.stock == 5
+
+        with pytest.raises(ValueError):
+            product.reduce_stock(10)  # Not enough stock
+</code></pre>
+<h2>View Testing</h2>
+<h3>Django View Testing</h3>
+<pre><code class="language-python"># tests/test_views.py
+import pytest
+from django.urls import reverse
+from tests.factories import ProductFactory, UserFactory
+
+class TestProductViews:
+    &quot;&quot;&quot;Test product views.&quot;&quot;&quot;
+
+    def test_product_list(self, client, db):
+        &quot;&quot;&quot;Test product list view.&quot;&quot;&quot;
+        ProductFactory.create_batch(10)
+
+        response = client.get(reverse(&#39;products:list&#39;))
+
+        assert response.status_code == 200
+        assert len(response.context[&#39;products&#39;]) == 10
+
+    def test_product_detail(self, client, db):
+        &quot;&quot;&quot;Test product detail view.&quot;&quot;&quot;
+        product = ProductFactory()
+
+        response = client.get(reverse(&#39;products:detail&#39;, kwargs={&#39;slug&#39;: product.slug}))
+
+        assert response.status_code == 200
+        assert response.context[&#39;product&#39;] == product
+
+    def test_product_create_requires_login(self, client, db):
+        &quot;&quot;&quot;Test product creation requires authentication.&quot;&quot;&quot;
+        response = client.get(reverse(&#39;products:create&#39;))
+
+        assert response.status_code == 302
+        assert response.url.startswith(&#39;/accounts/login/&#39;)
+
+    def test_product_create_authenticated(self, authenticated_client, db):
+        &quot;&quot;&quot;Test product creation as authenticated user.&quot;&quot;&quot;
+        response = authenticated_client.get(reverse(&#39;products:create&#39;))
+
+        assert response.status_code == 200
+
+    def test_product_create_post(self, authenticated_client, db, category):
+        &quot;&quot;&quot;Test creating a product via POST.&quot;&quot;&quot;
+        data = {
+            &#39;name&#39;: &#39;Test Product&#39;,
+            &#39;description&#39;: &#39;A test product&#39;,
+            &#39;price&#39;: &#39;99.99&#39;,
+            &#39;stock&#39;: 10,
+            &#39;category&#39;: category.id,
+        }
+
+        response = authenticated_client.post(reverse(&#39;products:create&#39;), data)
+
+        assert response.status_code == 302
+        assert Product.objects.filter(name=&#39;Test Product&#39;).exists()
+</code></pre>
+<h2>DRF API Testing</h2>
+<h3>Serializer Testing</h3>
+<pre><code class="language-python"># tests/test_serializers.py
+import pytest
+from rest_framework.exceptions import ValidationError
+from apps.products.serializers import ProductSerializer
+from tests.factories import ProductFactory
+
+class TestProductSerializer:
+    &quot;&quot;&quot;Test ProductSerializer.&quot;&quot;&quot;
+
+    def test_serialize_product(self, db):
+        &quot;&quot;&quot;Test serializing a product.&quot;&quot;&quot;
+        product = ProductFactory()
+        serializer = ProductSerializer(product)
+
+        data = serializer.data
+
+        assert data[&#39;id&#39;] == product.id
+        assert data[&#39;name&#39;] == product.name
+        assert data[&#39;price&#39;] == str(product.price)
+
+    def test_deserialize_product(self, db):
+        &quot;&quot;&quot;Test deserializing product data.&quot;&quot;&quot;
+        data = {
+            &#39;name&#39;: &#39;Test Product&#39;,
+            &#39;description&#39;: &#39;Test description&#39;,
+            &#39;price&#39;: &#39;99.99&#39;,
+            &#39;stock&#39;: 10,
+            &#39;category&#39;: 1,
+        }
+
+        serializer = ProductSerializer(data=data)
+
+        assert serializer.is_valid()
+        product = serializer.save()
+
+        assert product.name == &#39;Test Product&#39;
+        assert float(product.price) == 99.99
+
+    def test_price_validation(self, db):
+        &quot;&quot;&quot;Test price validation.&quot;&quot;&quot;
+        data = {
+            &#39;name&#39;: &#39;Test Product&#39;,
+            &#39;price&#39;: &#39;-10.00&#39;,
+            &#39;stock&#39;: 10,
+        }
+
+        serializer = ProductSerializer(data=data)
+
+        assert not serializer.is_valid()
+        assert &#39;price&#39; in serializer.errors
+
+    def test_stock_validation(self, db):
+        &quot;&quot;&quot;Test stock cannot be negative.&quot;&quot;&quot;
+        data = {
+            &#39;name&#39;: &#39;Test Product&#39;,
+            &#39;price&#39;: &#39;99.99&#39;,
+            &#39;stock&#39;: -5,
+        }
+
+        serializer = ProductSerializer(data=data)
+
+        assert not serializer.is_valid()
+        assert &#39;stock&#39; in serializer.errors
+</code></pre>
+<h3>API ViewSet Testing</h3>
+<pre><code class="language-python"># tests/test_api.py
+import pytest
+from rest_framework.test import APIClient
+from rest_framework import status
+from django.urls import reverse
+from tests.factories import ProductFactory, UserFactory
+
+class TestProductAPI:
+    &quot;&quot;&quot;Test Product API endpoints.&quot;&quot;&quot;
+
+    @pytest.fixture
+    def api_client(self):
+        &quot;&quot;&quot;Return API client.&quot;&quot;&quot;
+        return APIClient()
+
+    def test_list_products(self, api_client, db):
+        &quot;&quot;&quot;Test listing products.&quot;&quot;&quot;
+        ProductFactory.create_batch(10)
+
+        url = reverse(&#39;api:product-list&#39;)
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data[&#39;count&#39;] == 10
+
+    def test_retrieve_product(self, api_client, db):
+        &quot;&quot;&quot;Test retrieving a product.&quot;&quot;&quot;
+        product = ProductFactory()
+
+        url = reverse(&#39;api:product-detail&#39;, kwargs={&#39;pk&#39;: product.id})
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data[&#39;id&#39;] == product.id
+
+    def test_create_product_unauthorized(self, api_client, db):
+        &quot;&quot;&quot;Test creating product without authentication.&quot;&quot;&quot;
+        url = reverse(&#39;api:product-list&#39;)
+        data = {&#39;name&#39;: &#39;Test Product&#39;, &#39;price&#39;: &#39;99.99&#39;}
+
+        response = api_client.post(url, data)
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_create_product_authorized(self, authenticated_api_client, db):
+        &quot;&quot;&quot;Test creating product as authenticated user.&quot;&quot;&quot;
+        url = reverse(&#39;api:product-list&#39;)
+        data = {
+            &#39;name&#39;: &#39;Test Product&#39;,
+            &#39;description&#39;: &#39;Test&#39;,
+            &#39;price&#39;: &#39;99.99&#39;,
+            &#39;stock&#39;: 10,
+        }
+
+        response = authenticated_api_client.post(url, data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data[&#39;name&#39;] == &#39;Test Product&#39;
+
+    def test_update_product(self, authenticated_api_client, db):
+        &quot;&quot;&quot;Test updating a product.&quot;&quot;&quot;
+        product = ProductFactory(created_by=authenticated_api_client.user)
+
+        url = reverse(&#39;api:product-detail&#39;, kwargs={&#39;pk&#39;: product.id})
+        data = {&#39;name&#39;: &#39;Updated Product&#39;}
+
+        response = authenticated_api_client.patch(url, data)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data[&#39;name&#39;] == &#39;Updated Product&#39;
+
+    def test_delete_product(self, authenticated_api_client, db):
+        &quot;&quot;&quot;Test deleting a product.&quot;&quot;&quot;
+        product = ProductFactory(created_by=authenticated_api_client.user)
+
+        url = reverse(&#39;api:product-detail&#39;, kwargs={&#39;pk&#39;: product.id})
+        response = authenticated_api_client.delete(url)
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_filter_products_by_price(self, api_client, db):
+        &quot;&quot;&quot;Test filtering products by price.&quot;&quot;&quot;
+        ProductFactory(price=50)
+        ProductFactory(price=150)
+
+        url = reverse(&#39;api:product-list&#39;)
+        response = api_client.get(url, {&#39;price_min&#39;: 100})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data[&#39;count&#39;] == 1
+
+    def test_search_products(self, api_client, db):
+        &quot;&quot;&quot;Test searching products.&quot;&quot;&quot;
+        ProductFactory(name=&#39;Apple iPhone&#39;)
+        ProductFactory(name=&#39;Samsung Galaxy&#39;)
+
+        url = reverse(&#39;api:product-list&#39;)
+        response = api_client.get(url, {&#39;search&#39;: &#39;Apple&#39;})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data[&#39;count&#39;] == 1
+</code></pre>
+<h2>Mocking and Patching</h2>
+<h3>Mocking External Services</h3>
+<pre><code class="language-python"># tests/test_views.py
+from unittest.mock import patch, Mock
+import pytest
+
+class TestPaymentView:
+    &quot;&quot;&quot;Test payment view with mocked payment gateway.&quot;&quot;&quot;
+
+    @patch(&#39;apps.payments.services.stripe&#39;)
+    def test_successful_payment(self, mock_stripe, client, user, product):
+        &quot;&quot;&quot;Test successful payment with mocked Stripe.&quot;&quot;&quot;
+        # Configure mock
+        mock_stripe.Charge.create.return_value = {
+            &#39;id&#39;: &#39;ch_123&#39;,
+            &#39;status&#39;: &#39;succeeded&#39;,
+            &#39;amount&#39;: 9999,
+        }
+
+        client.force_login(user)
+        response = client.post(reverse(&#39;payments:process&#39;), {
+            &#39;product_id&#39;: product.id,
+            &#39;token&#39;: &#39;tok_visa&#39;,
+        })
+
+        assert response.status_code == 302
+        mock_stripe.Charge.create.assert_called_once()
+
+    @patch(&#39;apps.payments.services.stripe&#39;)
+    def test_failed_payment(self, mock_stripe, client, user, product):
+        &quot;&quot;&quot;Test failed payment.&quot;&quot;&quot;
+        mock_stripe.Charge.create.side_effect = Exception(&#39;Card declined&#39;)
+
+        client.force_login(user)
+        response = client.post(reverse(&#39;payments:process&#39;), {
+            &#39;product_id&#39;: product.id,
+            &#39;token&#39;: &#39;tok_visa&#39;,
+        })
+
+        assert response.status_code == 302
+        assert &#39;error&#39; in response.url
+</code></pre>
+<h3>Mocking Email Sending</h3>
+<pre><code class="language-python"># tests/test_email.py
+from django.core import mail
+from django.test import override_settings
+
+@override_settings(EMAIL_BACKEND=&#39;django.core.mail.backends.locmem.EmailBackend&#39;)
+def test_order_confirmation_email(db, order):
+    &quot;&quot;&quot;Test order confirmation email.&quot;&quot;&quot;
+    order.send_confirmation_email()
+
+    assert len(mail.outbox) == 1
+    assert order.user.email in mail.outbox[0].to
+    assert &#39;Order Confirmation&#39; in mail.outbox[0].subject
+</code></pre>
+<h2>Integration Testing</h2>
+<h3>Full Flow Testing</h3>
+<pre><code class="language-python"># tests/test_integration.py
+import pytest
+from django.urls import reverse
+from tests.factories import UserFactory, ProductFactory
+
+class TestCheckoutFlow:
+    &quot;&quot;&quot;Test complete checkout flow.&quot;&quot;&quot;
+
+    def test_guest_to_purchase_flow(self, client, db):
+        &quot;&quot;&quot;Test complete flow from guest to purchase.&quot;&quot;&quot;
+        # Step 1: Register
+        response = client.post(reverse(&#39;users:register&#39;), {
+            &#39;email&#39;: &#39;test@example.com&#39;,
+            &#39;password&#39;: &#39;testpass123&#39;,
+            &#39;password_confirm&#39;: &#39;testpass123&#39;,
+        })
+        assert response.status_code == 302
+
+        # Step 2: Login
+        response = client.post(reverse(&#39;users:login&#39;), {
+            &#39;email&#39;: &#39;test@example.com&#39;,
+            &#39;password&#39;: &#39;testpass123&#39;,
+        })
+        assert response.status_code == 302
+
+        # Step 3: Browse products
+        product = ProductFactory(price=100)
+        response = client.get(reverse(&#39;products:detail&#39;, kwargs={&#39;slug&#39;: product.slug}))
+        assert response.status_code == 200
+
+        # Step 4: Add to cart
+        response = client.post(reverse(&#39;cart:add&#39;), {
+            &#39;product_id&#39;: product.id,
+            &#39;quantity&#39;: 1,
+        })
+        assert response.status_code == 302
+
+        # Step 5: Checkout
+        response = client.get(reverse(&#39;checkout:review&#39;))
+        assert response.status_code == 200
+        assert product.name in response.content.decode()
+
+        # Step 6: Complete purchase
+        with patch(&#39;apps.checkout.services.process_payment&#39;) as mock_payment:
+            mock_payment.return_value = True
+            response = client.post(reverse(&#39;checkout:complete&#39;))
+
+        assert response.status_code == 302
+        assert Order.objects.filter(user__email=&#39;test@example.com&#39;).exists()
+</code></pre>
+<h2>Testing Best Practices</h2>
+<h3>DO</h3>
+<ul>
+<li><strong>Use factories</strong>: Instead of manual object creation</li>
+<li><strong>One assertion per test</strong>: Keep tests focused</li>
+<li><strong>Descriptive test names</strong>: <code>test_user_cannot_delete_others_post</code></li>
+<li><strong>Test edge cases</strong>: Empty inputs, None values, boundary conditions</li>
+<li><strong>Mock external services</strong>: Don&#39;t depend on external APIs</li>
+<li><strong>Use fixtures</strong>: Eliminate duplication</li>
+<li><strong>Test permissions</strong>: Ensure authorization works</li>
+<li><strong>Keep tests fast</strong>: Use <code>--reuse-db</code> and <code>--nomigrations</code></li>
+</ul>
+<h3>DON&#39;T</h3>
+<ul>
+<li><strong>Don&#39;t test Django internals</strong>: Trust Django to work</li>
+<li><strong>Don&#39;t test third-party code</strong>: Trust libraries to work</li>
+<li><strong>Don&#39;t ignore failing tests</strong>: All tests must pass</li>
+<li><strong>Don&#39;t make tests dependent</strong>: Tests should run in any order</li>
+<li><strong>Don&#39;t over-mock</strong>: Mock only external dependencies</li>
+<li><strong>Don&#39;t test private methods</strong>: Test public interface</li>
+<li><strong>Don&#39;t use production database</strong>: Always use test database</li>
+</ul>
+<h2>Coverage</h2>
+<h3>Coverage Configuration</h3>
+<pre><code class="language-bash"># Run tests with coverage
+pytest --cov=apps --cov-report=html --cov-report=term-missing
+
+# Generate HTML report
+open htmlcov/index.html
+</code></pre>
+<h3>Coverage Goals</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Target Coverage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Models</td>
+<td>90%+</td>
+</tr>
+<tr>
+<td>Serializers</td>
+<td>85%+</td>
+</tr>
+<tr>
+<td>Views</td>
+<td>80%+</td>
+</tr>
+<tr>
+<td>Services</td>
+<td>90%+</td>
+</tr>
+<tr>
+<td>Utilities</td>
+<td>80%+</td>
+</tr>
+<tr>
+<td>Overall</td>
+<td>80%+</td>
+</tr>
+</tbody></table>
+<h2>Quick Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@pytest.mark.django_db</code></td>
+<td>Enable database access</td>
+</tr>
+<tr>
+<td><code>client</code></td>
+<td>Django test client</td>
+</tr>
+<tr>
+<td><code>api_client</code></td>
+<td>DRF API client</td>
+</tr>
+<tr>
+<td><code>factory.create_batch(n)</code></td>
+<td>Create multiple objects</td>
+</tr>
+<tr>
+<td><code>patch(&#39;module.function&#39;)</code></td>
+<td>Mock external dependencies</td>
+</tr>
+<tr>
+<td><code>override_settings</code></td>
+<td>Temporarily change settings</td>
+</tr>
+<tr>
+<td><code>force_authenticate()</code></td>
+<td>Bypass authentication in tests</td>
+</tr>
+<tr>
+<td><code>assertRedirects</code></td>
+<td>Check for redirects</td>
+</tr>
+<tr>
+<td><code>assertTemplateUsed</code></td>
+<td>Verify template usage</td>
+</tr>
+<tr>
+<td><code>mail.outbox</code></td>
+<td>Check sent emails</td>
+</tr>
+</tbody></table>
+<p>Remember: Tests are documentation. Good tests explain how your code should work. Keep them simple, readable, and maintainable.</p>
+
+</body>
+</html>

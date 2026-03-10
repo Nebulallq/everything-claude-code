@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eval</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<h1>Eval Command</h1>
+<p>Manage eval-driven development workflow.</p>
+<h2>Usage</h2>
+<p><code>/eval [define|check|report|list] [feature-name]</code></p>
+<h2>Define Evals</h2>
+<p><code>/eval define feature-name</code></p>
+<p>Create a new eval definition:</p>
+<ol>
+<li>Create <code>.claude/evals/feature-name.md</code> with template:</li>
+</ol>
+<pre><code class="language-markdown">## EVAL: feature-name
+Created: $(date)
+
+### Capability Evals
+- [ ] [Description of capability 1]
+- [ ] [Description of capability 2]
+
+### Regression Evals
+- [ ] [Existing behavior 1 still works]
+- [ ] [Existing behavior 2 still works]
+
+### Success Criteria
+- pass@3 &gt; 90% for capability evals
+- pass^3 = 100% for regression evals
+</code></pre>
+<ol start="2">
+<li>Prompt user to fill in specific criteria</li>
+</ol>
+<h2>Check Evals</h2>
+<p><code>/eval check feature-name</code></p>
+<p>Run evals for a feature:</p>
+<ol>
+<li>Read eval definition from <code>.claude/evals/feature-name.md</code></li>
+<li>For each capability eval:<ul>
+<li>Attempt to verify criterion</li>
+<li>Record PASS/FAIL</li>
+<li>Log attempt in <code>.claude/evals/feature-name.log</code></li>
+</ul>
+</li>
+<li>For each regression eval:<ul>
+<li>Run relevant tests</li>
+<li>Compare against baseline</li>
+<li>Record PASS/FAIL</li>
+</ul>
+</li>
+<li>Report current status:</li>
+</ol>
+<pre><code>EVAL CHECK: feature-name
+========================
+Capability: X/Y passing
+Regression: X/Y passing
+Status: IN PROGRESS / READY
+</code></pre>
+<h2>Report Evals</h2>
+<p><code>/eval report feature-name</code></p>
+<p>Generate comprehensive eval report:</p>
+<pre><code>EVAL REPORT: feature-name
+=========================
+Generated: $(date)
+
+CAPABILITY EVALS
+----------------
+[eval-1]: PASS (pass@1)
+[eval-2]: PASS (pass@2) - required retry
+[eval-3]: FAIL - see notes
+
+REGRESSION EVALS
+----------------
+[test-1]: PASS
+[test-2]: PASS
+[test-3]: PASS
+
+METRICS
+-------
+Capability pass@1: 67%
+Capability pass@3: 100%
+Regression pass^3: 100%
+
+NOTES
+-----
+[Any issues, edge cases, or observations]
+
+RECOMMENDATION
+--------------
+[SHIP / NEEDS WORK / BLOCKED]
+</code></pre>
+<h2>List Evals</h2>
+<p><code>/eval list</code></p>
+<p>Show all eval definitions:</p>
+<pre><code>EVAL DEFINITIONS
+================
+feature-auth      [3/5 passing] IN PROGRESS
+feature-search    [5/5 passing] READY
+feature-export    [0/4 passing] NOT STARTED
+</code></pre>
+<h2>Arguments</h2>
+<p>$ARGUMENTS:</p>
+<ul>
+<li><code>define &lt;name&gt;</code> - Create new eval definition</li>
+<li><code>check &lt;name&gt;</code> - Run and check evals</li>
+<li><code>report &lt;name&gt;</code> - Generate full report</li>
+<li><code>list</code> - Show all evals</li>
+<li><code>clean</code> - Remove old eval logs (keeps last 10 runs)</li>
+</ul>
+
+</body>
+</html>

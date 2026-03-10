@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKILL</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>name: jpa-patterns<br>description: JPA/Hibernate patterns for entity design, relationships, query optimization, transactions, auditing, indexing, pagination, and pooling in Spring Boot.<br>origin: ECC</h2>
+<h1>JPA/Hibernate Patterns</h1>
+<p>Use for data modeling, repositories, and performance tuning in Spring Boot.</p>
+<h2>When to Activate</h2>
+<ul>
+<li>Designing JPA entities and table mappings</li>
+<li>Defining relationships (@OneToMany, @ManyToOne, @ManyToMany)</li>
+<li>Optimizing queries (N+1 prevention, fetch strategies, projections)</li>
+<li>Configuring transactions, auditing, or soft deletes</li>
+<li>Setting up pagination, sorting, or custom repository methods</li>
+<li>Tuning connection pooling (HikariCP) or second-level caching</li>
+</ul>
+<h2>Entity Design</h2>
+<pre><code class="language-java">@Entity
+@Table(name = &quot;markets&quot;, indexes = {
+  @Index(name = &quot;idx_markets_slug&quot;, columnList = &quot;slug&quot;, unique = true)
+})
+@EntityListeners(AuditingEntityListener.class)
+public class MarketEntity {
+  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(nullable = false, length = 200)
+  private String name;
+
+  @Column(nullable = false, unique = true, length = 120)
+  private String slug;
+
+  @Enumerated(EnumType.STRING)
+  private MarketStatus status = MarketStatus.ACTIVE;
+
+  @CreatedDate private Instant createdAt;
+  @LastModifiedDate private Instant updatedAt;
+}
+</code></pre>
+<p>Enable auditing:</p>
+<pre><code class="language-java">@Configuration
+@EnableJpaAuditing
+class JpaConfig {}
+</code></pre>
+<h2>Relationships and N+1 Prevention</h2>
+<pre><code class="language-java">@OneToMany(mappedBy = &quot;market&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+private List&lt;PositionEntity&gt; positions = new ArrayList&lt;&gt;();
+</code></pre>
+<ul>
+<li>Default to lazy loading; use <code>JOIN FETCH</code> in queries when needed</li>
+<li>Avoid <code>EAGER</code> on collections; use DTO projections for read paths</li>
+</ul>
+<pre><code class="language-java">@Query(&quot;select m from MarketEntity m left join fetch m.positions where m.id = :id&quot;)
+Optional&lt;MarketEntity&gt; findWithPositions(@Param(&quot;id&quot;) Long id);
+</code></pre>
+<h2>Repository Patterns</h2>
+<pre><code class="language-java">public interface MarketRepository extends JpaRepository&lt;MarketEntity, Long&gt; {
+  Optional&lt;MarketEntity&gt; findBySlug(String slug);
+
+  @Query(&quot;select m from MarketEntity m where m.status = :status&quot;)
+  Page&lt;MarketEntity&gt; findByStatus(@Param(&quot;status&quot;) MarketStatus status, Pageable pageable);
+}
+</code></pre>
+<ul>
+<li>Use projections for lightweight queries:</li>
+</ul>
+<pre><code class="language-java">public interface MarketSummary {
+  Long getId();
+  String getName();
+  MarketStatus getStatus();
+}
+Page&lt;MarketSummary&gt; findAllBy(Pageable pageable);
+</code></pre>
+<h2>Transactions</h2>
+<ul>
+<li>Annotate service methods with <code>@Transactional</code></li>
+<li>Use <code>@Transactional(readOnly = true)</code> for read paths to optimize</li>
+<li>Choose propagation carefully; avoid long-running transactions</li>
+</ul>
+<pre><code class="language-java">@Transactional
+public Market updateStatus(Long id, MarketStatus status) {
+  MarketEntity entity = repo.findById(id)
+      .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Market&quot;));
+  entity.setStatus(status);
+  return Market.from(entity);
+}
+</code></pre>
+<h2>Pagination</h2>
+<pre><code class="language-java">PageRequest page = PageRequest.of(pageNumber, pageSize, Sort.by(&quot;createdAt&quot;).descending());
+Page&lt;MarketEntity&gt; markets = repo.findByStatus(MarketStatus.ACTIVE, page);
+</code></pre>
+<p>For cursor-like pagination, include <code>id &gt; :lastId</code> in JPQL with ordering.</p>
+<h2>Indexing and Performance</h2>
+<ul>
+<li>Add indexes for common filters (<code>status</code>, <code>slug</code>, foreign keys)</li>
+<li>Use composite indexes matching query patterns (<code>status, created_at</code>)</li>
+<li>Avoid <code>select *</code>; project only needed columns</li>
+<li>Batch writes with <code>saveAll</code> and <code>hibernate.jdbc.batch_size</code></li>
+</ul>
+<h2>Connection Pooling (HikariCP)</h2>
+<p>Recommended properties:</p>
+<pre><code>spring.datasource.hikari.maximum-pool-size=20
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.validation-timeout=5000
+</code></pre>
+<p>For PostgreSQL LOB handling, add:</p>
+<pre><code>spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+</code></pre>
+<h2>Caching</h2>
+<ul>
+<li>1st-level cache is per EntityManager; avoid keeping entities across transactions</li>
+<li>For read-heavy entities, consider second-level cache cautiously; validate eviction strategy</li>
+</ul>
+<h2>Migrations</h2>
+<ul>
+<li>Use Flyway or Liquibase; never rely on Hibernate auto DDL in production</li>
+<li>Keep migrations idempotent and additive; avoid dropping columns without plan</li>
+</ul>
+<h2>Testing Data Access</h2>
+<ul>
+<li>Prefer <code>@DataJpaTest</code> with Testcontainers to mirror production</li>
+<li>Assert SQL efficiency using logs: set <code>logging.level.org.hibernate.SQL=DEBUG</code> and <code>logging.level.org.hibernate.orm.jdbc.bind=TRACE</code> for parameter values</li>
+</ul>
+<p><strong>Remember</strong>: Keep entities lean, queries intentional, and transactions short. Prevent N+1 with fetch strategies and projections, and index for your read/write paths.</p>
+
+</body>
+</html>

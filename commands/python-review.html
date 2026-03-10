@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>python-review</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1, h2, h3 { margin-top: 1.5em; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+<hr>
+<h2>description: Comprehensive Python code review for PEP 8 compliance, type hints, security, and Pythonic idioms. Invokes the python-reviewer agent.</h2>
+<h1>Python Code Review</h1>
+<p>This command invokes the <strong>python-reviewer</strong> agent for comprehensive Python-specific code review.</p>
+<h2>What This Command Does</h2>
+<ol>
+<li><strong>Identify Python Changes</strong>: Find modified <code>.py</code> files via <code>git diff</code></li>
+<li><strong>Run Static Analysis</strong>: Execute <code>ruff</code>, <code>mypy</code>, <code>pylint</code>, <code>black --check</code></li>
+<li><strong>Security Scan</strong>: Check for SQL injection, command injection, unsafe deserialization</li>
+<li><strong>Type Safety Review</strong>: Analyze type hints and mypy errors</li>
+<li><strong>Pythonic Code Check</strong>: Verify code follows PEP 8 and Python best practices</li>
+<li><strong>Generate Report</strong>: Categorize issues by severity</li>
+</ol>
+<h2>When to Use</h2>
+<p>Use <code>/python-review</code> when:</p>
+<ul>
+<li>After writing or modifying Python code</li>
+<li>Before committing Python changes</li>
+<li>Reviewing pull requests with Python code</li>
+<li>Onboarding to a new Python codebase</li>
+<li>Learning Pythonic patterns and idioms</li>
+</ul>
+<h2>Review Categories</h2>
+<h3>CRITICAL (Must Fix)</h3>
+<ul>
+<li>SQL/Command injection vulnerabilities</li>
+<li>Unsafe eval/exec usage</li>
+<li>Pickle unsafe deserialization</li>
+<li>Hardcoded credentials</li>
+<li>YAML unsafe load</li>
+<li>Bare except clauses hiding errors</li>
+</ul>
+<h3>HIGH (Should Fix)</h3>
+<ul>
+<li>Missing type hints on public functions</li>
+<li>Mutable default arguments</li>
+<li>Swallowing exceptions silently</li>
+<li>Not using context managers for resources</li>
+<li>C-style looping instead of comprehensions</li>
+<li>Using type() instead of isinstance()</li>
+<li>Race conditions without locks</li>
+</ul>
+<h3>MEDIUM (Consider)</h3>
+<ul>
+<li>PEP 8 formatting violations</li>
+<li>Missing docstrings on public functions</li>
+<li>Print statements instead of logging</li>
+<li>Inefficient string operations</li>
+<li>Magic numbers without named constants</li>
+<li>Not using f-strings for formatting</li>
+<li>Unnecessary list creation</li>
+</ul>
+<h2>Automated Checks Run</h2>
+<pre><code class="language-bash"># Type checking
+mypy .
+
+# Linting and formatting
+ruff check .
+black --check .
+isort --check-only .
+
+# Security scanning
+bandit -r .
+
+# Dependency audit
+pip-audit
+safety check
+
+# Testing
+pytest --cov=app --cov-report=term-missing
+</code></pre>
+<h2>Example Usage</h2>
+<pre><code class="language-text">User: /python-review
+
+Agent:
+# Python Code Review Report
+
+## Files Reviewed
+- app/routes/user.py (modified)
+- app/services/auth.py (modified)
+
+## Static Analysis Results
+✓ ruff: No issues
+✓ mypy: No errors
+⚠️ black: 2 files need reformatting
+✓ bandit: No security issues
+
+## Issues Found
+
+[CRITICAL] SQL Injection vulnerability
+File: app/routes/user.py:42
+Issue: User input directly interpolated into SQL query
+```python
+query = f&quot;SELECT * FROM users WHERE id = {user_id}&quot;  # Bad
+</code></pre>
+<p>Fix: Use parameterized query</p>
+<pre><code class="language-python">query = &quot;SELECT * FROM users WHERE id = %s&quot;  # Good
+cursor.execute(query, (user_id,))
+</code></pre>
+<p>[HIGH] Mutable default argument<br>File: app/services/auth.py:18<br>Issue: Mutable default argument causes shared state</p>
+<pre><code class="language-python">def process_items(items=[]):  # Bad
+    items.append(&quot;new&quot;)
+    return items
+</code></pre>
+<p>Fix: Use None as default</p>
+<pre><code class="language-python">def process_items(items=None):  # Good
+    if items is None:
+        items = []
+    items.append(&quot;new&quot;)
+    return items
+</code></pre>
+<p>[MEDIUM] Missing type hints<br>File: app/services/auth.py:25<br>Issue: Public function without type annotations</p>
+<pre><code class="language-python">def get_user(user_id):  # Bad
+    return db.find(user_id)
+</code></pre>
+<p>Fix: Add type hints</p>
+<pre><code class="language-python">def get_user(user_id: str) -&gt; Optional[User]:  # Good
+    return db.find(user_id)
+</code></pre>
+<p>[MEDIUM] Not using context manager<br>File: app/routes/user.py:55<br>Issue: File not closed on exception</p>
+<pre><code class="language-python">f = open(&quot;config.json&quot;)  # Bad
+data = f.read()
+f.close()
+</code></pre>
+<p>Fix: Use context manager</p>
+<pre><code class="language-python">with open(&quot;config.json&quot;) as f:  # Good
+    data = f.read()
+</code></pre>
+<h2>Summary</h2>
+<ul>
+<li>CRITICAL: 1</li>
+<li>HIGH: 1</li>
+<li>MEDIUM: 2</li>
+</ul>
+<p>Recommendation: ❌ Block merge until CRITICAL issue is fixed</p>
+<h2>Formatting Required</h2>
+<p>Run: <code>black app/routes/user.py app/services/auth.py</code></p>
+<pre><code>
+## Approval Criteria
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Approve | No CRITICAL or HIGH issues |
+| ⚠️ Warning | Only MEDIUM issues (merge with caution) |
+| ❌ Block | CRITICAL or HIGH issues found |
+
+## Integration with Other Commands
+
+- Use `/tdd` first to ensure tests pass
+- Use `/code-review` for non-Python specific concerns
+- Use `/python-review` before committing
+- Use `/build-fix` if static analysis tools fail
+
+## Framework-Specific Reviews
+
+### Django Projects
+The reviewer checks for:
+- N+1 query issues (use `select_related` and `prefetch_related`)
+- Missing migrations for model changes
+- Raw SQL usage when ORM could work
+- Missing `transaction.atomic()` for multi-step operations
+
+### FastAPI Projects
+The reviewer checks for:
+- CORS misconfiguration
+- Pydantic models for request validation
+- Response models correctness
+- Proper async/await usage
+- Dependency injection patterns
+
+### Flask Projects
+The reviewer checks for:
+- Context management (app context, request context)
+- Proper error handling
+- Blueprint organization
+- Configuration management
+
+## Related
+
+- Agent: `agents/python-reviewer.md`
+- Skills: `skills/python-patterns/`, `skills/python-testing/`
+
+## Common Fixes
+
+### Add Type Hints
+```python
+# Before
+def calculate(x, y):
+    return x + y
+
+# After
+from typing import Union
+
+def calculate(x: Union[int, float], y: Union[int, float]) -&gt; Union[int, float]:
+    return x + y
+</code></pre>
+<h3>Use Context Managers</h3>
+<pre><code class="language-python"># Before
+f = open(&quot;file.txt&quot;)
+data = f.read()
+f.close()
+
+# After
+with open(&quot;file.txt&quot;) as f:
+    data = f.read()
+</code></pre>
+<h3>Use List Comprehensions</h3>
+<pre><code class="language-python"># Before
+result = []
+for item in items:
+    if item.active:
+        result.append(item.name)
+
+# After
+result = [item.name for item in items if item.active]
+</code></pre>
+<h3>Fix Mutable Defaults</h3>
+<pre><code class="language-python"># Before
+def append(value, items=[]):
+    items.append(value)
+    return items
+
+# After
+def append(value, items=None):
+    if items is None:
+        items = []
+    items.append(value)
+    return items
+</code></pre>
+<h3>Use f-strings (Python 3.6+)</h3>
+<pre><code class="language-python"># Before
+name = &quot;Alice&quot;
+greeting = &quot;Hello, &quot; + name + &quot;!&quot;
+greeting2 = &quot;Hello, {}&quot;.format(name)
+
+# After
+greeting = f&quot;Hello, {name}!&quot;
+</code></pre>
+<h3>Fix String Concatenation in Loops</h3>
+<pre><code class="language-python"># Before
+result = &quot;&quot;
+for item in items:
+    result += str(item)
+
+# After
+result = &quot;&quot;.join(str(item) for item in items)
+</code></pre>
+<h2>Python Version Compatibility</h2>
+<p>The reviewer notes when code uses features from newer Python versions:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Minimum Python</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Type hints</td>
+<td>3.5+</td>
+</tr>
+<tr>
+<td>f-strings</td>
+<td>3.6+</td>
+</tr>
+<tr>
+<td>Walrus operator (<code>:=</code>)</td>
+<td>3.8+</td>
+</tr>
+<tr>
+<td>Position-only parameters</td>
+<td>3.8+</td>
+</tr>
+<tr>
+<td>Match statements</td>
+<td>3.10+</td>
+</tr>
+<tr>
+<td>Type unions (&#96;x &#124; None&#96;)</td>
+<td>3.10+</td>
+</tr>
+</tbody></table>
+<p>Ensure your project&#39;s <code>pyproject.toml</code> or <code>setup.py</code> specifies the correct minimum Python version.</p>
+
+</body>
+</html>
